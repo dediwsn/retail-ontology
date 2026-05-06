@@ -48,10 +48,10 @@ aws bedrock list-inference-profiles --region ap-northeast-2 \
   --query 'inferenceProfileSummaries[?contains(inferenceProfileName, `claude-sonnet-4-6`)]'
 ```
 
-The default model is `apac.anthropic.claude-sonnet-4-6-v1:0` (cross-region inference profile, calls originate from Seoul). Override:
+The default model is `global.anthropic.claude-sonnet-4-6` (cross-region inference profile, falls through APAC + global regions). Override:
 
 ```bash
-export BEDROCK_MODEL_ID=apac.anthropic.claude-sonnet-4-6-v1:0
+export BEDROCK_MODEL_ID=global.anthropic.claude-sonnet-4-6
 export AWS_REGION=ap-northeast-2
 ```
 
