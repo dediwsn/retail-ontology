@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scenario cards 11 → 12. Sidebar / home / guided-tour auto-synced per CLAUDE.md auto-sync rules.
 - `docs/membership.md` §8 "회원 위치 없음" limitation resolved; Phase 2A-G entry added to change history.
 - `/churn` page gains a *지도 (map)* tab — 17-sido choropleth of avg churn risk + per-region drill-down + Top 5 ranking + persona-slice header. New `GET /api/churn/map?persona=` endpoint backs it.
+- `/tier-up` page gains a *지도 (map)* tab — 17-sido choropleth of upgrade-candidate density (Silver tier with LTV ≥ 1.5M) + per-region Silver/Gold/candidate counts + Gold-threshold gap. New `GET /api/tier-up/map?persona=` endpoint.
 
 ## [0.2.0] — 2026-05-01
 
@@ -190,6 +191,7 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 - 시나리오 카드 11 → 12개. 사이드바·홈페이지·가이드투어 자동 동기화.
 - `docs/membership.md` §8 "회원 위치 없음" 한계 해소 반영, 변경 이력에 Phase 2A-G 추가.
 - `/churn` 페이지에 *지도 탭* 추가 — 17 시도 평균 이탈 위험 코로플레스 + 시도별 드릴다운 + Top 5 랭킹 + 페르소나 슬라이스 헤더. 백엔드 `GET /api/churn/map?persona=` 신설.
+- `/tier-up` 페이지에 *지도 탭* 추가 — 17 시도 업그레이드 후보(Silver, LTV ≥ 1.5M) 밀도 코로플레스 + 시도별 Silver/Gold/후보 수 + Gold 임계 갭. 백엔드 `GET /api/tier-up/map?persona=` 신설.
 
 ## [0.2.0] — 2026-05-01
 

@@ -203,3 +203,92 @@ def tier_up_dashboard(top_k: int = 25) -> TierUpDashboardResponse:
         category_lift=category_lift,
         upgrade_candidates=candidates,
     )
+
+
+# ─── Map view (시도별 등급 상승 후보 분포) ──────────────────────────────
+
+
+class TierUpRegionRow(BaseModel):
+    region_code: str
+    name_ko: str
+    silver_count: int
+    gold_count: int
+    candidate_count: int        # Silver 중 LTV ≥ CANDIDATE_LTV_FLOOR
+    avg_silver_ltv_krw: int
+    avg_gap_to_gold_krw: int    # Silver 코호트의 평균 등급 갭
+
+
+class TierUpMapResponse(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    candidate_ltv_floor_krw: int
+    gold_threshold_krw: int
+    regions: List[TierUpRegionRow]
+
+
+@router.get("/tier-up/map", response_model=TierUpMapResponse)
+def tier_up_map(persona: Optional[str] = None) -> TierUpMapResponse:
+    """시도(region)별 등급 상승 후보 분포.
+
+    Member.region_id 가 부여된 회원만 대상. persona가 주어지면 그 페르소나
+    슬라이스로 좁힘. 코로플레스 색은 클라이언트가 candidate_count 또는
+    avg_gap_to_gold_krw 로 결정.
+    """
+    GOLD_THRESHOLD = 2_000_000
+    persona_filter = (
+        "AND EXISTS { MATCH (m)-[:MATCHES_PERSONA]->(p:Persona {persona_id: $pid}) } "
+        if persona else ""
+    )
+    rows = neptune.open_cypher(
+        "MATCH (m:Member) "
+        "WHERE m.region_id IS NOT NULL " + persona_filter
+        + "OPTIONAL MATCH (m)-[:LIVES_IN]->(r:Region) "
+        "WITH coalesce(r.region_code, m.region_id) AS region_code, "
+        "     coalesce(r.name_ko, '') AS name_ko, "
+        "     m.tier AS tier, m.ltv_krw AS ltv "
+        "WITH region_code, name_ko, "
+        "     sum(CASE WHEN tier='Silver' THEN 1 ELSE 0 END) AS silver_count, "
+        "     sum(CASE WHEN tier='Gold'   THEN 1 ELSE 0 END) AS gold_count, "
+        "     sum(CASE WHEN tier='Silver' AND ltv >= $floor THEN 1 ELSE 0 END) AS cand_count, "
+        "     avg(CASE WHEN tier='Silver' THEN coalesce(ltv,0) ELSE NULL END) AS avg_silver_ltv, "
+        "     avg(CASE WHEN tier='Silver' THEN $gold - coalesce(ltv,0) ELSE NULL END) AS avg_gap "
+        "RETURN region_code, name_ko, silver_count, gold_count, cand_count, "
+        "       avg_silver_ltv, avg_gap "
+        "ORDER BY region_code",
+        parameters={
+            "floor": CANDIDATE_LTV_FLOOR,
+            "gold": GOLD_THRESHOLD,
+            **({"pid": persona} if persona else {}),
+        },
+    )
+
+    # 페르소나 라벨 룩업
+    persona_label = None
+    if persona:
+        plr = neptune.open_cypher(
+            "MATCH (p:Persona {persona_id: $pid}) RETURN p.label_ko AS label",
+            parameters={"pid": persona},
+        )
+        if plr:
+            persona_label = str(plr[0].get("label") or "") or None
+
+    out = [
+        TierUpRegionRow(
+            region_code=str(r.get("region_code") or ""),
+            name_ko=str(r.get("name_ko") or ""),
+            silver_count=int(r.get("silver_count") or 0),
+            gold_count=int(r.get("gold_count") or 0),
+            candidate_count=int(r.get("cand_count") or 0),
+            avg_silver_ltv_krw=int(r.get("avg_silver_ltv") or 0),
+            avg_gap_to_gold_krw=max(0, int(r.get("avg_gap") or 0)),
+        )
+        for r in rows
+        if r.get("region_code")
+    ]
+    return TierUpMapResponse(
+        persona_id=persona,
+        persona_label_ko=persona_label,
+        candidate_ltv_floor_krw=CANDIDATE_LTV_FLOOR,
+        gold_threshold_krw=GOLD_THRESHOLD,
+        regions=out,
+    )

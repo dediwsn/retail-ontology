@@ -182,6 +182,10 @@ Scenario K — Silver→Gold lift + upgrade candidates. Returns:
 - `category_lift`: same for Categories (top 15)
 - `upgrade_candidates`: Silver members with LTV ≥ 1.5M, sorted by gap-to-Gold and surfaced with churn_risk + frequency
 
+### `GET /api/tier-up/map?persona=<id>`
+
+시도(region)별 등급 상승 후보 분포 — `/tier-up` 페이지의 *지도 탭* 백엔드. `Member.region_id`가 부여된 회원만 대상으로 17 시도 집계 (`silver_count`, `gold_count`, `candidate_count` = Silver 중 LTV ≥ `CANDIDATE_LTV_FLOOR`(1.5M), `avg_silver_ltv_krw`, `avg_gap_to_gold_krw`). `persona`로 페르소나 슬라이스 좁힘.
+
 ## Coverage Map (Scenario L)
 
 ### `GET /api/coverage/dashboard?persona=<id>&dimension=<count|churn|ltv|uncov>&radius_km=<int>`

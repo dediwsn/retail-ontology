@@ -430,6 +430,31 @@ export async function tierUpDashboard(topK = 25): Promise<TierUpDashboardRespons
   return res.json();
 }
 
+export type TierUpRegionRow = {
+  region_code: string;
+  name_ko: string;
+  silver_count: number;
+  gold_count: number;
+  candidate_count: number;
+  avg_silver_ltv_krw: number;
+  avg_gap_to_gold_krw: number;
+};
+
+export type TierUpMapResponse = {
+  persona_id: string | null;
+  persona_label_ko: string | null;
+  candidate_ltv_floor_krw: number;
+  gold_threshold_krw: number;
+  regions: TierUpRegionRow[];
+};
+
+export async function tierUpMap(persona?: string | null): Promise<TierUpMapResponse> {
+  const qs = persona ? `?persona=${encodeURIComponent(persona)}` : '';
+  const res = await fetch(`${BASE}/api/tier-up/map${qs}`);
+  if (!res.ok) throw new Error(`tier-up map failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 // ─── Scenario L — Coverage Map (회원-거점 커버리지) ────────────────────────
 
 export type CoverageDimension = 'count' | 'churn' | 'ltv' | 'uncov';

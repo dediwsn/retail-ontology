@@ -1,9 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ArrowUpRight, Crown, Layers, Users, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  ArrowUpRight, Crown, Layers, Users, Sparkles, MapPin, BarChart3,
+} from 'lucide-react';
 
 import * as api from '@/lib/api-client';
+import { KoreaMapView, RegionFill } from '@/components/map/KoreaMapView';
+import { useActivePersona } from '@/lib/persona-context';
+
+type TierUpTab = 'dashboard' | 'map';
 
 function fmtKrw(v: number): string {
   if (v >= 100_000_000) return `${(v / 100_000_000).toFixed(1)}억`;
@@ -25,8 +31,12 @@ function liftBarWidth(lift: number, maxLift: number): string {
 }
 
 export default function TierUpPage() {
+  const { active } = useActivePersona();
+  const [tab, setTab] = useState<TierUpTab>('dashboard');
   const [data, setData] = useState<api.TierUpDashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mapData, setMapData] = useState<api.TierUpMapResponse | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,6 +45,15 @@ export default function TierUpPage() {
       .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : 'load failed'); });
     return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (tab !== 'map') return;
+    let cancelled = false;
+    api.tierUpMap(active?.id ?? null)
+      .then((d) => { if (!cancelled) setMapData(d); })
+      .catch(() => { /* keep prior data on error */ });
+    return () => { cancelled = true; };
+  }, [tab, active?.id]);
 
   const maxProductLift = data?.product_lift[0]?.lift ?? 1;
   const maxCategoryLift = data?.category_lift[0]?.lift ?? 1;
@@ -82,6 +101,21 @@ export default function TierUpPage() {
           />
         </section>
 
+        {/* Tab strip — 대시보드 / 지도 */}
+        <div className="flex border-b border-ink-700 -mb-1">
+          <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')} icon={BarChart3} label="대시보드" />
+          <TabBtn active={tab === 'map'} onClick={() => setTab('map')} icon={MapPin} label="지도" />
+        </div>
+
+        {tab === 'map' ? (
+          <TierUpMapView
+            data={mapData}
+            persona={active}
+            selectedRegion={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+          />
+        ) : (
+        <>
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Category lift */}
           <Card title="카테고리별 Silver→Gold lift" icon={Layers}>
@@ -173,7 +207,151 @@ export default function TierUpPage() {
             </table>
           </div>
         </Card>
+        </>
+        )}
       </div>
+    </div>
+  );
+}
+
+function TabBtn({
+  active, onClick, icon: Icon, label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'px-4 py-2 text-xs font-semibold flex items-center gap-1.5 transition border-b-2 -mb-px',
+        active
+          ? 'border-yellow-400 text-yellow-200 bg-yellow-500/5'
+          : 'border-transparent text-ink-400 hover:text-ink-200 hover:bg-ink-800/50',
+      ].join(' ')}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function TierUpMapView({
+  data, persona, selectedRegion, onSelectRegion,
+}: {
+  data: api.TierUpMapResponse | null;
+  persona: { id: string; label: string } | null;
+  selectedRegion: string | null;
+  onSelectRegion: (code: string | null) => void;
+}) {
+  // 코로플레스 색은 candidate_count 정규화 — 업그레이드 가능성이 큰 지역이 진하게.
+  const fills: RegionFill[] = useMemo(() => {
+    if (!data) return [];
+    const max = Math.max(...data.regions.map((r) => r.candidate_count), 1);
+    return data.regions.map((r) => ({
+      region_code: r.region_code,
+      value: r.candidate_count / max,
+      hue: 'amber',
+    }));
+  }, [data]);
+
+  const selected = useMemo(
+    () => (selectedRegion ? data?.regions.find((r) => r.region_code === selectedRegion) : null),
+    [data, selectedRegion],
+  );
+
+  return (
+    <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+      <section className="rounded-lg border border-ink-700 bg-ink-900 p-3 min-h-[700px]">
+        {!data ? (
+          <div className="h-[700px] flex items-center justify-center text-xs text-ink-400">로딩 중…</div>
+        ) : (
+          <KoreaMapView
+            regionFills={fills}
+            selectedRegionCode={selectedRegion}
+            onRegionClick={(code) => onSelectRegion(code)}
+            showLanes={false}
+            height={760}
+          />
+        )}
+      </section>
+
+      <aside className="rounded-lg border border-ink-700 bg-ink-900 flex flex-col min-h-[700px] overflow-hidden">
+        <div className="px-3 py-2.5 border-b border-ink-700 text-xs uppercase tracking-wider text-ink-400 font-semibold flex items-center justify-between">
+          <span>{selected ? `${selected.name_ko} 상세` : '시도별 업그레이드 후보'}</span>
+          {persona && (
+            <span className="text-[10px] text-yellow-300 normal-case">
+              {persona.label} 슬라이스
+            </span>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {selected ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label="Silver 회원" value={selected.silver_count.toLocaleString()} />
+              <Stat label="Gold 회원" value={selected.gold_count.toLocaleString()} tone="amber" />
+              <Stat
+                label="업그레이드 후보"
+                value={selected.candidate_count.toLocaleString()}
+                tone="amber"
+              />
+              <Stat label="Silver 평균 LTV" value={fmtKrw(selected.avg_silver_ltv_krw) + '원'} />
+              <Stat label="Gold까지 평균 갭" value={fmtKrw(selected.avg_gap_to_gold_krw) + '원'} />
+            </div>
+          ) : (
+            <p className="text-xs text-ink-400 leading-relaxed">
+              지도에서 시도를 클릭하면 Silver/Gold 분포와 업그레이드 후보 수가 표시됩니다.
+              {persona && ` 현재 ${persona.label} 페르소나 슬라이스만 집계.`}
+            </p>
+          )}
+
+          <section>
+            <h3 className="text-[11px] uppercase tracking-wider text-ink-400 font-semibold mb-2">
+              업그레이드 후보 Top {Math.min(5, data?.regions.length ?? 0)}
+            </h3>
+            <ul className="space-y-1">
+              {(data?.regions ?? [])
+                .filter((r) => r.candidate_count > 0)
+                .sort((a, b) => b.candidate_count - a.candidate_count)
+                .slice(0, 5)
+                .map((r) => (
+                  <li
+                    key={r.region_code}
+                    onClick={() => onSelectRegion(r.region_code)}
+                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-ink-800 hover:bg-ink-700 cursor-pointer"
+                  >
+                    <span className="text-ink-100">{r.name_ko || r.region_code}</span>
+                    <span className="font-mono text-yellow-300">{r.candidate_count}명</span>
+                  </li>
+                ))}
+            </ul>
+          </section>
+
+          <p className="text-[10px] text-ink-500 italic">
+            ※ 후보 = Silver tier 중 LTV ≥ {fmtKrw(data?.candidate_ltv_floor_krw ?? 1_500_000)}원.
+            Gold 임계 {fmtKrw(data?.gold_threshold_krw ?? 2_000_000)}원.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone = 'default' }: {
+  label: string;
+  value: string;
+  tone?: 'default' | 'amber';
+}) {
+  const TONE: Record<string, string> = {
+    default: 'text-ink-100',
+    amber: 'text-amber-300',
+  };
+  return (
+    <div className="rounded bg-ink-800 px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-wider text-ink-400">{label}</div>
+      <div className={`text-sm font-semibold ${TONE[tone]}`}>{value}</div>
     </div>
   );
 }
