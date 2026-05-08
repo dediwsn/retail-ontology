@@ -140,12 +140,13 @@ def coverage_dashboard(
     # 원본 수치를 모두 포함하므로 클라이언트가 토글 시 재호출 불필요.
 
     # 1. 회원 집계 — LIVES_IN 트래버설로 region 결정. region_id property 대신
-    # 관계를 권위로 사용 (loader가 region_id를 property로 SET 안 함).
-    # persona 필터는 pattern expression form — Neptune의 EXISTS{MATCH} subquery
-    # form은 엔진 버전에 따라 MalformedQueryException을 던지므로 회피.
+    # 관계를 권위로 사용. persona 필터는 spine(per_*)와 narrative(psn_*)를 모두
+    # 받는 OR 패턴 — narrative는 (Persona)-[:DERIVED_FROM]->(spine) 1-hop으로
+    # spine-linked Member에 도달.
     member_q = (
         "MATCH (m:Member)-[:LIVES_IN]->(r:Region) "
         + ("WHERE (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+           "   OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-(:Persona {persona_id: $pid}) "
            if persona else "")
         + "RETURN r.region_code AS region_code, m.tier AS tier, "
         "       m.churn_risk AS churn_risk, m.ltv_krw AS ltv_krw"

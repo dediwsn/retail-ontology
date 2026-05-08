@@ -454,10 +454,11 @@ def churn_map(persona: Optional[str] = None) -> ChurnMapResponse:
     슬라이스로 좁힘. 코로플레스 색은 클라이언트가 avg_churn_risk 또는
     at_risk 비율로 결정.
     """
-    # LIVES_IN 트래버설을 권위로 사용. persona 필터는 pattern expression form —
-    # Neptune의 EXISTS{MATCH} subquery form은 엔진 버전 호환성 좁음.
+    # LIVES_IN 트래버설을 권위로 사용. persona 필터는 spine·narrative 모두
+    # 허용하는 OR 패턴 (narrative는 DERIVED_FROM 1-hop으로 spine 도달).
     persona_filter = (
-        "AND (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+        "AND ((m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+        "  OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-(:Persona {persona_id: $pid})) "
         if persona else ""
     )
     rows = neptune.open_cypher(

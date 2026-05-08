@@ -235,10 +235,11 @@ def tier_up_map(persona: Optional[str] = None) -> TierUpMapResponse:
     avg_gap_to_gold_krw 로 결정.
     """
     GOLD_THRESHOLD = 2_000_000
-    # LIVES_IN 트래버설을 권위로 사용. EXISTS{MATCH} subquery form 대신
-    # pattern expression form (Neptune 엔진 호환성 우선).
+    # LIVES_IN 트래버설을 권위로 사용. persona 필터는 spine·narrative 모두
+    # 허용하는 OR 패턴 (narrative는 DERIVED_FROM 1-hop으로 spine 도달).
     persona_filter = (
-        "AND (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+        "AND ((m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+        "  OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-(:Persona {persona_id: $pid})) "
         if persona else ""
     )
     rows = neptune.open_cypher(

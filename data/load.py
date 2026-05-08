@@ -287,6 +287,46 @@ def load_neptune() -> Dict[str, int]:
             {"id": pid, "lk": label},
         )
 
+    # narrative(psn_*) → spine(per_*) bridge via label keyword matching.
+    # PersonaSwitch widget exposes the 40 narrative personas — picking one
+    # should still work in scenarios that route through MATCHES_PERSONA on
+    # the spine. The DERIVED_FROM edge lets the routers OR-traverse to the
+    # spine-linked Members. Idempotent.
+    _SPINE_KEYWORDS = {
+        "per_pregnant":       ["임산부", "임신"],
+        "per_kid_4yo_mom":    ["엄마", "4세", "유아", "아이", "워킹맘"],
+        "per_camper":         ["캠퍼", "캠핑", "아웃도어"],
+        "per_sensitive_skin": ["민감성", "트러블"],
+        "per_gluten_allergy": ["글루텐", "셀리악", "알레르기"],
+    }
+    narratives = neptune_cypher(
+        "MATCH (p:Persona) WHERE p.persona_id STARTS WITH 'psn_' "
+        "RETURN p.persona_id AS pid, p.label_ko AS label"
+    )
+    derived_count = 0
+    for row in narratives or []:
+        nid = row.get("pid")
+        label = str(row.get("label") or "")
+        if not nid or not label:
+            continue
+        matched: List[str] = []
+        for spine_id, keywords in _SPINE_KEYWORDS.items():
+            if any(kw in label for kw in keywords):
+                matched.append(spine_id)
+        if not matched:
+            # Fallback — link to per_pregnant only if no keyword hit, so
+            # at least one DERIVED_FROM edge exists. Better: future curation.
+            continue
+        for spine_id in matched:
+            neptune_cypher(
+                "MATCH (n:Persona {persona_id: $nid}), "
+                "      (s:Persona {persona_id: $sid}) "
+                "MERGE (n)-[:DERIVED_FROM]->(s)",
+                {"nid": nid, "sid": spine_id},
+            )
+            derived_count += 1
+    counts["derived_from_edges"] = derived_count
+
     items = load_jsonish(OUTPUT_DIR / "tiers.json")
     for t in items:
         neptune_cypher(
