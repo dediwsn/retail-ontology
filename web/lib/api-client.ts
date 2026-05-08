@@ -645,8 +645,8 @@ export async function vipLoyal(opts: {
 } = {}): Promise<LoyalResponse> {
   const qs = new URLSearchParams();
   if (opts.persona) qs.set('persona', opts.persona);
-  qs.set('share_floor', String(opts.share_floor ?? 0.7));
-  qs.set('total_floor_krw', String(opts.total_floor_krw ?? 1_000_000));
+  qs.set('share_floor', String(opts.share_floor ?? 0.5));
+  qs.set('total_floor_krw', String(opts.total_floor_krw ?? 300_000));
   qs.set('top_k', String(opts.top_k ?? 50));
   const res = await fetch(`${BASE}/api/vip/loyal?${qs}`);
   if (!res.ok) throw new Error(`vip loyal failed: ${res.status} ${await res.text()}`);

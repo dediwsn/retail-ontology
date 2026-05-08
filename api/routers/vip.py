@@ -320,10 +320,16 @@ class LoyalResponse(BaseModel):
 @router.get("/vip/loyal", response_model=LoyalResponse)
 def loyal_vip(
     persona: Optional[str] = Query(None),
-    share_floor: float = Query(0.7, ge=0.0, le=1.0),
-    total_floor_krw: int = Query(1_000_000, ge=0),
+    share_floor: float = Query(0.5, ge=0.0, le=1.0),
+    total_floor_krw: int = Query(300_000, ge=0),
     top_k: int = Query(50, ge=1, le=200),
 ) -> LoyalResponse:
+    # Defaults tuned for the current synthetic distribution: median wallet
+    # share is ~0%, p75 ~9%, p90 ~26%. share_floor=0.5 ("majority share")
+    # surfaces a meaningful demo cohort (~60 candidates). Stricter "70%
+    # dominant" definition is reachable via the slider, but produces 0
+    # candidates on the synthetic data and is closer to a real-world fit
+    # where internal:external transactions are more balanced.
     rows = neptune.open_cypher(
         "MATCH (m:Member)-[hcs:HAS_CATEGORY_SPEND {period: '2026-Q1'}]->(i:IndustryCategory) "
         "WHERE 1=1 " + _persona_filter_fragment(persona, "AND")

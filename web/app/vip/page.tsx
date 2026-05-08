@@ -198,8 +198,8 @@ function OpportunityTab({ personaId, personaLabel }: TabProps) {
 
 
 function LoyalTab({ personaId, personaLabel }: TabProps) {
-  const [shareFloor, setShareFloor] = useState<number>(0.7);
-  const [totalFloor, setTotalFloor] = useState<number>(1_000_000);
+  const [shareFloor, setShareFloor] = useState<number>(0.5);
+  const [totalFloor, setTotalFloor] = useState<number>(300_000);
   const [data, setData] = useState<api.LoyalResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -214,12 +214,12 @@ function LoyalTab({ personaId, personaLabel }: TabProps) {
     <>
       <div className="flex flex-wrap items-center gap-4">
         <SliderControl
-          label="우리 점유율 ≥" min={0.4} max={0.95} step={0.05}
+          label="우리 점유율 ≥" min={0.3} max={0.95} step={0.05}
           value={shareFloor} onChange={setShareFloor}
           format={(v) => `${Math.round(v * 100)}%`} width="w-12"
         />
         <SliderControl
-          label="카테고리 총액 ≥" min={300_000} max={5_000_000} step={100_000}
+          label="카테고리 총액 ≥" min={100_000} max={3_000_000} step={100_000}
           value={totalFloor} onChange={setTotalFloor}
           format={fmtKrw} width="w-16"
         />
