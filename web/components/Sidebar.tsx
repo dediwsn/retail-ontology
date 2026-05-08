@@ -9,7 +9,7 @@ import {
   UserCheck, ShieldAlert, ArrowLeftRight, BookOpen, GitBranch,
   Building2, MessageCircle, ListTree, Truck, MapPin, Boxes, CalendarClock,
   UserCircle, Crown, Megaphone, Receipt, Send, TrendingDown, Wallet, ArrowUpRight,
-  Target,
+  Target, Code2,
 } from 'lucide-react';
 
 import { SidebarAuth } from './SidebarAuth';
@@ -55,6 +55,7 @@ const SECTIONS: Section[] = [
       { href: '/schema',     icon: GitBranch,  label: '온톨로지 스키마' },
       { href: '/standards',  icon: BookOpen,   label: '표준 매핑' },
       { href: '/validation', icon: ShieldCheck, label: '검증 리포트' },
+      { href: '/codegraph',  icon: Code2,      label: '코드 지식 그래프' },
     ],
   },
   {

@@ -1,0 +1,634 @@
+{
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/jest.config.js": {
+    "mtime": 1777370334.294782,
+    "hash": "4ba5de7334c93d8b54bfe262d5caf618"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/bin/app.ts": {
+    "mtime": 1777250772.8739672,
+    "hash": "732170a1601fda7842a103e4516a0e74"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/network-stack.ts": {
+    "mtime": 1777180916.292422,
+    "hash": "9671888a31673a55b309a543889ecbfb"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/data-stack.ts": {
+    "mtime": 1777269292.039552,
+    "hash": "ce69b8d93999559045f031facb591d56"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/ai-stack.ts": {
+    "mtime": 1777203008.7527087,
+    "hash": "cd632f6a0093ce9fcf219826fbc2ca0d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/compute-stack.ts": {
+    "mtime": 1777383637.6007113,
+    "hash": "319be8d51e83febd31a3f37c12931955"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/edge-stack.ts": {
+    "mtime": 1777383637.6007113,
+    "hash": "09e1420a9e2195cf1d8ba15af668e362"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/lib/observability-stack.ts": {
+    "mtime": 1777383637.6007113,
+    "hash": "6fd49de5f8b7df43a9334d89a47b8a46"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200/__entrypoint__.js": {
+    "mtime": 1777179717.4634023,
+    "hash": "11b4baf36f4f3cc64a23100523aa68b7"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200/index.js": {
+    "mtime": 1777179717.4634023,
+    "hash": "1550315b9b6f924833fe6cfa1c99683f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.56f7467bbde8a5efebcf57ae9e460027607099bab9f844669dcf5d800172ee5a/index.js": {
+    "mtime": 1777179717.5134013,
+    "hash": "8f27486d799ca5f1afd7b1a4b97a65e6"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6/index.js": {
+    "mtime": 1777179717.5934,
+    "hash": "5fbdabcdca0c4f7b2c97dda725f936a4"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.934f26e3be418ca933eeffc0c28bc2546c67037b7ea94c28b93ad93e1952a30e/__entrypoint__.js": {
+    "mtime": 1777179717.813396,
+    "hash": "11b4baf36f4f3cc64a23100523aa68b7"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/cdk.out/asset.934f26e3be418ca933eeffc0c28bc2546c67037b7ea94c28b93ad93e1952a30e/index.js": {
+    "mtime": 1777179717.813396,
+    "hash": "9d3bce5be0b3bbac0ae4e8b4934553bb"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/test/stacks.test.ts": {
+    "mtime": 1777370357.3743844,
+    "hash": "1e5d97b694fa10d652157f3f6863cbe5"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/__init__.py": {
+    "mtime": 1777128543.5639043,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/load.py": {
+    "mtime": 1778258880.275524,
+    "hash": "77a379b51e67260b50a738df652411b9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/schemas.py": {
+    "mtime": 1778258843.0064907,
+    "hash": "56cc88c632259532408b394553282016"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/public/__init__.py": {
+    "mtime": 1777128567.1234887,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/public/inci.py": {
+    "mtime": 1777128579.4532697,
+    "hash": "f1a179fa2f0882b697e780ff3a2223d1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/public/kfda.py": {
+    "mtime": 1777128586.0331535,
+    "hash": "0dfa7c3d2dc72561004d862c27efe0dd"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/public/foodon.py": {
+    "mtime": 1777128605.7528043,
+    "hash": "da70d969b3cf95f16df176c804150282"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/public/beauty_categories.py": {
+    "mtime": 1777129230.211808,
+    "hash": "bdfd7385e04b08a871bc2ccd4f0cee76"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/__init__.py": {
+    "mtime": 1777128569.8734398,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/deterministic.py": {
+    "mtime": 1777128742.1303985,
+    "hash": "a4eb1d14cb5798fbbad05097a160ecb1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/_bedrock.py": {
+    "mtime": 1777213051.0761554,
+    "hash": "ca546f3485b94e49168250477a0cba4f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/personas.py": {
+    "mtime": 1777128836.1787403,
+    "hash": "586437105b986f66814b26072e465cea"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/products.py": {
+    "mtime": 1777129248.561485,
+    "hash": "6b3a9b4e1e40bc157205671125a853de"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/reviews.py": {
+    "mtime": 1777128915.3473477,
+    "hash": "bcf5e4ff91e12a426f88c06c127b8126"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/logistics.py": {
+    "mtime": 1777351221.6300752,
+    "hash": "7da7cb68eb9e258aaf8d1b54812b58ce"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/membership.py": {
+    "mtime": 1778201272.9503908,
+    "hash": "967ca8928c0fbea6c0776339aa374a77"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/synthetic/external.py": {
+    "mtime": 1778279918.21909,
+    "hash": "b0ae98eeac25ddcce61dfa441f31d086"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/scripts/create_kb_index.py": {
+    "mtime": 1777207404.2555928,
+    "hash": "0fee343aa2c230e39bdf44e685e5e8b0"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/scripts/eval_wow_queries.py": {
+    "mtime": 1777383743.9288466,
+    "hash": "0e46991eb3664dc7c15674ad6845a81d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/scripts/git-hooks/commit-msg": {
+    "mtime": 1777347934.957822,
+    "hash": "410ee2906112286bec45bd7273c81459"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/__init__.py": {
+    "mtime": 1777180435.380855,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/aws_clients.py": {
+    "mtime": 1777265932.8285186,
+    "hash": "a8b23b6bed64d3f37e762bfde4e4aa31"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/config.py": {
+    "mtime": 1778029650.2499728,
+    "hash": "ff399680f0f009570d7e81ef6cf489af"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/middleware_auth.py": {
+    "mtime": 1777383637.6007113,
+    "hash": "b87835bc779f3fcc68de1e67fe9970d9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/main.py": {
+    "mtime": 1778258935.83408,
+    "hash": "91ede57f8c60d0584692fe8600696a8e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/__init__.py": {
+    "mtime": 1777180482.6200325,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/health.py": {
+    "mtime": 1777180486.089972,
+    "hash": "65d97c34aaf022531949a71fad2c927b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/chat.py": {
+    "mtime": 1777181782.9272747,
+    "hash": "8415d742bde35dba3f74608f904936f8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/ingest.py": {
+    "mtime": 1777214521.8303132,
+    "hash": "2e4c95e7832add43e0a5796145539af6"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/objects.py": {
+    "mtime": 1777614017.3481252,
+    "hash": "2ad94b29768a5689795ce53759a0fb86"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/persona_match.py": {
+    "mtime": 1778256562.5657544,
+    "hash": "408c50eae60a8c5483a0f9edfd1cb4ec"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/safety.py": {
+    "mtime": 1777302504.2169545,
+    "hash": "a07e9c4896f560ac8ecbe5f3b317793b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/ops.py": {
+    "mtime": 1777340101.3057334,
+    "hash": "738183351e0c4ee8d02425372abee2d9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/substitute.py": {
+    "mtime": 1777302069.7245753,
+    "hash": "46d283dfb6f0c3009f75b6e13cc59832"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/ontology.py": {
+    "mtime": 1777520938.3483088,
+    "hash": "a1a62c4d9610a08162a1cd3bceda4e2a"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/price.py": {
+    "mtime": 1777339484.6565688,
+    "hash": "77cf44b89ec6fa28728dc32102a2e8e3"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/logistics.py": {
+    "mtime": 1777351355.9377148,
+    "hash": "316f2854288514fa72f0ed7f0fb0442c"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/auth.py": {
+    "mtime": 1777557070.540505,
+    "hash": "34b10484de0623ccaf7053a4230061f2"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/insights.py": {
+    "mtime": 1777562665.8119013,
+    "hash": "fa9573c0e33f94d095a8df7c4998bd0e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/search.py": {
+    "mtime": 1777557094.790078,
+    "hash": "1035cdf2d13f9aa3d1b25beaaa99413e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/churn.py": {
+    "mtime": 1778255330.6477625,
+    "hash": "756d382d604e7437ae080b78f29be532"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/acquisition.py": {
+    "mtime": 1777521862.5619962,
+    "hash": "6c844ff9cec471d9baa6a1b0320b0b12"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/tier_up.py": {
+    "mtime": 1778255339.747526,
+    "hash": "2a07b10fdbf4b9e761ac1e1ed59a2a29"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/coverage.py": {
+    "mtime": 1778255324.2379293,
+    "hash": "c3f0a7ca0e125b21fb9efcc572c6da8c"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/routers/vip.py": {
+    "mtime": 1778281519.747498,
+    "hash": "df5e8c4c0f88e2575be31121a13c10a1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/__init__.py": {
+    "mtime": 1777180489.04992,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/embedding.py": {
+    "mtime": 1777207399.075684,
+    "hash": "d2246c3f69d25e4685d0b6c00c33b26b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/guardrails.py": {
+    "mtime": 1777180509.6195605,
+    "hash": "6081d1070df0d75bd564d1df0624eab1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/neptune.py": {
+    "mtime": 1777253597.884594,
+    "hash": "5d755c5130a7515a73e45cfd2ad1aa4f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/kb.py": {
+    "mtime": 1777181693.8888273,
+    "hash": "d78c7c72520a874c3d8c8b8d6dab2e8b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/ingest.py": {
+    "mtime": 1777181768.357529,
+    "hash": "5fd24c3889bf779e0ab5956043798a95"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/code_interpreter.py": {
+    "mtime": 1777297951.1268978,
+    "hash": "ad8f8330c556fc7832bdafcc59dc5557"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/agent.py": {
+    "mtime": 1777646894.2083886,
+    "hash": "62940a133bafd48f7bd31176f49928a0"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/memory.py": {
+    "mtime": 1777561254.5467803,
+    "hash": "a29480d7589e768bea55cb965d8474c7"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/services/search.py": {
+    "mtime": 1777383637.6007113,
+    "hash": "68e8f06b207bcc2cfb4b5b79e1b013d0"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/postcss.config.js": {
+    "mtime": 1777185168.167819,
+    "hash": "8640f9b2e6475cc3f5b1ff4548925765"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/next-env.d.ts": {
+    "mtime": 1777205830.6232398,
+    "hash": "b5ed9dd8b4c5ba8e5ab8e6a379c15838"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/middleware.ts": {
+    "mtime": 1777295122.9164102,
+    "hash": "505ada74be8b1d4cf9b036e87be702c3"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/next.config.mjs": {
+    "mtime": 1777558115.4521363,
+    "hash": "71e6755b9da309565ef1d291557b7a6e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/tailwind.config.ts": {
+    "mtime": 1777560631.3377557,
+    "hash": "476dc805d0108e8a14583035c7b7598e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/layout.tsx": {
+    "mtime": 1777560647.1674767,
+    "hash": "bb5b02a72db532c17acbb65af636f157"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/page.tsx": {
+    "mtime": 1778259119.5493114,
+    "hash": "fb795f2d6c4ae47b6038c7a8d5c00d69"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/api/health-web/route.ts": {
+    "mtime": 1777185202.2772312,
+    "hash": "a65534cd76c6ba9427d7bf537a6df40b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/(shopper)/layout.tsx": {
+    "mtime": 1777383637.6007113,
+    "hash": "2d49809fc0de14f000570ec031b220bd"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/(shopper)/search/page.tsx": {
+    "mtime": 1777563390.4791157,
+    "hash": "2c2f12822dde4e6d1c00784657948948"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/(shopper)/chat/page.tsx": {
+    "mtime": 1777646971.4770248,
+    "hash": "0584b60dc98e0b2ce0950ead37de44bf"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/(md)/layout.tsx": {
+    "mtime": 1777383637.6007113,
+    "hash": "80db79397801fc7125358c82c4ed171f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/(md)/insights/page.tsx": {
+    "mtime": 1777613574.835898,
+    "hash": "604a7f705a60776d40701e7cd117eda1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/objects/[type]/page.tsx": {
+    "mtime": 1777613942.609439,
+    "hash": "c241e9e5e9583ed09eb49c0683b301ad"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/ops/[area]/page.tsx": {
+    "mtime": 1777339702.8427289,
+    "hash": "28032deb1306cb753fd426e73c779971"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/match/page.tsx": {
+    "mtime": 1777300152.348293,
+    "hash": "b94e97f13a9ae28084a6482d4fcd0185"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/safety/page.tsx": {
+    "mtime": 1777302473.8174868,
+    "hash": "61d18b5c97c165a6507bb836b45ed740"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/substitute/page.tsx": {
+    "mtime": 1777302540.3363283,
+    "hash": "12628bb231ff90ccc8dd115e8ef5ebd9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/schema/page.tsx": {
+    "mtime": 1777302354.149591,
+    "hash": "92a9fa76811f6a5a023030d5b88db19d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/standards/page.tsx": {
+    "mtime": 1777302381.9391007,
+    "hash": "b7aac9ecb7eac62324203d3eda76a0b4"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/validation/page.tsx": {
+    "mtime": 1777331370.5090976,
+    "hash": "4f7d09c69ad59e8c0452c8cc3c074a24"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/price/page.tsx": {
+    "mtime": 1777338590.1022406,
+    "hash": "7d046e7e0ef3cf7eccaa77644bfc98e5"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/logistics/page.tsx": {
+    "mtime": 1777352286.6913338,
+    "hash": "a3ad546b3ba15069b9e379d851949174"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/churn/page.tsx": {
+    "mtime": 1778203012.2352595,
+    "hash": "4b99cc3ff45d79446f1515ed387822cf"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/acquisition/page.tsx": {
+    "mtime": 1777521931.7907627,
+    "hash": "584fad6a20ba3cdd4069c0cd356a4418"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/tier-up/page.tsx": {
+    "mtime": 1778203248.2691271,
+    "hash": "318e1b498f6382df5c4b6abb8b7a45f8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/coverage/page.tsx": {
+    "mtime": 1778202456.79969,
+    "hash": "10fe73d5b02e34870defa8f382d7d101"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/app/vip/page.tsx": {
+    "mtime": 1778281544.4868555,
+    "hash": "e09051ad51cf1f602bd020c24b3d692b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/PersonaSwitch.tsx": {
+    "mtime": 1778256607.2845929,
+    "hash": "ac98cd4d1374b2d93cc5951f900402b6"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/SidebarAuth.tsx": {
+    "mtime": 1777341438.1721547,
+    "hash": "901ac3dc7698f0f870666f0e428c7752"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/LogisticsChatPanel.tsx": {
+    "mtime": 1777352217.982538,
+    "hash": "bcc65431815778379851329a688a34e8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/MarkdownView.tsx": {
+    "mtime": 1777563000.405986,
+    "hash": "aa34c986f3dd8e61697520b2d7afd9c2"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/GuidedTour.tsx": {
+    "mtime": 1778259076.5104294,
+    "hash": "e8d53bc1ff5fd7222d2f43e616b798e6"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/Sidebar.tsx": {
+    "mtime": 1778282562.6204107,
+    "hash": "d0085d63b67a5a284f1a967624461604"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/CompanyLogo.tsx": {
+    "mtime": 1778282548.300783,
+    "hash": "59ce68ab69356287497584decbe31f0c"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/graph/CytoscapeView.tsx": {
+    "mtime": 1777613862.5108383,
+    "hash": "bf7044566afdc888a0b492b264b51090"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/components/map/KoreaMapView.tsx": {
+    "mtime": 1777350168.4485881,
+    "hash": "a5084a179e17bca59c2c002b490a86f9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/lib/persona-context.tsx": {
+    "mtime": 1777331182.8523827,
+    "hash": "389cdc3107c68b1ffd9ca914a84d95c8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/lib/api-client.ts": {
+    "mtime": 1778281530.0972292,
+    "hash": "6e00bebe69fd06e4974f906a43727e0f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/types/cytoscape-fcose.d.ts": {
+    "mtime": 1777293270.3489053,
+    "hash": "2aab46e7f1c52b772c8502a168a150ad"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/__init__.py": {
+    "mtime": 1777369971.161136,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/conftest.py": {
+    "mtime": 1777370550.1510186,
+    "hash": "bc849aeb478ed164d7e697beaeeb3f4c"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/test_smoke.py": {
+    "mtime": 1778259141.1587498,
+    "hash": "2dde7a9f0eea2a0f635f442fbc17c1e2"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/api/__init__.py": {
+    "mtime": 1777370494.2819936,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/api/conftest.py": {
+    "mtime": 1777370497.9319298,
+    "hash": "fa8c80ed0c64b25275b80df12d1fb49e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/api/test_models.py": {
+    "mtime": 1777370506.5517793,
+    "hash": "7933e72422afef46cfc5139c91dd43ea"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/api/test_health.py": {
+    "mtime": 1777370510.691707,
+    "hash": "b3628df28daf0f07b793a294801c4b37"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/api/test_search_integration.py": {
+    "mtime": 1777370525.5914469,
+    "hash": "3ab58f7fdadca37a56f42a691e938290"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/SECURITY.md": {
+    "mtime": 1777249547.465407,
+    "hash": "6409bbc86ffc9cf51b19ff2e95186472"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/README.md": {
+    "mtime": 1778258042.4972951,
+    "hash": "ad5553af228b7d3993b5ef73abba52c8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/CLAUDE.md": {
+    "mtime": 1778257866.761876,
+    "hash": "554ed59242f1075ac0f485cbe043161d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/requirements-dev.txt": {
+    "mtime": 1777369970.4411485,
+    "hash": "f5686e5824dcef4d26ee8303d38fc5ba"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/CHANGELOG.md": {
+    "mtime": 1778282673.3275342,
+    "hash": "3858950bd7c5c925c606073b5e73f93b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/onboarding.md": {
+    "mtime": 1777387433.2038093,
+    "hash": "eba53427573700293789654ac9a4c883"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/architecture.md": {
+    "mtime": 1778257965.4193087,
+    "hash": "85673ede7375aa833cd4848f1e597e2f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/aws-resources.md": {
+    "mtime": 1778258524.7947605,
+    "hash": "0c6da0789114b40e8dbf5aa760b7d1f4"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/membership.md": {
+    "mtime": 1778258502.1753495,
+    "hash": "f4df4ea89f59266d7e784c5d4e263cdb"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/api-reference.md": {
+    "mtime": 1778259136.568869,
+    "hash": "2d14493cb0acaaf6eaa0c59d575ec712"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/superpowers/specs/2026-04-25-ontology-retail-cpg-design.md": {
+    "mtime": 1777117245.2023191,
+    "hash": "a20567f608ee51c121472669ed19b2b2"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0001-agentcore-memory-via-aws-custom-resource.md": {
+    "mtime": 1777360633.2447805,
+    "hash": "f5f304924cdd19e7ba5047dfc378b63a"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0002-cloudtrail-via-cfntrail-with-manual-bucket-policy.md": {
+    "mtime": 1777360659.1543248,
+    "hash": "54dd73b6ea8617c59eb026d60a7eac42"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0003-lambda-edge-stable-id-hardcode-strategy.md": {
+    "mtime": 1777386482.900576,
+    "hash": "bee5cc2d4b6f97e23b864b8819fd6e87"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0004-cognito-user-pool-client-cdk-driven.md": {
+    "mtime": 1777360719.7732584,
+    "hash": "1b70d137225f324ce6f732358a2a9ed3"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0005-narrative-spine-keyword-bridge.md": {
+    "mtime": 1778258211.9128993,
+    "hash": "312d7c3b5ed1f8cc36bb97346e17183d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0006-persona-spine-coexistence.md": {
+    "mtime": 1778258246.5819964,
+    "hash": "2e5855df3318d3b8fc3328ef3b5f48aa"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/decisions/0007-member-region-distribution.md": {
+    "mtime": 1778258296.970686,
+    "hash": "4b95040cd82e44803b06e0f02ece5a31"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/runbooks/deploy-production.md": {
+    "mtime": 1778258343.3994799,
+    "hash": "39e158a21188884147fbccb1538a118b"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/runbooks/reload-synthetic-data.md": {
+    "mtime": 1778258387.7583272,
+    "hash": "8ec7b345fce4952f27f746315ce94e9c"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/runbooks/ecr-auth-refresh.md": {
+    "mtime": 1778258407.947802,
+    "hash": "2324b81ad11741639035d87d210e3327"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/docs/runbooks/incident-loader-rollback.md": {
+    "mtime": 1778258450.6166916,
+    "hash": "811c8ef677d1c3a2f45ffcb7dd66f6b0"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/ontology/CLAUDE.md": {
+    "mtime": 1777357452.710537,
+    "hash": "df07902efc97cc780147e59d95dbf628"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/ontology/mappings/README.md": {
+    "mtime": 1777125104.5743885,
+    "hash": "aad92ad2e3f97d4776cf57b99f449394"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/README.md": {
+    "mtime": 1777127168.2981215,
+    "hash": "122c066f993e139b6e9642df2b1ad08d"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/infra-cdk/CLAUDE.md": {
+    "mtime": 1777387441.1836684,
+    "hash": "7ef13f98f8db81a919af8907974405b2"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/requirements.txt": {
+    "mtime": 1777187257.7711282,
+    "hash": "8378ba31cd731de45f805251922f3318"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/README.md": {
+    "mtime": 1778029657.5597832,
+    "hash": "e1ff666bcddb2811a9172a20acb14287"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/data/CLAUDE.md": {
+    "mtime": 1778258122.015232,
+    "hash": "84a7ba10ea107676b1a513ad17afdf6f"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/requirements.txt": {
+    "mtime": 1777252359.3362758,
+    "hash": "498de296351c64048292f83eeb38d150"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/README.md": {
+    "mtime": 1777387464.2632608,
+    "hash": "a158793f0d7442838b895071ef6828c5"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/api/CLAUDE.md": {
+    "mtime": 1778258069.8965816,
+    "hash": "49b50d270afb043b435a17101fa977ff"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/README.md": {
+    "mtime": 1777387465.0432472,
+    "hash": "30bc65e7a0f6707ee5c28c8083140ac1"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/CLAUDE.md": {
+    "mtime": 1778258100.8657753,
+    "hash": "77e02ef6198c24f25bab440060b1f8d9"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/public/logos/README.md": {
+    "mtime": 1778282531.2712252,
+    "hash": "6df84d52b892aaad3c0a895debb454d0"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/tests/CLAUDE.md": {
+    "mtime": 1778258152.254446,
+    "hash": "6c1abfd3bcb594da38bfeece09d3e827"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/public/logos/aws.svg": {
+    "mtime": 1778282495.8521454,
+    "hash": "1c6cecda958b366874218f86b8daa3c8"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/public/logos/demo-blue.svg": {
+    "mtime": 1778282502.2619789,
+    "hash": "34b74bc9d725e293f1130ab18eeb0a61"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/public/logos/demo-emerald.svg": {
+    "mtime": 1778282507.8518336,
+    "hash": "e875fcfe3799e271080e91967476161e"
+  },
+  "/home/ec2-user/my-project/ontology-for-retail/web/public/logos/demo-violet.svg": {
+    "mtime": 1778282513.9716744,
+    "hash": "ed65c1b8be476ffc66178742e74a9832"
+  }
+}

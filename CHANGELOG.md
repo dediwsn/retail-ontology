@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Code Knowledge Graph (codegraph)
+- New `/codegraph` page (Sidebar 메타 section) embedding the `graphify`-generated AST graph as a static iframe. **No LLM at build time** — graphify is an AST-only third-party skill, fully offline. Bundle ships in `web/public/codegraph/` (`graph.html` 1.3MB, `graph.json` 1.2MB, `manifest.json` 28KB, `GRAPH_REPORT.md` 44KB). Current snapshot: **1,751 nodes, 2,217 edges, 159 communities, 151 source files**.
+- Fullscreen toggle (ESC to exit), per-node click-through into the graphify viewer, side links to raw `graph.html` / `graph.json` / `GRAPH_REPORT.md` for deeper exploration.
+- Refresh workflow documented inline: `graphify update . --force && cp graphify-out/* web/public/codegraph/` then redeploy web. Pattern adopted from the mfg-ontology project's `/codegraph` page.
+
 ## [0.7.0] — 2026-05-08
 
 3 commits expanding the project surface from 12 → 13 scenarios:
@@ -240,6 +245,11 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### 추가 — 코드 지식 그래프 (codegraph)
+- 신규 `/codegraph` 페이지 (사이드바 메타 섹션) — `graphify`가 생성한 AST 그래프를 정적 iframe으로 임베드. **빌드 시 LLM 호출 0** — graphify는 AST-only 서드파티 스킬, 오프라인 동작. 정적 자산은 `web/public/codegraph/` 에 번들 (`graph.html` 1.3MB, `graph.json` 1.2MB, `manifest.json` 28KB, `GRAPH_REPORT.md` 44KB). 현재 스냅샷: **1,751 노드, 2,217 엣지, 159 커뮤니티, 151 소스 파일**.
+- 전체화면 토글 (ESC 해제), graphify 뷰어 내 노드 클릭 탐색, raw `graph.html`/`graph.json`/`GRAPH_REPORT.md` 직접 링크.
+- 갱신 워크플로 문서화: `graphify update . --force && cp graphify-out/* web/public/codegraph/` 후 web 재배포. mfg-ontology 프로젝트의 `/codegraph` 패턴을 그대로 이식.
 
 ## [0.7.0] — 2026-05-08
 

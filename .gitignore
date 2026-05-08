@@ -63,3 +63,7 @@ Thumbs.db
 *.tmp
 
 /.local/
+
+# graphify-out/ is regenerable via `graphify update . --force` — only the
+# bundled snapshot copied into web/public/codegraph/ is shipped.
+/graphify-out/
