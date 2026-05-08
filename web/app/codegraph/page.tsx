@@ -7,8 +7,8 @@
 // To refresh: `graphify update . --force && cp graphify-out/* web/public/codegraph/`
 // then docker build + redeploy. See web/public/codegraph/README.md (TBD).
 
-import { useEffect, useState } from 'react';
-import { ExternalLink, FileText, Code2, Maximize2, Minimize2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ExternalLink, FileText, Code2, Maximize2, Minimize2, Tag } from 'lucide-react';
 
 interface Manifest {
   total_nodes?: number;
@@ -22,12 +22,17 @@ interface Manifest {
   [k: string]: unknown;
 }
 
+type CommunityLabels = Record<string, string>;
+
 const STATIC_BASE = '/codegraph';
 
 export default function CodeGraphPage() {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [communityLabels, setCommunityLabels] = useState<CommunityLabels | null>(null);
+  const [communitySizes, setCommunitySizes] = useState<Record<string, number>>({});
+  const [showCommunityPanel, setShowCommunityPanel] = useState(false);
 
   useEffect(() => {
     fetch(`${STATIC_BASE}/manifest.json`, { cache: 'no-store' })
@@ -37,6 +42,24 @@ export default function CodeGraphPage() {
       })
       .then((d) => setManifest(d as Manifest))
       .catch((e) => setManifestError(String(e)));
+    // Load community labels (sidecar mirror — doesn't require parsing graph.json)
+    fetch(`${STATIC_BASE}/community_labels.json`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setCommunityLabels(d as CommunityLabels); })
+      .catch(() => { /* optional asset */ });
+    // Compute community sizes from graph.json (only first time)
+    fetch(`${STATIC_BASE}/graph.json`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((g) => {
+        if (!g?.nodes) return;
+        const sizes: Record<string, number> = {};
+        for (const n of g.nodes) {
+          const c = String(n.community ?? '');
+          if (c) sizes[c] = (sizes[c] ?? 0) + 1;
+        }
+        setCommunitySizes(sizes);
+      })
+      .catch(() => { /* graph.json optional */ });
   }, []);
 
   // ESC exits fullscreen
@@ -105,15 +128,15 @@ export default function CodeGraphPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="h-14 border-b border-ink-700 bg-ink-900 flex items-center px-6">
+    <div className="h-screen flex flex-col">
+      <header className="h-14 border-b border-ink-700 bg-ink-900 flex items-center px-6 shrink-0">
         <div className="text-xs text-ink-400">메타 · 코드 지식 그래프</div>
         <span className="ml-3 text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
           graphify · AST-only · LLM 미사용 빌드
         </span>
       </header>
 
-      <div className="flex-1 min-h-0 flex flex-col px-6 py-4">
+      <div className="flex-1 min-h-0 flex flex-col px-4 py-3">
         <div className="flex items-center gap-3 mb-2 flex-wrap">
           <div className="flex items-center gap-2">
             <Code2 className="w-5 h-5 text-emerald-300" />
@@ -137,6 +160,21 @@ export default function CodeGraphPage() {
           )}
 
           <div className="flex items-center gap-1.5 ml-auto">
+            {communityLabels && (
+              <button
+                type="button"
+                onClick={() => setShowCommunityPanel((v) => !v)}
+                className={[
+                  'flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border transition',
+                  showCommunityPanel
+                    ? 'border-emerald-500 bg-emerald-500/15 text-emerald-100'
+                    : 'border-ink-700 text-ink-300 hover:border-emerald-500 hover:text-emerald-300',
+                ].join(' ')}
+                title={`${Object.keys(communityLabels).length}개 커뮤니티 라벨 (LLM 의미 분석)`}
+              >
+                <Tag className="w-3.5 h-3.5" /> 커뮤니티 ({Object.keys(communityLabels).length})
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setFullscreen(true)}
@@ -186,15 +224,90 @@ export default function CodeGraphPage() {
           <code className="text-ink-300">cp graphify-out/* web/public/codegraph/</code> → web 이미지 재배포.
         </p>
 
-        <div className="flex-1 min-h-[600px] rounded-lg border border-ink-700 bg-ink-950 overflow-hidden">
-          <iframe
-            title="graphify code graph"
-            src={`${STATIC_BASE}/graph.html`}
-            className="w-full h-full block"
-            style={{ border: 0 }}
-          />
+        <div className="flex-1 min-h-0 flex gap-3 overflow-hidden">
+          <div className="flex-1 min-h-0 min-w-0 rounded-lg border border-ink-700 bg-ink-950 overflow-hidden">
+            <iframe
+              title="graphify code graph"
+              src={`${STATIC_BASE}/graph.html`}
+              className="w-full h-full block"
+              style={{ border: 0 }}
+            />
+          </div>
+          {showCommunityPanel && communityLabels && (
+            <CommunityListPanel labels={communityLabels} sizes={communitySizes} />
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+
+function CommunityListPanel({
+  labels, sizes,
+}: {
+  labels: Record<string, string>;
+  sizes: Record<string, number>;
+}) {
+  const [filter, setFilter] = useState('');
+
+  const sorted = useMemo(() => {
+    const entries = Object.entries(labels).map(([cid, label]) => ({
+      cid,
+      label,
+      size: sizes[cid] ?? 0,
+    }));
+    entries.sort((a, b) => b.size - a.size);
+    if (!filter) return entries;
+    const q = filter.toLowerCase();
+    return entries.filter((e) =>
+      e.label.toLowerCase().includes(q) || e.cid.includes(q),
+    );
+  }, [labels, sizes, filter]);
+
+  return (
+    <aside className="w-72 shrink-0 rounded-lg border border-ink-700 bg-ink-900 flex flex-col overflow-hidden">
+      <div className="px-3 py-2 border-b border-ink-700 flex items-center gap-2">
+        <Tag className="w-3.5 h-3.5 text-emerald-300" />
+        <span className="text-xs font-semibold text-ink-100">코드 커뮤니티</span>
+        <span className="text-[10px] font-mono text-ink-400 ml-auto">
+          {sorted.length}/{Object.keys(labels).length}
+        </span>
+      </div>
+      <div className="px-3 py-2 border-b border-ink-700">
+        <input
+          type="text"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="커뮤니티 검색…"
+          className="w-full text-xs bg-ink-800 border border-ink-700 rounded px-2 py-1 text-ink-100 outline-none focus:border-emerald-500"
+        />
+      </div>
+      <ul className="flex-1 overflow-y-auto text-xs">
+        {sorted.map(({ cid, label, size }) => (
+          <li
+            key={cid}
+            className="px-3 py-1.5 border-b border-ink-700/50 hover:bg-ink-800 flex items-center gap-2"
+            title={`Community #${cid} — ${size} 노드`}
+          >
+            <span className="font-mono text-[10px] text-ink-500 shrink-0 w-7 text-right">
+              #{cid}
+            </span>
+            <span className="text-ink-200 flex-1 min-w-0 truncate">{label}</span>
+            <span className="font-mono text-[10px] text-emerald-300 shrink-0">
+              {size}
+            </span>
+          </li>
+        ))}
+        {sorted.length === 0 && (
+          <li className="px-3 py-4 text-center text-ink-500 text-[11px]">
+            매칭되는 커뮤니티가 없습니다.
+          </li>
+        )}
+      </ul>
+      <div className="px-3 py-1.5 border-t border-ink-700 text-[10px] text-ink-500">
+        라벨은 Bedrock Sonnet 4.6이 각 커뮤니티의 중심 노드를 분석해 자동 생성.
+      </div>
+    </aside>
   );
 }
