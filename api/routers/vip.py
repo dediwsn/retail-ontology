@@ -185,3 +185,395 @@ def opportunity_vip(
     )
 
     return OpportunityResponse(summary=summary, candidates=candidates)
+
+
+# ─── Helper — persona OR-pattern filter fragment ──────────────────────────
+
+
+def _persona_filter_fragment(persona: Optional[str], where_keyword: str = "AND") -> str:
+    """Return a Cypher fragment that filters Member m by persona via the
+    spine-or-narrative OR pattern (ADR-0006).
+    `where_keyword` lets the caller choose AND or WHERE depending on the
+    surrounding clause shape.
+    """
+    if not persona:
+        return ""
+    return (
+        f"{where_keyword} ((m)-[:MATCHES_PERSONA]->(:Persona {{persona_id: $pid}}) "
+        "  OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-(:Persona {persona_id: $pid})) "
+    )
+
+
+# ─── Whale VIP — internal-only definition (tier=VIP + LTV >= floor) ──────
+
+
+class WhaleCandidate(BaseModel):
+    member_id: str
+    name_ko: str
+    tier: str
+    persona_id: Optional[str] = None
+    ltv_krw: int
+    monetary_krw: int
+    frequency: int
+    recency_days: int
+    churn_risk: float
+
+
+class WhaleSummary(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    ltv_floor_krw: int
+    candidate_count: int
+    sum_ltv_krw: int
+    avg_recency_days: float
+    high_risk_count: int        # churn_risk >= 0.7
+
+
+class WhaleResponse(BaseModel):
+    summary: WhaleSummary
+    candidates: List[WhaleCandidate]
+
+
+@router.get("/vip/whale", response_model=WhaleResponse)
+def whale_vip(
+    persona: Optional[str] = Query(None),
+    ltv_floor_krw: int = Query(5_000_000, ge=0),
+    top_k: int = Query(50, ge=1, le=200),
+) -> WhaleResponse:
+    rows = neptune.open_cypher(
+        "MATCH (m:Member {tier: 'VIP'}) "
+        "WHERE coalesce(m.ltv_krw, 0) >= $floor "
+        + _persona_filter_fragment(persona, "AND")
+        + "RETURN m.member_id AS mid, m.name_ko AS name_ko, m.tier AS tier, "
+        "       m.persona_id AS pid, coalesce(m.ltv_krw, 0) AS ltv, "
+        "       coalesce(m.monetary_krw, 0) AS monetary, "
+        "       coalesce(m.frequency, 0) AS freq, "
+        "       coalesce(m.recency_days, 0) AS recency, "
+        "       coalesce(m.churn_risk, 0.0) AS churn_risk "
+        "ORDER BY ltv DESC LIMIT $k",
+        parameters={
+            "floor": ltv_floor_krw, "k": top_k,
+            **({"pid": persona} if persona else {}),
+        },
+    ) or []
+    cands = [
+        WhaleCandidate(
+            member_id=str(r.get("mid") or ""),
+            name_ko=str(r.get("name_ko") or r.get("mid") or ""),
+            tier=str(r.get("tier") or "VIP"),
+            persona_id=r.get("pid"),
+            ltv_krw=int(r.get("ltv") or 0),
+            monetary_krw=int(r.get("monetary") or 0),
+            frequency=int(r.get("freq") or 0),
+            recency_days=int(r.get("recency") or 0),
+            churn_risk=round(float(r.get("churn_risk") or 0.0), 3),
+        )
+        for r in rows
+    ]
+    summary = WhaleSummary(
+        persona_id=persona,
+        persona_label_ko=_PERSONA_LABEL.get(persona) if persona else None,
+        ltv_floor_krw=ltv_floor_krw,
+        candidate_count=len(cands),
+        sum_ltv_krw=sum(c.ltv_krw for c in cands),
+        avg_recency_days=round(
+            sum(c.recency_days for c in cands) / max(1, len(cands)), 1
+        ),
+        high_risk_count=sum(1 for c in cands if c.churn_risk >= 0.7),
+    )
+    return WhaleResponse(summary=summary, candidates=cands)
+
+
+# ─── Loyal VIP — Opportunity's mirror (high our_share + meaningful total) ─
+
+
+class LoyalCandidate(BaseModel):
+    member_id: str
+    name_ko: str
+    tier: str
+    persona_id: Optional[str] = None
+    industry_id: str
+    industry_ko: str
+    our_spend_krw: int
+    external_spend_krw: int
+    total_spend_krw: int
+    our_share: float
+    churn_risk: float
+
+
+class LoyalSummary(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    share_floor: float
+    total_floor_krw: int
+    candidate_count: int
+    distinct_member_count: int
+    sum_protected_krw: int      # our_spend at risk if we lose share
+    avg_our_share: float
+
+
+class LoyalResponse(BaseModel):
+    summary: LoyalSummary
+    candidates: List[LoyalCandidate]
+
+
+@router.get("/vip/loyal", response_model=LoyalResponse)
+def loyal_vip(
+    persona: Optional[str] = Query(None),
+    share_floor: float = Query(0.7, ge=0.0, le=1.0),
+    total_floor_krw: int = Query(1_000_000, ge=0),
+    top_k: int = Query(50, ge=1, le=200),
+) -> LoyalResponse:
+    rows = neptune.open_cypher(
+        "MATCH (m:Member)-[hcs:HAS_CATEGORY_SPEND {period: '2026-Q1'}]->(i:IndustryCategory) "
+        "WHERE 1=1 " + _persona_filter_fragment(persona, "AND")
+        + "OPTIONAL MATCH (m)-[:MADE]->(t:Transaction)-[:OF_PRODUCT]->(p:Product)"
+        "                 -[:IN_CATEGORY]->(c:Category)<-[:OVERLAPS_WITH]-(i) "
+        "WITH m, i, hcs.amount_krw AS external_amt, "
+        "     coalesce(sum(t.amount_krw), 0) AS our_internal "
+        "WITH m, i, external_amt, our_internal, "
+        "     (external_amt + our_internal) AS total_spend, "
+        "     CASE WHEN (external_amt + our_internal) > 0 "
+        "          THEN toFloat(our_internal) / (external_amt + our_internal) "
+        "          ELSE 0.0 END AS our_share "
+        "WHERE total_spend >= $total_floor "
+        "  AND our_share >= $share_floor "
+        "  AND our_internal > 0 "
+        "RETURN m.member_id AS mid, m.name_ko AS name_ko, m.tier AS tier, "
+        "       m.persona_id AS pid, coalesce(m.churn_risk, 0.0) AS churn_risk, "
+        "       i.industry_id AS iid, i.name_ko AS iko, "
+        "       our_internal AS our_spend, external_amt AS external_spend, "
+        "       total_spend, our_share "
+        "ORDER BY our_internal DESC LIMIT $k",
+        parameters={
+            "total_floor": total_floor_krw,
+            "share_floor": share_floor,
+            "k": top_k,
+            **({"pid": persona} if persona else {}),
+        },
+    ) or []
+    cands = [
+        LoyalCandidate(
+            member_id=str(r.get("mid") or ""),
+            name_ko=str(r.get("name_ko") or ""),
+            tier=str(r.get("tier") or "Bronze"),
+            persona_id=r.get("pid"),
+            industry_id=str(r.get("iid") or ""),
+            industry_ko=str(r.get("iko") or ""),
+            our_spend_krw=int(r.get("our_spend") or 0),
+            external_spend_krw=int(r.get("external_spend") or 0),
+            total_spend_krw=int(r.get("total_spend") or 0),
+            our_share=round(float(r.get("our_share") or 0.0), 4),
+            churn_risk=round(float(r.get("churn_risk") or 0.0), 3),
+        )
+        for r in rows
+    ]
+    summary = LoyalSummary(
+        persona_id=persona,
+        persona_label_ko=_PERSONA_LABEL.get(persona) if persona else None,
+        share_floor=share_floor,
+        total_floor_krw=total_floor_krw,
+        candidate_count=len(cands),
+        distinct_member_count=len({c.member_id for c in cands}),
+        sum_protected_krw=sum(c.our_spend_krw for c in cands),
+        avg_our_share=round(
+            sum(c.our_share for c in cands) / max(1, len(cands)), 4
+        ),
+    )
+    return LoyalResponse(summary=summary, candidates=cands)
+
+
+# ─── Cross-category VIP — single-category internal buyer + big external ──
+
+
+class CrossCategoryCandidate(BaseModel):
+    member_id: str
+    name_ko: str
+    tier: str
+    persona_id: Optional[str] = None
+    internal_industry_ko: Optional[str] = None  # the one category we have
+    target_industry_id: str                     # external industry to expand into
+    target_industry_ko: str
+    external_spend_krw: int
+    churn_risk: float
+
+
+class CrossCategorySummary(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    external_floor_krw: int
+    candidate_count: int
+    distinct_member_count: int
+    sum_addressable_krw: int
+    top_target_industry_ko: Optional[str] = None
+
+
+class CrossCategoryResponse(BaseModel):
+    summary: CrossCategorySummary
+    candidates: List[CrossCategoryCandidate]
+
+
+@router.get("/vip/cross-category", response_model=CrossCategoryResponse)
+def cross_category_vip(
+    persona: Optional[str] = Query(None),
+    external_floor_krw: int = Query(500_000, ge=0),
+    top_k: int = Query(50, ge=1, le=200),
+) -> CrossCategoryResponse:
+    # Two-step: (1) find members with exactly 1 distinct internal Category;
+    # (2) collect their external industries where we have *zero* internal
+    # transactions overlapping (i.e. expansion targets).
+    rows = neptune.open_cypher(
+        "MATCH (m:Member)-[:MADE]->(:Transaction)-[:OF_PRODUCT]->(:Product)"
+        "                  -[:IN_CATEGORY]->(c:Category) "
+        "WITH m, count(DISTINCT c) AS distinct_internal_cats "
+        "WHERE distinct_internal_cats = 1 "
+        + _persona_filter_fragment(persona, "AND")
+        + "MATCH (m)-[hcs:HAS_CATEGORY_SPEND {period: '2026-Q1'}]->(i:IndustryCategory) "
+        "WITH m, i, hcs.amount_krw AS ext "
+        "WHERE ext >= $ext_floor "
+        "OPTIONAL MATCH (m)-[:MADE]->(t2:Transaction)-[:OF_PRODUCT]->(:Product)"
+        "                  -[:IN_CATEGORY]->(:Category)<-[:OVERLAPS_WITH]-(i) "
+        "WITH m, i, ext, count(t2) AS internal_count "
+        "WHERE internal_count = 0 "
+        "OPTIONAL MATCH (m)-[:MADE]->(:Transaction)-[:OF_PRODUCT]->(:Product)"
+        "                  -[:IN_CATEGORY]->(:Category)<-[:OVERLAPS_WITH]-(i_our:IndustryCategory) "
+        "WITH m, i, ext, collect(DISTINCT i_our.name_ko)[0] AS internal_iko "
+        "RETURN m.member_id AS mid, m.name_ko AS name_ko, m.tier AS tier, "
+        "       m.persona_id AS pid, coalesce(m.churn_risk, 0.0) AS churn_risk, "
+        "       internal_iko AS internal_industry_ko, "
+        "       i.industry_id AS iid, i.name_ko AS iko, "
+        "       ext AS external_spend "
+        "ORDER BY ext DESC LIMIT $k",
+        parameters={
+            "ext_floor": external_floor_krw,
+            "k": top_k,
+            **({"pid": persona} if persona else {}),
+        },
+    ) or []
+    cands = [
+        CrossCategoryCandidate(
+            member_id=str(r.get("mid") or ""),
+            name_ko=str(r.get("name_ko") or ""),
+            tier=str(r.get("tier") or "Bronze"),
+            persona_id=r.get("pid"),
+            internal_industry_ko=r.get("internal_industry_ko"),
+            target_industry_id=str(r.get("iid") or ""),
+            target_industry_ko=str(r.get("iko") or ""),
+            external_spend_krw=int(r.get("external_spend") or 0),
+            churn_risk=round(float(r.get("churn_risk") or 0.0), 3),
+        )
+        for r in rows
+    ]
+    target_counts: Dict[str, int] = {}
+    target_label: Dict[str, str] = {}
+    for c in cands:
+        target_counts[c.target_industry_id] = target_counts.get(c.target_industry_id, 0) + 1
+        target_label[c.target_industry_id] = c.target_industry_ko
+    top_target_ko = None
+    if target_counts:
+        top_target_ko = target_label.get(max(target_counts, key=lambda k: target_counts[k]))
+    summary = CrossCategorySummary(
+        persona_id=persona,
+        persona_label_ko=_PERSONA_LABEL.get(persona) if persona else None,
+        external_floor_krw=external_floor_krw,
+        candidate_count=len(cands),
+        distinct_member_count=len({c.member_id for c in cands}),
+        sum_addressable_krw=sum(c.external_spend_krw for c in cands),
+        top_target_industry_ko=top_target_ko,
+    )
+    return CrossCategoryResponse(summary=summary, candidates=cands)
+
+
+# ─── Trajectory VIP — q1/q0 growth ratio above threshold + tier != VIP ───
+
+
+class TrajectoryCandidate(BaseModel):
+    member_id: str
+    name_ko: str
+    tier: str
+    persona_id: Optional[str] = None
+    industry_id: str
+    industry_ko: str
+    q0_amount_krw: int          # 2025-Q4
+    q1_amount_krw: int          # 2026-Q1
+    growth_ratio: float         # q1 / q0
+    churn_risk: float
+
+
+class TrajectorySummary(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    growth_floor: float
+    candidate_count: int
+    distinct_member_count: int
+    avg_growth_ratio: float
+    top_industry_ko: Optional[str] = None
+
+
+class TrajectoryResponse(BaseModel):
+    summary: TrajectorySummary
+    candidates: List[TrajectoryCandidate]
+
+
+@router.get("/vip/trajectory", response_model=TrajectoryResponse)
+def trajectory_vip(
+    persona: Optional[str] = Query(None),
+    growth_floor: float = Query(1.2, ge=1.0, le=10.0),
+    exclude_tier_vip: bool = Query(True),
+    top_k: int = Query(50, ge=1, le=200),
+) -> TrajectoryResponse:
+    tier_filter = "AND m.tier <> 'VIP' " if exclude_tier_vip else ""
+    rows = neptune.open_cypher(
+        "MATCH (m:Member)-[h1:HAS_CATEGORY_SPEND {period: '2026-Q1'}]->(i:IndustryCategory) "
+        "MATCH (m)-[h0:HAS_CATEGORY_SPEND {period: '2025-Q4'}]->(i) "
+        "WHERE coalesce(h0.amount_krw, 0) > 0 "
+        + tier_filter
+        + _persona_filter_fragment(persona, "AND")
+        + "WITH m, i, h0.amount_krw AS q0, h1.amount_krw AS q1, "
+        "     toFloat(h1.amount_krw) / h0.amount_krw AS growth "
+        "WHERE growth >= $growth_floor "
+        "RETURN m.member_id AS mid, m.name_ko AS name_ko, m.tier AS tier, "
+        "       m.persona_id AS pid, coalesce(m.churn_risk, 0.0) AS churn_risk, "
+        "       i.industry_id AS iid, i.name_ko AS iko, "
+        "       q0, q1, growth "
+        "ORDER BY growth DESC, q1 DESC LIMIT $k",
+        parameters={
+            "growth_floor": growth_floor, "k": top_k,
+            **({"pid": persona} if persona else {}),
+        },
+    ) or []
+    cands = [
+        TrajectoryCandidate(
+            member_id=str(r.get("mid") or ""),
+            name_ko=str(r.get("name_ko") or ""),
+            tier=str(r.get("tier") or "Bronze"),
+            persona_id=r.get("pid"),
+            industry_id=str(r.get("iid") or ""),
+            industry_ko=str(r.get("iko") or ""),
+            q0_amount_krw=int(r.get("q0") or 0),
+            q1_amount_krw=int(r.get("q1") or 0),
+            growth_ratio=round(float(r.get("growth") or 0.0), 3),
+            churn_risk=round(float(r.get("churn_risk") or 0.0), 3),
+        )
+        for r in rows
+    ]
+    industry_counts: Dict[str, int] = {}
+    industry_label: Dict[str, str] = {}
+    for c in cands:
+        industry_counts[c.industry_id] = industry_counts.get(c.industry_id, 0) + 1
+        industry_label[c.industry_id] = c.industry_ko
+    top_industry_ko = None
+    if industry_counts:
+        top_industry_ko = industry_label.get(max(industry_counts, key=lambda k: industry_counts[k]))
+    summary = TrajectorySummary(
+        persona_id=persona,
+        persona_label_ko=_PERSONA_LABEL.get(persona) if persona else None,
+        growth_floor=growth_floor,
+        candidate_count=len(cands),
+        distinct_member_count=len({c.member_id for c in cands}),
+        avg_growth_ratio=round(
+            sum(c.growth_ratio for c in cands) / max(1, len(cands)), 3
+        ),
+        top_industry_ko=top_industry_ko,
+    )
+    return TrajectoryResponse(summary=summary, candidates=cands)

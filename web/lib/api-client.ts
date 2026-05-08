@@ -566,6 +566,178 @@ export async function vipOpportunity(opts: {
   return res.json();
 }
 
+// Whale — internal tier=VIP definition
+
+export type WhaleCandidate = {
+  member_id: string;
+  name_ko: string;
+  tier: string;
+  persona_id: string | null;
+  ltv_krw: number;
+  monetary_krw: number;
+  frequency: number;
+  recency_days: number;
+  churn_risk: number;
+};
+
+export type WhaleResponse = {
+  summary: {
+    persona_id: string | null;
+    persona_label_ko: string | null;
+    ltv_floor_krw: number;
+    candidate_count: number;
+    sum_ltv_krw: number;
+    avg_recency_days: number;
+    high_risk_count: number;
+  };
+  candidates: WhaleCandidate[];
+};
+
+export async function vipWhale(opts: {
+  persona?: string | null;
+  ltv_floor_krw?: number;
+  top_k?: number;
+} = {}): Promise<WhaleResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('ltv_floor_krw', String(opts.ltv_floor_krw ?? 5_000_000));
+  qs.set('top_k', String(opts.top_k ?? 50));
+  const res = await fetch(`${BASE}/api/vip/whale?${qs}`);
+  if (!res.ok) throw new Error(`vip whale failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+// Loyal — high our_share + meaningful total
+
+export type LoyalCandidate = {
+  member_id: string;
+  name_ko: string;
+  tier: string;
+  persona_id: string | null;
+  industry_id: string;
+  industry_ko: string;
+  our_spend_krw: number;
+  external_spend_krw: number;
+  total_spend_krw: number;
+  our_share: number;
+  churn_risk: number;
+};
+
+export type LoyalResponse = {
+  summary: {
+    persona_id: string | null;
+    persona_label_ko: string | null;
+    share_floor: number;
+    total_floor_krw: number;
+    candidate_count: number;
+    distinct_member_count: number;
+    sum_protected_krw: number;
+    avg_our_share: number;
+  };
+  candidates: LoyalCandidate[];
+};
+
+export async function vipLoyal(opts: {
+  persona?: string | null;
+  share_floor?: number;
+  total_floor_krw?: number;
+  top_k?: number;
+} = {}): Promise<LoyalResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('share_floor', String(opts.share_floor ?? 0.7));
+  qs.set('total_floor_krw', String(opts.total_floor_krw ?? 1_000_000));
+  qs.set('top_k', String(opts.top_k ?? 50));
+  const res = await fetch(`${BASE}/api/vip/loyal?${qs}`);
+  if (!res.ok) throw new Error(`vip loyal failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+// Cross-category — single internal cat + big external different
+
+export type CrossCategoryCandidate = {
+  member_id: string;
+  name_ko: string;
+  tier: string;
+  persona_id: string | null;
+  internal_industry_ko: string | null;
+  target_industry_id: string;
+  target_industry_ko: string;
+  external_spend_krw: number;
+  churn_risk: number;
+};
+
+export type CrossCategoryResponse = {
+  summary: {
+    persona_id: string | null;
+    persona_label_ko: string | null;
+    external_floor_krw: number;
+    candidate_count: number;
+    distinct_member_count: number;
+    sum_addressable_krw: number;
+    top_target_industry_ko: string | null;
+  };
+  candidates: CrossCategoryCandidate[];
+};
+
+export async function vipCrossCategory(opts: {
+  persona?: string | null;
+  external_floor_krw?: number;
+  top_k?: number;
+} = {}): Promise<CrossCategoryResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('external_floor_krw', String(opts.external_floor_krw ?? 500_000));
+  qs.set('top_k', String(opts.top_k ?? 50));
+  const res = await fetch(`${BASE}/api/vip/cross-category?${qs}`);
+  if (!res.ok) throw new Error(`vip cross-category failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+// Trajectory — q1/q0 growth >= floor + tier != VIP
+
+export type TrajectoryCandidate = {
+  member_id: string;
+  name_ko: string;
+  tier: string;
+  persona_id: string | null;
+  industry_id: string;
+  industry_ko: string;
+  q0_amount_krw: number;
+  q1_amount_krw: number;
+  growth_ratio: number;
+  churn_risk: number;
+};
+
+export type TrajectoryResponse = {
+  summary: {
+    persona_id: string | null;
+    persona_label_ko: string | null;
+    growth_floor: number;
+    candidate_count: number;
+    distinct_member_count: number;
+    avg_growth_ratio: number;
+    top_industry_ko: string | null;
+  };
+  candidates: TrajectoryCandidate[];
+};
+
+export async function vipTrajectory(opts: {
+  persona?: string | null;
+  growth_floor?: number;
+  exclude_tier_vip?: boolean;
+  top_k?: number;
+} = {}): Promise<TrajectoryResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('growth_floor', String(opts.growth_floor ?? 1.2));
+  qs.set('exclude_tier_vip', String(opts.exclude_tier_vip ?? true));
+  qs.set('top_k', String(opts.top_k ?? 50));
+  const res = await fetch(`${BASE}/api/vip/trajectory?${qs}`);
+  if (!res.ok) throw new Error(`vip trajectory failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 // ─── Wide-scope passthroughs for scenarios D/E/F/G/H + objects + ontology + ops
 //
 // These functions exist to satisfy import-resolution from the untracked

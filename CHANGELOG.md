@@ -13,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Scenario M tabs 2–5 (Loyal / Whale / Cross-category / Trajectory)
+- **`GET /api/vip/whale`** — internal `tier=VIP` + `LTV ≥ ltv_floor_krw` (defaults 5M). Persona-aware. Lists Whale candidates with monetary, frequency, recency, churn_risk for retention prioritisation.
+- **`GET /api/vip/loyal`** — Opportunity's mirror: `our_share ≥ share_floor` (default 0.7) AND `total_spend ≥ total_floor_krw` (default 1M) per (Member, IndustryCategory). Surfaces members where we hold dominant share — defensive marketing target.
+- **`GET /api/vip/cross-category`** — single-category internal buyers (`distinct_internal_cats=1`) whose external spend in *non-overlapping* industries exceeds `external_floor_krw`. Up-sell / cross-sell candidates: tells you which industry to extend each member into.
+- **`GET /api/vip/trajectory`** — Q1/Q0 growth ratio ≥ `growth_floor` (default 1.2), `tier ≠ VIP`. Identifies "future VIPs" — members whose external + internal spend is rising fastest, ideal for early-upgrade campaigns.
+- Phase 2B data layer extended: `external_spend.json` now contains both 2026-Q1 and 2025-Q4 periods (~10,400 rows total) — prior-quarter snapshot enables the Trajectory growth ratio. Per-member growth factor distribution: 25% strong (q1/q0 ≥ 1.5×) / 35% mild (1.18×–1.54×) / 30% flat / 10% declining.
+- Scenario M page: 4 stub tabs replaced with full implementations sharing a generic `CandidatesTable<T>` component, `SliderControl`, `KpiCard`, and persona context. All 5 tabs respect the active PersonaSwitch persona.
+
 ### Added — Scenario M (VIP Target Builder + external consumption layer)
 - New **Phase 2B external-consumption layer** in the synthetic data + graph: `IndustryCategory` nodes (10 industry-level categories — 스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` mapping to existing GS1 bricks, and `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` quarterly spend edges (~5,200, persona-biased).
 - New **`GET /api/vip/opportunity`** endpoint — wallet-share-aware "Opportunity VIP" identification. Joins external panel data with internal Transactions via the OVERLAPS_WITH bridge to compute `our_share = our_internal / (our_internal + external)` per (Member, IndustryCategory). Filters on `share_ceiling` + `total_floor_krw` + persona; returns ranked candidates with `untapped_krw` upside.
@@ -216,6 +224,14 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### 추가 — 시나리오 M 탭 2~5 (Loyal / Whale / Cross-category / Trajectory)
+- **`GET /api/vip/whale`** — `tier=VIP` + `LTV ≥ ltv_floor_krw` (기본 5M). 페르소나 필터. retention 우선순위용 monetary/frequency/recency/churn_risk 동반.
+- **`GET /api/vip/loyal`** — Opportunity의 거울: `our_share ≥ share_floor` (기본 0.7) AND `total_spend ≥ total_floor_krw` (기본 1M). 우리가 압도적 점유율을 가진 (회원 × 카테고리) 식별 — *방어적* 마케팅 타깃.
+- **`GET /api/vip/cross-category`** — 우리에게 1개 카테고리만 거래하는 회원 (`distinct_internal_cats=1`) + 그 회원의 *다른 industry* 외부 지출이 `external_floor_krw` 이상. up-sell/cross-sell 후보, 어느 industry로 확장할지 직접 알려줌.
+- **`GET /api/vip/trajectory`** — Q1/Q0 성장률 ≥ `growth_floor` (기본 1.2), `tier ≠ VIP`. *잠재 VIP* 식별 — 외부+내부 지출이 가장 빠르게 상승 중인 회원, 조기 격상 캠페인 ROI 최고.
+- Phase 2B 데이터 레이어 확장: `external_spend.json` 가 이제 2026-Q1과 2025-Q4 두 분기를 모두 포함 (~10,400 rows). 회원별 성장 분포: 25% 강성장(q1/q0 ≥ 1.5×) / 35% 약성장(1.18×–1.54×) / 30% flat / 10% 하락.
+- 시나리오 M 페이지: 4개 stub 탭이 모두 풀 구현으로 교체. 5개 탭이 공통 `CandidatesTable<T>` + `SliderControl` + `KpiCard` 컴포넌트 + 페르소나 컨텍스트 공유.
 
 ### 추가 — 시나리오 M (VIP 타깃 빌더 + 외부 소비 레이어)
 - 신규 **Phase 2B 외부 소비 레이어** (합성 데이터 + 그래프): `IndustryCategory` 노드 10종 (스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` 기존 GS1 brick 매핑, `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` 분기별 지출 엣지 (~5,200건, 페르소나 편향).

@@ -33,11 +33,33 @@ from typing import Any, Dict, List, Tuple
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output"
 
-# Single demo period. All external spend is bucketed here. Real systems
-# would have monthly/quarterly time-series — this is a deliberate
-# simplification for PoC. The choice of Q1 2026 aligns with the loader's
-# ANCHOR_DATE and Member.last_purchase_at distribution.
-PERIOD_KEY = "2026-Q1"
+# Two demo periods — the *current* quarter for VIP cohort identification,
+# and the *prior* quarter for Trajectory VIP (growth = current / prior).
+# Real systems would have a deeper time-series; two snapshots is enough
+# to demo the *direction* signal that's invisible with a single period.
+PERIOD_KEY = "2026-Q1"          # current
+PRIOR_PERIOD_KEY = "2025-Q4"    # for trajectory comparison
+
+
+def _stable_growth_factor(seed: str) -> float:
+    """Per-member q0/q1 ratio. Lower = stronger growth.
+    Distribution chosen so the trajectory-VIP query (q1/q0 ≥ 1.2) catches
+    roughly the top 25% (strong growers).
+
+      25% strong-growth   factor 0.40 .. 0.65   (q1/q0 = 1.54 .. 2.50)
+      35% mild-growth     factor 0.65 .. 0.85   (q1/q0 = 1.18 .. 1.54)
+      30% flat            factor 0.85 .. 1.05   (q1/q0 = 0.95 .. 1.18)
+      10% declining       factor 1.05 .. 1.50   (q1/q0 = 0.67 .. 0.95)
+    """
+    roll = _stable_int(seed, "growth-roll", mod=100)
+    if roll < 25:
+        return 0.40 + _stable_float(seed, "g-strong") * 0.25
+    elif roll < 60:
+        return 0.65 + _stable_float(seed, "g-mild") * 0.20
+    elif roll < 90:
+        return 0.85 + _stable_float(seed, "g-flat") * 0.20
+    else:
+        return 1.05 + _stable_float(seed, "g-decl") * 0.45
 
 
 def _stable_int(*parts: str, mod: int) -> int:
@@ -250,18 +272,31 @@ def generate_external_spend(members: List[Dict[str, Any]]) -> List[Dict[str, Any
             picked.append(choice)
             del remaining[choice]
 
+        # Per-member growth factor — same across all this member's industries
+        # so the "rising member" signal is coherent (not category-by-category
+        # random). Trajectory VIP catches members with low q0_factor.
+        q0_factor = _stable_growth_factor(seed)
+
         # Assign amount per chosen industry — baseline × tier × persona-multiplier × noise.
         for cid in picked:
             cat = next(c for c in _INDUSTRY_CATEGORIES if c["industry_id"] == cid)
             persona_mult = _PERSONA_INDUSTRY_BIAS.get(persona_id, {}).get(cid, 1.0)
             noise = 0.5 + _stable_float(f"{seed}-{cid}", "noise") * 1.5  # 0.5..2.0
-            amount = int(cat["baseline_krw_q"] * tier_scale * persona_mult * noise)
-            amount = (amount // 1000) * 1000  # round to thousands
+            q1_amount = int(cat["baseline_krw_q"] * tier_scale * persona_mult * noise)
+            q1_amount = (q1_amount // 1000) * 1000
+            q0_amount = int(q1_amount * q0_factor)
+            q0_amount = (q0_amount // 1000) * 1000
             out.append({
                 "member_id": member_id,
                 "industry_id": cid,
                 "period": PERIOD_KEY,
-                "amount_krw": amount,
+                "amount_krw": q1_amount,
+            })
+            out.append({
+                "member_id": member_id,
+                "industry_id": cid,
+                "period": PRIOR_PERIOD_KEY,
+                "amount_krw": q0_amount,
             })
     return out
 
