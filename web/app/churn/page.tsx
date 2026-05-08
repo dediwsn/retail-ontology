@@ -1,10 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { TrendingDown, AlertTriangle, Megaphone, Crown, UserCircle, Sparkles } from 'lucide-react';
+import {
+  TrendingDown, AlertTriangle, Megaphone, Crown, UserCircle, Sparkles,
+  MapPin, BarChart3,
+} from 'lucide-react';
 
 import * as api from '@/lib/api-client';
+import { KoreaMapView, RegionFill } from '@/components/map/KoreaMapView';
+import { useActivePersona } from '@/lib/persona-context';
+
+type ChurnTab = 'dashboard' | 'map';
 
 const CytoscapeView = dynamic(
   () => import('@/components/graph/CytoscapeView').then((m) => m.CytoscapeView),
@@ -33,11 +40,15 @@ function riskTone(risk: number): string {
 }
 
 export default function ChurnPage() {
+  const { active } = useActivePersona();
+  const [tab, setTab] = useState<ChurnTab>('dashboard');
   const [data, setData] = useState<api.ChurnDashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<api.ChurnMemberDetailResponse | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [mapData, setMapData] = useState<api.ChurnMapResponse | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,6 +57,16 @@ export default function ChurnPage() {
       .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : 'dashboard failed'); });
     return () => { cancelled = true; };
   }, []);
+
+  // 지도 탭 진입 시 또는 페르소나 변경 시 churn map 데이터 (re-)fetch.
+  useEffect(() => {
+    if (tab !== 'map') return;
+    let cancelled = false;
+    api.churnMap(active?.id ?? null)
+      .then((d) => { if (!cancelled) setMapData(d); })
+      .catch(() => { /* keep prior data on error */ });
+    return () => { cancelled = true; };
+  }, [tab, active?.id]);
 
   useEffect(() => {
     if (!selectedId) { setDetail(null); return; }
@@ -97,7 +118,21 @@ export default function ChurnPage() {
           <KpiCard icon={TrendingDown} label="평균 미접속(일)" value={data?.summary.avg_recency_days ?? '—'} accent="text-amber-300" />
         </section>
 
-        {/* Workspace */}
+        {/* Tab strip — 대시보드 / 지도 */}
+        <div className="flex border-b border-ink-700 -mb-1">
+          <TabBtn active={tab === 'dashboard'} onClick={() => setTab('dashboard')} icon={BarChart3} label="대시보드" />
+          <TabBtn active={tab === 'map'} onClick={() => setTab('map')} icon={MapPin} label="지도" />
+        </div>
+
+        {tab === 'map' ? (
+          <ChurnMapView
+            data={mapData}
+            persona={active}
+            selectedRegion={selectedRegion}
+            onSelectRegion={setSelectedRegion}
+          />
+        ) : (
+        /* Workspace */
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Left column: breakdowns + winback */}
           <div className="flex flex-col gap-4">
@@ -247,7 +282,150 @@ export default function ChurnPage() {
             </Card>
           </div>
         </section>
+        )}
       </div>
+    </div>
+  );
+}
+
+function TabBtn({
+  active, onClick, icon: Icon, label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'px-4 py-2 text-xs font-semibold flex items-center gap-1.5 transition border-b-2 -mb-px',
+        active
+          ? 'border-orange-400 text-orange-200 bg-orange-500/5'
+          : 'border-transparent text-ink-400 hover:text-ink-200 hover:bg-ink-800/50',
+      ].join(' ')}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function ChurnMapView({
+  data, persona, selectedRegion, onSelectRegion,
+}: {
+  data: api.ChurnMapResponse | null;
+  persona: { id: string; label: string } | null;
+  selectedRegion: string | null;
+  onSelectRegion: (code: string | null) => void;
+}) {
+  // avg_churn_risk 의 max 로 정규화 — 색이 항상 의미 있게 분포하도록.
+  const fills: RegionFill[] = useMemo(() => {
+    if (!data) return [];
+    const max = Math.max(...data.regions.map((r) => r.avg_churn_risk), 1e-9);
+    return data.regions.map((r) => ({
+      region_code: r.region_code,
+      value: r.avg_churn_risk / max,
+      hue: 'rose',
+    }));
+  }, [data]);
+
+  const selected = useMemo(
+    () => (selectedRegion ? data?.regions.find((r) => r.region_code === selectedRegion) : null),
+    [data, selectedRegion],
+  );
+
+  return (
+    <div className="grid xl:grid-cols-[minmax(0,1fr)_320px] gap-5">
+      <section className="rounded-lg border border-ink-700 bg-ink-900 p-3 min-h-[700px]">
+        {!data ? (
+          <div className="h-[700px] flex items-center justify-center text-xs text-ink-400">로딩 중…</div>
+        ) : (
+          <KoreaMapView
+            regionFills={fills}
+            selectedRegionCode={selectedRegion}
+            onRegionClick={(code) => onSelectRegion(code)}
+            showLanes={false}
+            height={760}
+          />
+        )}
+      </section>
+
+      <aside className="rounded-lg border border-ink-700 bg-ink-900 flex flex-col min-h-[700px] overflow-hidden">
+        <div className="px-3 py-2.5 border-b border-ink-700 text-xs uppercase tracking-wider text-ink-400 font-semibold flex items-center justify-between">
+          <span>{selected ? `${selected.name_ko} 상세` : '시도별 이탈 위험'}</span>
+          {persona && (
+            <span className="text-[10px] text-orange-300 normal-case">
+              {persona.label} 슬라이스
+            </span>
+          )}
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-3">
+          {selected ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Stat label="회원 수" value={selected.members.toLocaleString()} />
+              <Stat
+                label="고위험 (≥0.7)"
+                value={`${selected.at_risk} (${((selected.at_risk / Math.max(1, selected.members)) * 100).toFixed(0)}%)`}
+                tone="rose"
+              />
+              <Stat label="평균 risk" value={selected.avg_churn_risk.toFixed(2)} />
+              <Stat label="평균 LTV" value={fmtKrw(selected.avg_ltv_krw) + '원'} />
+            </div>
+          ) : (
+            <p className="text-xs text-ink-400 leading-relaxed">
+              지도에서 시도를 클릭하면 해당 지역의 회원 수·고위험 비율·평균 LTV가 표시됩니다.
+              {persona && ` 현재 ${persona.label} 페르소나 슬라이스만 집계.`}
+            </p>
+          )}
+
+          <section>
+            <h3 className="text-[11px] uppercase tracking-wider text-ink-400 font-semibold mb-2">
+              평균 이탈 위험 Top {Math.min(5, data?.regions.length ?? 0)}
+            </h3>
+            <ul className="space-y-1">
+              {(data?.regions ?? [])
+                .filter((r) => r.members > 0)
+                .sort((a, b) => b.avg_churn_risk - a.avg_churn_risk)
+                .slice(0, 5)
+                .map((r) => (
+                  <li
+                    key={r.region_code}
+                    onClick={() => onSelectRegion(r.region_code)}
+                    className="flex items-center justify-between text-xs px-2 py-1.5 rounded bg-ink-800 hover:bg-ink-700 cursor-pointer"
+                  >
+                    <span className="text-ink-100">{r.name_ko || r.region_code}</span>
+                    <span className={`font-mono ${r.avg_churn_risk >= 0.5 ? 'text-rose-300' : 'text-amber-300'}`}>
+                      {r.avg_churn_risk.toFixed(2)} · {r.at_risk}/{r.members}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </section>
+
+          <p className="text-[10px] text-ink-500 italic">
+            ※ Member.region_id 가 부여된 회원만 집계. 임계값 risk ≥ {(data?.high_risk_threshold ?? 0.7).toFixed(2)}.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function Stat({ label, value, tone = 'default' }: {
+  label: string;
+  value: string;
+  tone?: 'default' | 'rose';
+}) {
+  const TONE: Record<string, string> = {
+    default: 'text-ink-100',
+    rose: 'text-rose-300',
+  };
+  return (
+    <div className="rounded bg-ink-800 px-2 py-1.5">
+      <div className="text-[10px] uppercase tracking-wider text-ink-400">{label}</div>
+      <div className={`text-sm font-semibold ${TONE[tone]}`}>{value}</div>
     </div>
   );
 }

@@ -425,3 +425,79 @@ def churn_member(member_id: str) -> MemberDetail:
         recommended_campaign=recommended,
         subgraph=subgraph,
     )
+
+
+# ─── Map view (시도별 이탈 위험 분포) ─────────────────────────────────────
+
+
+class ChurnRegionRow(BaseModel):
+    region_code: str
+    name_ko: str
+    members: int
+    at_risk: int
+    avg_churn_risk: float
+    avg_ltv_krw: int
+
+
+class ChurnMapResponse(BaseModel):
+    persona_id: Optional[str] = None
+    persona_label_ko: Optional[str] = None
+    high_risk_threshold: float
+    regions: List[ChurnRegionRow]
+
+
+@router.get("/churn/map", response_model=ChurnMapResponse)
+def churn_map(persona: Optional[str] = None) -> ChurnMapResponse:
+    """시도(region)별 이탈 위험 집계.
+
+    Member.region_id 가 부여된 회원만 대상. persona가 주어지면 그 페르소나
+    슬라이스로 좁힘. 코로플레스 색은 클라이언트가 avg_churn_risk 또는
+    at_risk 비율로 결정.
+    """
+    persona_filter = (
+        "AND EXISTS { MATCH (m)-[:MATCHES_PERSONA]->(p:Persona {persona_id: $pid}) } "
+        if persona else ""
+    )
+    rows = neptune.open_cypher(
+        "MATCH (m:Member) "
+        "WHERE m.region_id IS NOT NULL " + persona_filter
+        + "OPTIONAL MATCH (m)-[:LIVES_IN]->(r:Region) "
+        "WITH coalesce(r.region_code, m.region_id) AS region_code, "
+        "     coalesce(r.name_ko, '') AS name_ko, "
+        "     count(m) AS members, "
+        "     sum(CASE WHEN m.churn_risk >= $hr THEN 1 ELSE 0 END) AS at_risk, "
+        "     avg(coalesce(m.churn_risk, 0.0)) AS avg_risk, "
+        "     avg(coalesce(m.ltv_krw, 0)) AS avg_ltv "
+        "RETURN region_code, name_ko, members, at_risk, avg_risk, avg_ltv "
+        "ORDER BY region_code",
+        parameters={"hr": HIGH_RISK, **({"pid": persona} if persona else {})},
+    )
+
+    # 페르소나 라벨 룩업 (UI 헤더용)
+    persona_label = None
+    if persona:
+        plr = neptune.open_cypher(
+            "MATCH (p:Persona {persona_id: $pid}) RETURN p.label_ko AS label",
+            parameters={"pid": persona},
+        )
+        if plr:
+            persona_label = str(plr[0].get("label") or "") or None
+
+    out = [
+        ChurnRegionRow(
+            region_code=str(r.get("region_code") or ""),
+            name_ko=str(r.get("name_ko") or ""),
+            members=int(r.get("members") or 0),
+            at_risk=int(r.get("at_risk") or 0),
+            avg_churn_risk=round(float(r.get("avg_risk") or 0.0), 3),
+            avg_ltv_krw=int(r.get("avg_ltv") or 0),
+        )
+        for r in rows
+        if r.get("region_code")
+    ]
+    return ChurnMapResponse(
+        persona_id=persona,
+        persona_label_ko=persona_label,
+        high_risk_threshold=HIGH_RISK,
+        regions=out,
+    )

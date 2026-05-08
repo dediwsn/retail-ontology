@@ -156,6 +156,10 @@ Scenario I — 이탈 위험 진단. Returns:
 - `recommended_winback`: campaigns where `type='winback'` with target personas
 - `subgraph`: 10 highest-risk members + their tier + persona nodes (Cytoscape contract)
 
+### `GET /api/churn/map?persona=<id>`
+
+시도(region)별 이탈 위험 집계 — `/churn` 페이지의 *지도 탭* 백엔드. `Member.region_id`가 부여된 회원만 대상으로 17 시도 집계 (`members`, `at_risk` 회원수, `avg_churn_risk`, `avg_ltv_krw`). `persona`로 페르소나 슬라이스로 좁힐 수 있음. 코로플레스 색은 클라이언트가 `avg_churn_risk` 정규화로 결정.
+
 ### `GET /api/churn/member/{member_id}`
 
 Scenario I drill-down. Returns the member's RFM, last 10 transactions, last 12 touchpoints, response_rate, persona-aware winback recommendation, and a 1-hop subgraph (member + tier + persona + last 5 tx + last 5 tp).

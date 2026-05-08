@@ -299,6 +299,29 @@ export async function churnMember(memberId: string): Promise<ChurnMemberDetailRe
   return res.json();
 }
 
+export type ChurnRegionRow = {
+  region_code: string;
+  name_ko: string;
+  members: number;
+  at_risk: number;
+  avg_churn_risk: number;
+  avg_ltv_krw: number;
+};
+
+export type ChurnMapResponse = {
+  persona_id: string | null;
+  persona_label_ko: string | null;
+  high_risk_threshold: number;
+  regions: ChurnRegionRow[];
+};
+
+export async function churnMap(persona?: string | null): Promise<ChurnMapResponse> {
+  const qs = persona ? `?persona=${encodeURIComponent(persona)}` : '';
+  const res = await fetch(`${BASE}/api/churn/map${qs}`);
+  if (!res.ok) throw new Error(`churn map failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 // ─── Scenario J — Acquisition Channel ROI ──────────────────────────────────
 
 export type CampaignRoi = {
