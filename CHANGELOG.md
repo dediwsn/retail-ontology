@@ -13,19 +13,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-08
+
+3 commits expanding the project surface from 12 → 13 scenarios:
+**Scenario M (VIP Target Builder)** with the Phase 2B external-consumption layer
+plus 4 follow-up tabs landing the full 5-axis VIP matrix. Sidebar version
+bumped `v0.5.0` → `v0.7.0`. New configurable company-logo button at sidebar
+top, defaulting to AWS, click-cycles through presets for live demo swap.
+
+### Added — Sidebar company logo (configurable, demo-friendly)
+- New `web/components/CompanyLogo.tsx` button at sidebar top-right next to the version pill. **Default = AWS** (per `NEXT_PUBLIC_DEFAULT_LOGO_PRESET`, falls back to `aws`). Clicking cycles through 4 bundled presets (AWS / Demo Blue / Retail Demo Emerald / CPG Demo Violet) and persists the selection in `localStorage` (key `ontology-retail.company-logo`) — no rebuild needed for live demo swap.
+- Adding a custom brand: drop your SVG into `web/public/logos/<id>.svg`, register the preset in `LOGO_PRESETS` in `CompanyLogo.tsx`. To make it the *default*, set `NEXT_PUBLIC_DEFAULT_LOGO_PRESET=<id>` in the web task-definition env block. See `web/public/logos/README.md`.
+
 ### Added — Scenario M tabs 2–5 (Loyal / Whale / Cross-category / Trajectory)
 - **`GET /api/vip/whale`** — internal `tier=VIP` + `LTV ≥ ltv_floor_krw` (defaults 5M). Persona-aware. Lists Whale candidates with monetary, frequency, recency, churn_risk for retention prioritisation.
-- **`GET /api/vip/loyal`** — Opportunity's mirror: `our_share ≥ share_floor` (default 0.7) AND `total_spend ≥ total_floor_krw` (default 1M) per (Member, IndustryCategory). Surfaces members where we hold dominant share — defensive marketing target.
+- **`GET /api/vip/loyal`** — Opportunity's mirror: `our_share ≥ share_floor` AND `total_spend ≥ total_floor_krw` per (Member, IndustryCategory). Defaults tuned to `share_floor=0.5` + `total_floor_krw=300_000` after the synthetic distribution analysis (median wallet share ≈ 0%, p90 ≈ 26%; the original 0.7/1M default produced 0 candidates — `ae4df57`). Surfaces members where we hold majority share — defensive marketing target. Slider lets the user dial up to 0.95 for stricter "dominant share" selection.
 - **`GET /api/vip/cross-category`** — single-category internal buyers (`distinct_internal_cats=1`) whose external spend in *non-overlapping* industries exceeds `external_floor_krw`. Up-sell / cross-sell candidates: tells you which industry to extend each member into.
 - **`GET /api/vip/trajectory`** — Q1/Q0 growth ratio ≥ `growth_floor` (default 1.2), `tier ≠ VIP`. Identifies "future VIPs" — members whose external + internal spend is rising fastest, ideal for early-upgrade campaigns.
-- Phase 2B data layer extended: `external_spend.json` now contains both 2026-Q1 and 2025-Q4 periods (~10,400 rows total) — prior-quarter snapshot enables the Trajectory growth ratio. Per-member growth factor distribution: 25% strong (q1/q0 ≥ 1.5×) / 35% mild (1.18×–1.54×) / 30% flat / 10% declining.
+- Phase 2B data layer extended: `external_spend.json` now contains both 2026-Q1 and 2025-Q4 periods (10,410 rows total = 2 × 5,205) — prior-quarter snapshot enables the Trajectory growth ratio. Per-member growth factor distribution: 25% strong (q1/q0 ≥ 1.5×) / 35% mild (1.18×–1.54×) / 30% flat / 10% declining.
 - Scenario M page: 4 stub tabs replaced with full implementations sharing a generic `CandidatesTable<T>` component, `SliderControl`, `KpiCard`, and persona context. All 5 tabs respect the active PersonaSwitch persona.
 
 ### Added — Scenario M (VIP Target Builder + external consumption layer)
-- New **Phase 2B external-consumption layer** in the synthetic data + graph: `IndustryCategory` nodes (10 industry-level categories — 스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` mapping to existing GS1 bricks, and `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` quarterly spend edges (~5,200, persona-biased).
+- New **Phase 2B external-consumption layer** in the synthetic data + graph: `IndustryCategory` nodes (10 industry-level categories — 스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` mapping to existing GS1 bricks (43 edges), and `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` quarterly spend edges (10,410 = Q1 5,205 + Q4 5,205, persona-biased).
 - New **`GET /api/vip/opportunity`** endpoint — wallet-share-aware "Opportunity VIP" identification. Joins external panel data with internal Transactions via the OVERLAPS_WITH bridge to compute `our_share = our_internal / (our_internal + external)` per (Member, IndustryCategory). Filters on `share_ceiling` + `total_floor_krw` + persona; returns ranked candidates with `untapped_krw` upside.
-- New **Scenario M page (`/vip`)** with 5-tab structure (Opportunity tab fully implemented; Loyal / Whale / Cross-category / Trajectory tabs are stubs flagged "다음 반복" — same data layer, just a different Cypher each).
+- New **Scenario M page (`/vip`)** with 5-tab structure — all 5 tabs (Opportunity / Loyal / Whale / Cross-category / Trajectory) fully implemented as of this release.
 - `data/synthetic/external.py` — deterministic generator (SHA1 PRNG), persona × industry multipliers (camper×3.5 outdoor, pregnant×2.5 baby food, sensitive_skin×2.5 skincare, etc.).
+
+### Changed
+- Sidebar version `v0.5.0` → `v0.7.0`. `web/package.json` version field bumped to match.
+- Sidebar header layout reflows to fit the new CompanyLogo button: `flex items-center justify-between` with truncating title block on the left.
 
 ### Documentation
 - All seven CLAUDE.md files refreshed: scenario count `A–H` → `A–L`, router count `14` → `18`, entity counts include the membership layer (1,000 members + 4 tiers + 20 campaigns + 7,862 transactions + 10,021 touchpoints + 5 spine personas / 45 total).
@@ -225,19 +241,33 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-05-08
+
+3 커밋, 시나리오 12 → 13 확장: **시나리오 M (VIP 타깃 빌더)** + Phase 2B 외부 소비 레이어
++ 4개 후속 탭 풀 구현. 사이드바 버전 `v0.5.0` → `v0.7.0`. 사이드바 상단에 *설정 가능한*
+회사 로고 버튼 신규 — 기본 AWS, 클릭으로 프리셋 순환하여 데모 중 *실시간 교체* 가능.
+
+### 추가 — 사이드바 회사 로고 (설정 가능, 데모 친화)
+- 신규 `web/components/CompanyLogo.tsx` 버튼이 사이드바 상단 우측, 버전 pill 옆에 표시. **기본값 = AWS** (`NEXT_PUBLIC_DEFAULT_LOGO_PRESET` 환경변수, 미설정 시 `aws`). 클릭하면 4개 번들 프리셋(AWS / Demo Blue / Retail Demo Emerald / CPG Demo Violet)을 순환하며 `localStorage` (`ontology-retail.company-logo`)에 저장 — *재배포 없이 라이브 데모 교체* 가능.
+- 커스텀 브랜드 추가: `web/public/logos/<id>.svg` 에 SVG 드롭, `CompanyLogo.tsx` 의 `LOGO_PRESETS` 에 한 줄 등록. *기본값* 으로 만들려면 web task-definition 환경변수 `NEXT_PUBLIC_DEFAULT_LOGO_PRESET=<id>`. 자세한 가이드는 `web/public/logos/README.md`.
+
 ### 추가 — 시나리오 M 탭 2~5 (Loyal / Whale / Cross-category / Trajectory)
 - **`GET /api/vip/whale`** — `tier=VIP` + `LTV ≥ ltv_floor_krw` (기본 5M). 페르소나 필터. retention 우선순위용 monetary/frequency/recency/churn_risk 동반.
-- **`GET /api/vip/loyal`** — Opportunity의 거울: `our_share ≥ share_floor` (기본 0.7) AND `total_spend ≥ total_floor_krw` (기본 1M). 우리가 압도적 점유율을 가진 (회원 × 카테고리) 식별 — *방어적* 마케팅 타깃.
+- **`GET /api/vip/loyal`** — Opportunity의 거울: `our_share ≥ share_floor` AND `total_spend ≥ total_floor_krw` (회원 × 카테고리) 식별. 합성 분포 분석(median wallet share ≈ 0%, p90 ≈ 26%) 후 기본값 `share_floor=0.5` + `total_floor_krw=300_000` 으로 튜닝 (초기 0.7/1M은 0건이라 — `ae4df57`). 슬라이더로 0.95까지 상향해 *압도적 점유* 좁힘 가능.
 - **`GET /api/vip/cross-category`** — 우리에게 1개 카테고리만 거래하는 회원 (`distinct_internal_cats=1`) + 그 회원의 *다른 industry* 외부 지출이 `external_floor_krw` 이상. up-sell/cross-sell 후보, 어느 industry로 확장할지 직접 알려줌.
 - **`GET /api/vip/trajectory`** — Q1/Q0 성장률 ≥ `growth_floor` (기본 1.2), `tier ≠ VIP`. *잠재 VIP* 식별 — 외부+내부 지출이 가장 빠르게 상승 중인 회원, 조기 격상 캠페인 ROI 최고.
-- Phase 2B 데이터 레이어 확장: `external_spend.json` 가 이제 2026-Q1과 2025-Q4 두 분기를 모두 포함 (~10,400 rows). 회원별 성장 분포: 25% 강성장(q1/q0 ≥ 1.5×) / 35% 약성장(1.18×–1.54×) / 30% flat / 10% 하락.
+- Phase 2B 데이터 레이어 확장: `external_spend.json` 가 이제 2026-Q1과 2025-Q4 두 분기를 모두 포함 (10,410 rows = 2 × 5,205). 회원별 성장 분포: 25% 강성장(q1/q0 ≥ 1.5×) / 35% 약성장(1.18×–1.54×) / 30% flat / 10% 하락.
 - 시나리오 M 페이지: 4개 stub 탭이 모두 풀 구현으로 교체. 5개 탭이 공통 `CandidatesTable<T>` + `SliderControl` + `KpiCard` 컴포넌트 + 페르소나 컨텍스트 공유.
 
 ### 추가 — 시나리오 M (VIP 타깃 빌더 + 외부 소비 레이어)
-- 신규 **Phase 2B 외부 소비 레이어** (합성 데이터 + 그래프): `IndustryCategory` 노드 10종 (스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` 기존 GS1 brick 매핑, `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` 분기별 지출 엣지 (~5,200건, 페르소나 편향).
+- 신규 **Phase 2B 외부 소비 레이어** (합성 데이터 + 그래프): `IndustryCategory` 노드 10종 (스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` 기존 GS1 brick 매핑 (43건), `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` 분기별 지출 엣지 (10,410 = Q1 5,205 + Q4 5,205, 페르소나 편향).
 - 신규 **`GET /api/vip/opportunity`** — wallet-share 기반 Opportunity VIP 식별. 외부 패널 데이터와 내부 Transaction을 OVERLAPS_WITH 브릿지로 조인하여 (Member, IndustryCategory)당 `our_share = our_internal / (our_internal + external)` 계산. `share_ceiling` + `total_floor_krw` + 페르소나로 필터링하고 `untapped_krw`(미점유 금액) 함께 반환.
-- 신규 **시나리오 M 페이지 (`/vip`)** — 5-탭 구조 (Opportunity는 풀 구현, Loyal/Whale/Cross-category/Trajectory는 "다음 반복" stub. 모두 동일 데이터 레이어 위에서 Cypher 1개씩 추가 가능).
+- 신규 **시나리오 M 페이지 (`/vip`)** — 5-탭 구조, 0.7.0 시점에는 *5개 탭 모두 풀 구현* 완료.
 - `data/synthetic/external.py` — 결정론적 generator (SHA1 PRNG), persona × industry multiplier (camper×3.5 outdoor, pregnant×2.5 영유아, sensitive_skin×2.5 스킨케어 등).
+
+### 변경
+- 사이드바 버전 `v0.5.0` → `v0.7.0`. `web/package.json` version 필드 동기.
+- 사이드바 헤더 layout 재구성 — `flex justify-between` 으로 좌측 타이틀(truncate) + 우측 신규 CompanyLogo 버튼 배치.
 
 ### 문서
 - 7개 CLAUDE.md 파일 전체 동기화 — 시나리오 카운트 `A–H` → `A–L`, 라우터 `14` → `18`, 엔티티 카운트에 멤버쉽 레이어 반영 (1,000 회원 + 4 등급 + 20 캠페인 + 7,862 거래 + 10,021 접점 + 5 spine 페르소나 / 총 45).

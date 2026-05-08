@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { SidebarAuth } from './SidebarAuth';
+import { CompanyLogo } from './CompanyLogo';
 
 type Item = {
   href: string;
@@ -103,16 +104,17 @@ export function Sidebar() {
   const pathname = usePathname() ?? '/';
   return (
     <aside className="w-72 shrink-0 bg-ink-900 border-r border-ink-700 flex flex-col">
-      <div className="h-14 flex items-center px-5 border-b border-ink-700">
-        <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center">
+      <div className="h-14 flex items-center justify-between px-5 border-b border-ink-700 gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-7 h-7 shrink-0 rounded-md bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center">
             <Network className="w-4 h-4 text-ink-950" />
           </div>
-          <div>
-            <div className="text-sm font-semibold text-ink-100 leading-tight">Ontology Retail</div>
-            <div className="text-[10px] text-ink-400 leading-tight">Korean CPG Demo · v0.5.0</div>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-ink-100 leading-tight truncate">Ontology Retail</div>
+            <div className="text-[10px] text-ink-400 leading-tight truncate">Korean CPG Demo · v0.7.0</div>
           </div>
         </div>
+        <CompanyLogo />
       </div>
 
       <nav className="flex-1 overflow-y-auto py-3">
