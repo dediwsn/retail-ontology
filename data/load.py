@@ -263,10 +263,29 @@ def load_neptune() -> Dict[str, int]:
     counts["reviews"] = len(items)
 
     # ─── Membership / Marketing (Phase 2A) ───────────────────────────────
-    # Order: tiers → campaigns (+TARGETS persona) → members (+BELONGS_TO tier,
-    # MATCHES_PERSONA) → transactions (+MADE, OF_PRODUCT) → touchpoints
-    # (+HAS_TOUCHPOINT, FROM_CAMPAIGN). All foreign keys reference entities
-    # already MERGE'd above (Persona, Product, Channel).
+    # Order: spine personas → tiers → campaigns (+TARGETS persona) → members
+    # (+BELONGS_TO tier, MATCHES_PERSONA) → transactions (+MADE, OF_PRODUCT)
+    # → touchpoints (+HAS_TOUCHPOINT, FROM_CAMPAIGN).
+
+    # 5-spine personas — referenced by Member.persona_id and Campaign.target
+    # but NOT in personas.ndjson (which uses psn_001..psn_040 narrative IDs).
+    # Without these MERGE rows the per_* MATCH in the member loader silently
+    # creates 0 MATCHES_PERSONA edges → all persona-filter queries return 0.
+    # Idempotent: existing psn_* nodes are untouched.
+    _SPINE_PERSONAS = [
+        ("per_pregnant",       "임산부"),
+        ("per_kid_4yo_mom",    "4세 아이 엄마"),
+        ("per_camper",         "캠퍼"),
+        ("per_sensitive_skin", "민감성 피부"),
+        ("per_gluten_allergy", "글루텐 알레르기"),
+    ]
+    for pid, label in _SPINE_PERSONAS:
+        neptune_cypher(
+            "MERGE (p:Persona {persona_id: $id}) "
+            "SET p.label_ko = coalesce(p.label_ko, $lk), "
+            "    p.is_spine = true",
+            {"id": pid, "lk": label},
+        )
 
     items = load_jsonish(OUTPUT_DIR / "tiers.json")
     for t in items:

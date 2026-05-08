@@ -139,13 +139,15 @@ def coverage_dashboard(
     # `dimension`은 프론트엔드 색 스케일 결정용 — 백엔드 응답은 4개 차원의
     # 원본 수치를 모두 포함하므로 클라이언트가 토글 시 재호출 불필요.
 
-    # 1. 회원 집계 — region_id 있는 회원만, persona 필터 옵션
+    # 1. 회원 집계 — LIVES_IN 트래버설로 region 결정. region_id property 대신
+    # 관계를 권위로 사용 (loader가 region_id를 property로 SET 안 함).
+    # persona 필터는 pattern expression form — Neptune의 EXISTS{MATCH} subquery
+    # form은 엔진 버전에 따라 MalformedQueryException을 던지므로 회피.
     member_q = (
-        "MATCH (m:Member) "
-        "WHERE m.region_id IS NOT NULL "
-        + ("AND EXISTS { MATCH (m)-[:MATCHES_PERSONA]->(p:Persona {persona_id: $pid}) } "
+        "MATCH (m:Member)-[:LIVES_IN]->(r:Region) "
+        + ("WHERE (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
            if persona else "")
-        + "RETURN m.region_id AS region_code, m.tier AS tier, "
+        + "RETURN r.region_code AS region_code, m.tier AS tier, "
         "       m.churn_risk AS churn_risk, m.ltv_krw AS ltv_krw"
     )
     params: Dict[str, Any] = {}
