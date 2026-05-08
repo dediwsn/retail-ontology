@@ -12,7 +12,7 @@ CDK snapshot tests live separately under `infra-cdk/test/` (Jest), not here.
 ## Layout
 
 - `conftest.py` — root pytest fixture; sets 18 dummy env vars (`AWS_REGION`, `NEPTUNE_ENDPOINT`, `OPENSEARCH_*`, `BEDROCK_*`, `AGENTCORE_MEMORY_ID`, S3 buckets, `ONTOLOGY_*`, `COGNITO_USER_POOL_CLIENT_ID`, `PUBLIC_DOMAIN`) so `api.config.Settings()` validates. Also flips `DEMO_PUBLIC_MODE=true` and `REQUIRE_ORIGIN_AUTH=false` to bypass auth middleware.
-- `test_smoke.py` — 16 tests: parametrized router import + `api.main.app` instantiation + `get_settings()`.
+- `test_smoke.py` — 20 tests: parametrized router import (18 routers) + `api.main.app` instantiation + `get_settings()`.
 - `api/conftest.py` — async `client` fixture using `httpx.ASGITransport` (no port binding, no real network).
 - `api/test_models.py` — Pydantic validation for `SearchRequest` / `SearchResponse` (required fields, bounds, defaults).
 - `api/test_health.py` — `/healthz` returns 200; unknown route 404.
@@ -49,7 +49,7 @@ CI runs `pytest tests -q` as the fourth job in `.github/workflows/ci.yml` after 
 
 1. **Pydantic model test**: drop into `tests/api/test_models.py`. Construct with valid data; assert defaults and validation errors. No fixtures needed.
 2. **Endpoint integration test**: create `tests/api/test_<router>_integration.py`. Use the `client` fixture from `api/conftest.py`. Patch service-layer calls at `api.routers.<router>.<service>.<func>`. Test 422 on bad payload + happy path + at least one error-isolation case.
-3. **Import smoke**: usually automatic — `tests/test_smoke.py` already parametrizes over the 14 router names. If a new router is added, append it to the list.
+3. **Import smoke**: usually automatic — `tests/test_smoke.py` already parametrizes over the 18 router names. If a new router is added, append it to the list.
 
 ## Gotchas
 

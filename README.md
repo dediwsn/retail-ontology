@@ -4,9 +4,9 @@
 [![English](https://img.shields.io/badge/lang-English-blue.svg)](#english)
 [![한국어](https://img.shields.io/badge/lang-한국어-red.svg)](#한국어)
 
-A 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph on AWS Bedrock + AgentCore + Neptune.
+A 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph on AWS Bedrock + AgentCore + Neptune (12 wow scenarios).
 
-AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프 7개 wow 시나리오를 보여주는 30–60분 PoC 데모.
+AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프 12개 wow 시나리오를 보여주는 30–60분 PoC 데모.
 
 ---
 
@@ -14,9 +14,9 @@ AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프
 
 ## Overview
 
-`ontology-retail` is a hands-on demonstration of how a domain ontology (products, ingredients, personas, channels, trends, reviews) can power seven distinct retail-experience scenarios on AWS managed AI services. The demo deploys a multi-tier application — FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure — that integrates Bedrock Sonnet 4.6, AgentCore Memory and Code Interpreter, Neptune openCypher, OpenSearch Serverless hybrid search, and CloudFront-fronted ECS Fargate.
+`ontology-retail` is a hands-on demonstration of how a domain ontology (products, ingredients, personas, channels, trends, reviews, members, regions) can power **twelve distinct retail-experience scenarios (A–L)** on AWS managed AI services. The demo deploys a multi-tier application — FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure — that integrates Bedrock Sonnet 4.6, AgentCore Memory and Code Interpreter, Neptune openCypher, OpenSearch Serverless hybrid search, and CloudFront-fronted ECS Fargate.
 
-The scenarios span semantic search, conversational agents with multi-turn memory, MD-grade analytics with streaming token summaries, persona matching, safety-lens filtering, substitution recommendations, and channel-aware price/availability comparison.
+The scenarios span semantic search, conversational agents with multi-turn memory, MD-grade analytics with streaming token summaries, persona matching, safety-lens filtering, substitution recommendations, channel-aware price/availability comparison, logistics network mapping, churn-risk diagnosis, acquisition-channel ROI, tier-up path lift analysis, and member-warehouse coverage mapping.
 
 ## Features
 
@@ -28,7 +28,11 @@ The scenarios span semantic search, conversational agents with multi-turn memory
 - **Substitute Finder (F)** — Same-category, cross-brand substitution traversal with price-delta cards.
 - **Price/Availability Compare (G)** — Four-channel (CU, eMart, Olive Young, Kurly) price/discount/stock matrix with persona-channel affinity weighting.
 - **Logistics Network (H)** — Korean choropleth map with 30 warehouses, 76 lanes, 940 inventory rows, KPI strip (OTD rate, active shipments, transit time, exceptions, active events), and an inline LLM panel for natural-language queries (`inventory_lookup`, `nearest_warehouses` haversine k-NN, `shortest_path` BFS).
-- **Knowledge Graph Explorer** — Per-type browsers for products, ingredients, concerns, trends, brands, categories, personas, channels, manufacturers, and reviews.
+- **Churn Risk (I)** — RFM-based `churn_risk` per Member with tier × persona breakdowns, Top-30 at-risk drilldown with 1-hop graph, persona-aware winback recommendation, and a 17-sido choropleth map tab keyed on average churn risk.
+- **Acquisition ROI (J)** — Per-campaign and per-channel ROI rollup (cost ÷ attributed LTV from responded touchpoints), plus a Persona × Channel response-rate heatmap (best channel per persona archetype).
+- **Tier-up Path (K)** — Silver→Gold lift on products and categories (per-capita Gold-rate ÷ Silver-rate with Laplace smoothing), upgrade-candidate ranking (Silver with LTV ≥ 1.5M sorted by gap-to-Gold), plus a 17-sido map tab keyed on candidate density.
+- **Coverage Map (L)** — Persona-filtered choropleth of member distribution by 시도 + Warehouse markers + 4-dimension toggle (count / avg churn / avg LTV / uncovered share) + radius slider. Single KPI "회원 중 N km 안에 거점 없는 비율" — the hub scenario that bridges membership · logistics · persona on one screen.
+- **Knowledge Graph Explorer** — Per-type browsers for products, ingredients, concerns, trends, brands, categories, personas, channels, manufacturers, reviews, regions, warehouses, carriers, events, members, tiers, campaigns, transactions, and touchpoints.
 - **Ontology Meta** — Cytoscape ER diagram, standards mapping CSV browser, and validation coverage report (INCI/FoodOn/GS1+KFDA/Loader).
 - **Operations Console** — Ingest counts, guardrail logs, AgentCore memory snapshots, eval pass-rate scoreboard, and tool-call trace timeline.
 
@@ -124,7 +128,7 @@ ontology-retail/
 │   ├── middleware_auth.py # Cognito JWT verification
 │   └── Dockerfile        # Multi-purpose: API server + one-shot data loader
 ├── web/                  # Next.js 14 frontend (TypeScript, ARM64)
-│   ├── app/              # App Router scenarios A-H + objects + ops + meta
+│   ├── app/              # App Router scenarios A-L + objects + ops + meta
 │   ├── components/       # PersonaSwitch, GuidedTour, CytoscapeView, Sidebar
 │   └── lib/api-client.ts # Typed SSE + REST client
 ├── infra-cdk/            # AWS CDK v2 infrastructure (TypeScript)
@@ -205,9 +209,9 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 개요
 
-`ontology-retail`은 한국 리테일/CPG 도메인 온톨로지(상품, 성분, 페르소나, 채널, 트렌드, 리뷰)가 AWS 매니지드 AI 서비스 위에서 일곱 가지 리테일 경험 시나리오를 어떻게 구동하는지 보여주는 PoC 데모입니다. FastAPI 백엔드, Next.js 14 프론트엔드, AWS CDK 인프라로 구성된 다층 애플리케이션이 Bedrock Sonnet 4.6, AgentCore Memory와 Code Interpreter, Neptune openCypher, OpenSearch Serverless 하이브리드 검색, CloudFront 앞단에 ECS Fargate를 통합합니다.
+`ontology-retail`은 한국 리테일/CPG 도메인 온톨로지(상품, 성분, 페르소나, 채널, 트렌드, 리뷰, 회원, 지역)가 AWS 매니지드 AI 서비스 위에서 **열두 가지 리테일 경험 시나리오 (A–L)** 를 어떻게 구동하는지 보여주는 PoC 데모입니다. FastAPI 백엔드, Next.js 14 프론트엔드, AWS CDK 인프라로 구성된 다층 애플리케이션이 Bedrock Sonnet 4.6, AgentCore Memory와 Code Interpreter, Neptune openCypher, OpenSearch Serverless 하이브리드 검색, CloudFront 앞단에 ECS Fargate를 통합합니다.
 
-시나리오는 의미 검색, 다회차 메모리 기반 대화형 에이전트, 토큰 스트리밍 요약을 갖춘 MD급 분석, 페르소나 매칭, 안전성 렌즈 필터링, 대체재 추천, 채널 인지 가격·가용성 비교, 한국 지도 기반 물류 네트워크에 걸쳐 있습니다.
+시나리오는 의미 검색, 다회차 메모리 기반 대화형 에이전트, 토큰 스트리밍 요약을 갖춘 MD급 분석, 페르소나 매칭, 안전성 렌즈 필터링, 대체재 추천, 채널 인지 가격·가용성 비교, 한국 지도 기반 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지에 걸쳐 있습니다.
 
 ## 주요 기능
 
@@ -219,7 +223,11 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - **대체재 추천 (F)** — 동일 카테고리·다른 브랜드 대체재 워크 + 가격 차이 카드.
 - **가격·가용성 비교 (G)** — 4채널(CU, 이마트, 올리브영, 마컬) 가격/할인/재고 매트릭스에 페르소나-채널 친화도 가중치를 적용합니다.
 - **물류 네트워크 (H)** — 한국 시도 choropleth 지도에 30 거점 + 76 lane + 940 재고 row, KPI 스트립(OTD 준수율 / 활성 출하 / 평균 transit / 예외 / 활성 이벤트), 자연어 질의용 인라인 LLM 패널(`inventory_lookup`, `nearest_warehouses` haversine k-NN, `shortest_path` BFS).
-- **지식그래프 객체 탐색** — 상품, 성분, 관심사, 트렌드, 브랜드, 카테고리, 페르소나, 채널, 제조사, 리뷰 별 탐색기.
+- **이탈 위험 진단 (I)** — 회원별 RFM 기반 `churn_risk` + 등급·페르소나별 분포 + 상위 30명 드릴다운(1-hop 그래프) + 페르소나 맞춤 winback 추천 + 17 시도 평균 이탈 위험 코로플레스 *지도 탭*.
+- **확보 채널 ROI (J)** — 캠페인별·채널별 ROI 롤업(비용 ÷ 응답 touchpoint 귀속 LTV) + Persona × Channel 응답률 히트맵.
+- **등급 상승 경로 (K)** — 상품·카테고리별 Silver→Gold lift(per-capita Laplace smoothing), LTV ≥ 1.5M Silver 회원 업그레이드 후보 + 17 시도 후보 밀도 *지도 탭*.
+- **회원-거점 커버리지 (L)** — 페르소나 컨텍스트로 필터링된 회원의 시도별 분포 코로플레스 + Warehouse 마커 + 4 차원 토글 + radius 슬라이더. KPI 하나 — "회원 중 N km 안에 거점 없는 비율" — 으로 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.
+- **지식그래프 객체 탐색** — 상품, 성분, 관심사, 트렌드, 브랜드, 카테고리, 페르소나, 채널, 제조사, 리뷰, 지역, 거점, 운송사, 이벤트, 회원, 등급, 캠페인, 거래, 접점 별 탐색기.
 - **온톨로지 메타** — Cytoscape ER 다이어그램, 표준 매핑 CSV 브라우저, 검증 커버리지 리포트(INCI/FoodOn/GS1+KFDA/Loader).
 - **운영 콘솔** — 적재 카운트, 가드레일 로그, AgentCore 메모리 스냅샷, 평가 pass-rate 스코어보드, 도구 호출 트레이스 타임라인.
 

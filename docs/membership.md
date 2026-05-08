@@ -72,7 +72,7 @@
 
 ```
 (Member)-[:BELONGS_TO]->(MembershipTier)
-(Member)-[:MATCHES_PERSONA]->(Persona)             # 옵셔널
+(Member)-[:MATCHES_PERSONA]->(Persona)             # 옵셔널, Member.persona_id가 spine(per_*)을 가리킴
 (Member)-[:PREFERS_CHANNEL]->(Channel)             # 옵셔널
 (Member)-[:LIVES_IN]->(Region)                     # 옵셔널, Phase 2A-G에서 추가
 (Member)-[:MADE]->(Transaction)
@@ -80,6 +80,8 @@
 (Member)-[:HAS_TOUCHPOINT]->(Touchpoint)
 (Touchpoint)-[:FROM_CAMPAIGN]->(Campaign)          # 캠페인 외 접점은 미연결
 (Campaign)-[:TARGETS]->(Persona)                   # 페르소나 타깃 캠페인
+(Persona)-[:DERIVED_FROM]->(Persona)               # narrative(psn_*)→spine(per_*) 브릿지, Phase 2A-G+
+                                                    # see ADR-0005, 10건, label keyword 기반 다중 매핑
 ```
 
 설계 의도:
@@ -320,3 +322,4 @@ CANDIDATE_LTV_FLOOR = 1_500_000   # Gold 임계 2M의 75% — 상위 후보군
 | 2026-04 | Phase 2A 초기 도입 — Member·Tier·Campaign·Transaction·Touchpoint 5종 + 7종 엣지. churn/acquisition/tier-up 라우터 동시 추가. |
 | 2026-05-07 | 본 설계 문서 작성. |
 | 2026-05-08 | **Phase 2A-G** — `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 추가. 페르소나 편향 시도 분포(`_persona_region_bias`)로 시나리오 L(Coverage Map) 기반 마련. |
+| 2026-05-08 | **Phase 2A-G+** — 5-spine `Persona` 노드 (`is_spine=true`) + `(narrative)-[:DERIVED_FROM]->(spine)` keyword 브릿지 (10 엣지) 추가. 라우터들이 spine·narrative 모두 받는 OR 패턴으로 전환. `/api/personas?segment_eligible=true` 필터 도입. ADR-0005 / 0006 참조. |

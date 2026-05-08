@@ -20,8 +20,10 @@ def test_api_main_imports() -> None:
 @pytest.mark.parametrize(
     "router_name",
     [
+        "acquisition",
         "auth",
         "chat",
+        "churn",
         "coverage",
         "health",
         "ingest",
@@ -35,6 +37,7 @@ def test_api_main_imports() -> None:
         "safety",
         "search",
         "substitute",
+        "tier_up",
     ],
 )
 def test_router_imports(router_name: str) -> None:

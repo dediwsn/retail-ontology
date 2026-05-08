@@ -265,9 +265,14 @@ Cost Explorer daily spend split by Bedrock / Neptune / OpenSearch with sparkline
 
 ## Persona
 
-### `GET /api/personas?limit=50`
+### `GET /api/personas?limit=50&segment_eligible=<bool>`
 
-40 synthetic personas with Korean labels and concern counts. Used by the global PersonaSwitch widget and the `/match` page.
+Persona listing for client pickers.
+
+- Default (`segment_eligible=false` or omitted) — returns all 45 personas (40 narrative `psn_*` + 5 spine `per_*`). Used by `/match` (scenario D).
+- `segment_eligible=true` — returns only personas that yield non-zero Members on segment-scenario filters: `is_spine=true` OR has outgoing `(p)-[:DERIVED_FROM]->(:Persona)` edge. ~14 items. Used by the global PersonaSwitch widget so the picker hides personas that would always return 0 on Coverage / Churn /map / Tier-up /map.
+
+Each item exposes `is_spine` (boolean), `is_bridged` (boolean), `bridge_targets[]` (which spine IDs this narrative bridges to), `concern_count`, plus standard fields. See [ADR-0005](decisions/0005-narrative-spine-keyword-bridge.md) and [ADR-0006](decisions/0006-persona-spine-coexistence.md) for the bifurcated persona model.
 
 ## Health
 

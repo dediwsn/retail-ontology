@@ -2,11 +2,12 @@
 
 ## Role
 
-HTTP surface for all eight scenarios (A–H) plus the knowledge-graph object explorer, ontology meta views, and operations console. Runs as `uvicorn api.main:app` on Fargate ARM64. The same image is reused as a one-shot loader via command override, so anything imported by `api.main` must also be importable inside the loader.
+HTTP surface for all twelve scenarios (A–L) plus the knowledge-graph object explorer, ontology meta views, and operations console. Runs as `uvicorn api.main:app` on Fargate ARM64. The same image is reused as a one-shot loader via command override, so anything imported by `api.main` must also be importable inside the loader.
 
 ## Layout
 
-- `routers/` — one file per API surface area: `auth, chat, health, ingest, insights, logistics, objects, ontology, ops, persona_match, price, safety, search, substitute`. Registered in `api/main.py:include_router`.
+- `routers/` — one file per API surface area: `acquisition, auth, chat, churn, coverage, health, ingest, insights, logistics, objects, ontology, ops, persona_match, price, safety, search, substitute, tier_up` (18 routers). Registered in `api/main.py:include_router`.
+- **Persona filter convention** — endpoints that filter by an active persona (coverage, churn /map, tier-up /map) accept either spine (`per_*`) or narrative (`psn_*`) IDs and use the OR pattern `(m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-(:Persona {persona_id: $pid})`. The narrative→spine bridge lets a UI that lists narrative personas still resolve to spine-linked Members. `/api/personas?segment_eligible=true` returns only spine + bridged narratives so the picker hides personas that would yield 0 results.
 - `services/` — boto3 / Neptune / OpenSearch / AgentCore wrappers. Each service module owns one external dependency.
 - `services/agent.py` — Bedrock Converse multi-turn with TOOL_SPECS (`semantic_search`, `kb_lookup`, `neptune_subgraph`, `memory_recall`, `inventory_lookup`, `nearest_warehouses`, `shortest_path`). The chat scenario (B) and the logistics inline panel both stream from `/api/chat`.
 - `aws_clients.py` — `@lru_cache` factory functions for boto3 clients/sessions. **Always call as functions** (`session().client(...)`, not `session.client(...)`).

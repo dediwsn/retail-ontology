@@ -13,6 +13,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+- All seven CLAUDE.md files refreshed: scenario count `A–H` → `A–L`, router count `14` → `18`, entity counts include the membership layer (1,000 members + 4 tiers + 20 campaigns + 7,862 transactions + 10,021 touchpoints + 5 spine personas / 45 total).
+- `docs/architecture.md` gains a Membership & Marketing layer section (EN + KR halves).
+- `docs/api-reference.md` documents `GET /api/personas?segment_eligible=true`.
+- `docs/membership.md` documents the `(narrative)-[:DERIVED_FROM]->(spine)` bridge in §2.2 and the new Phase 2A-G+ change-history row.
+- `README.md` features list expanded to 12 scenarios (EN + KR).
+- New ADRs: 0005 (narrative→spine keyword bridge), 0006 (persona spine/narrative coexistence), 0007 (member region distribution).
+- New runbooks: `deploy-production.md`, `reload-synthetic-data.md`, `ecr-auth-refresh.md`, `incident-loader-rollback.md` (`docs/runbooks/` was previously empty).
+- `tests/test_smoke.py` parametrize expanded from 15 to 18 routers (added `acquisition`, `churn`, `tier_up`).
+
 ## [0.5.0] — 2026-05-08
 
 7 commits + AWS deploy (api task-def revision 28, web revision 28). Scenario surface
@@ -200,6 +210,16 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### 문서
+- 7개 CLAUDE.md 파일 전체 동기화 — 시나리오 카운트 `A–H` → `A–L`, 라우터 `14` → `18`, 엔티티 카운트에 멤버쉽 레이어 반영 (1,000 회원 + 4 등급 + 20 캠페인 + 7,862 거래 + 10,021 접점 + 5 spine 페르소나 / 총 45).
+- `docs/architecture.md` 에 Membership & Marketing 레이어 섹션 추가 (EN + KR 양쪽).
+- `docs/api-reference.md` 에 `GET /api/personas?segment_eligible=true` 문서화.
+- `docs/membership.md` §2.2 에 `(narrative)-[:DERIVED_FROM]->(spine)` 브릿지 + Phase 2A-G+ 변경 이력 추가.
+- `README.md` 시나리오 목록 12개로 확장 (EN + KR).
+- 신규 ADR 3건: 0005 (narrative→spine keyword 브릿지), 0006 (페르소나 spine/narrative 공존), 0007 (회원 지역 분포).
+- 신규 runbook 4건: `deploy-production.md`, `reload-synthetic-data.md`, `ecr-auth-refresh.md`, `incident-loader-rollback.md` (`docs/runbooks/` 가 비어 있었음).
+- `tests/test_smoke.py` parametrize 가 15 → 18 라우터로 확장 (`acquisition`, `churn`, `tier_up` 추가).
 
 ## [0.5.0] — 2026-05-08
 

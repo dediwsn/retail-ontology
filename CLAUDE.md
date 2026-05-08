@@ -4,11 +4,15 @@ Project memory for Claude Code. This file is auto-loaded into every session and 
 
 ## Project
 
-`ontology-retail` is a 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph that powers eight wow scenarios on AWS Bedrock + AgentCore + Neptune. It is a multi-runtime monorepo: Python FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure, and a synthetic-data loader that doubles as a one-shot ECS task.
+`ontology-retail` is a 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph that powers twelve wow scenarios on AWS Bedrock + AgentCore + Neptune. It is a multi-runtime monorepo: Python FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure, and a synthetic-data loader that doubles as a one-shot ECS task.
 
 Custom domain: `https://retail-ontology.whchoi.net` (CloudFront + Lambda@Edge cookie auth → Cognito). Demo user: `demo / demo@whchoi.net`.
 
-The five-persona spine (임산부, 4세 아이, 캠퍼, 민감성 피부, 글루텐 알레르기) drives every demo path. Scenario A–H plus the knowledge-graph object explorer must remain coherent for the same persona context.
+The five-persona spine (임산부, 4세 아이, 캠퍼, 민감성 피부, 글루텐 알레르기) drives every demo path. Spine personas are stored as `Persona` nodes with `is_spine=true`; the 40 narrative personas (`psn_*`, descriptive Bedrock-narrated profiles) are bridged to spine via `(narrative)-[:DERIVED_FROM]->(spine)` so any persona selection in the UI resolves to spine-linked Members. Scenarios A–L plus the knowledge-graph object explorer must remain coherent for the same persona context.
+
+### Scenarios A–L (current)
+
+A search · B chat · C insights · D persona-match · E safety · F substitute · G price · H logistics · I churn · J acquisition · K tier-up · **L coverage map** (지도 기반 회원-거점 커버리지 허브 — 멤버쉽·물류·페르소나를 한 화면에서 직조).
 
 ## Tech Stack
 
@@ -149,7 +153,7 @@ python -m compileall -q api data scripts   # AST validation (also a CI job)
 
 When a session-level decision changes any of the following, update the corresponding doc immediately rather than letting it drift:
 
-- Adding a new scenario (A–Z badge): update sidebar in `web/components/Sidebar.tsx`, add page under `web/app/<slug>/`, add API router under `api/routers/<slug>.py`, register in `api/main.py`, document the route in [docs/api-reference.md](docs/api-reference.md), add a CHANGELOG entry, and add a step to `web/components/GuidedTour.tsx`.
+- Adding a new scenario (A–Z badge): update sidebar in `web/components/Sidebar.tsx`, add page under `web/app/<slug>/`, add API router under `api/routers/<slug>.py`, register in `api/main.py`, add a typed function + response types in `web/lib/api-client.ts`, add a card to the home page grid in `web/app/page.tsx` (with a unique color from the `CARD_COLOR` map), document the route in [docs/api-reference.md](docs/api-reference.md), add a CHANGELOG entry (EN + KR), append a smoke-test parametrize entry in `tests/test_smoke.py`, and add a step to `web/components/GuidedTour.tsx`.
 - Adding a new Knowledge Graph node type: update `_TYPE_REGISTRY` in `api/routers/objects.py`, `TYPE_META` in `web/app/objects/[type]/page.tsx`, sidebar 객체 탐색 section in `web/components/Sidebar.tsx`, `_CLASSES`/`_RELATIONS` in `api/routers/ontology.py`, the home page chip group in `web/app/page.tsx`, and (if persistent in synthetic data) `data/schemas.py` + a generator in `data/synthetic/`.
 - Adding a new agent tool: register in `api/services/agent.py:TOOL_SPECS` (JSON Schema), add a branch to `_dispatch_tool`, and update the system prompt with chaining hints if the tool depends on another (e.g., `semantic_search` → `inventory_lookup`).
 - Adding a new domain or alias: update CloudFront alias, ACM cert (us-east-1), Cognito callback URLs (full re-PUT — `update-user-pool-client` clobbers config), API task-def `PUBLIC_DOMAIN` env, and Route53. Lambda@Edge derives `redirect_uri` from the request `Host` header so it adapts automatically.

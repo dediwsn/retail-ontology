@@ -12,7 +12,7 @@
 
 `ontology-retail` is a multi-tier AWS-native demo for a Korean Retail/CPG knowledge graph. A FastAPI backend on Fargate fronts Bedrock + AgentCore + Neptune + OpenSearch, while a Next.js 14 frontend on Fargate provides scenario-specific UIs. CloudFront with Lambda@Edge cookie auth wraps the entire surface and a Cognito user pool gates access.
 
-Eight wow scenarios (A–H) span semantic search, conversational agent with memory, MD insights, persona match, safety, substitution, price/availability comparison, and logistics network. The ontology now includes a logistics layer (Region, Warehouse, Carrier, Route, Shipment, Event, Inventory) with a Korean choropleth map view (`react-simple-maps` + d3-geo + KOSTAT 행정구역 GeoJSON).
+Twelve wow scenarios (A–L) span semantic search, conversational agent with memory, MD insights, persona match, safety, substitution, price/availability comparison, logistics network, churn diagnosis, acquisition ROI, tier-up path, and member-warehouse coverage map. The ontology covers four layers — commerce/lifestyle (Phase 1–2), logistics (Phase 5), membership/marketing (Phase 2A), and member geography (Phase 2A-G) — with two Korean choropleth views (`react-simple-maps` + d3-geo + KOSTAT 행정구역 GeoJSON) shared across H/I/K/L.
 
 ## Components by Layer
 
@@ -42,6 +42,13 @@ Eight wow scenarios (A–H) span semantic search, conversational agent with memo
 - **Korean map** — react-simple-maps + d3-geo, `web/public/korea-provinces.json` (KOSTAT 17 시도, 146 KB), 5:4 viewBox preserves peninsula aspect at lat~36°N.
 - **Inventory model** — first-class `Inventory` node (`{wh_id, sku_id, on_hand_pallets, capacity_pallets, days_of_cover, temperature}`) so graph traversal, validation, and time-series extension all stay natural. Avoids edge-property gotchas in openCypher.
 - **Logistics agent tools** — `inventory_lookup`, `nearest_warehouses` (haversine k-NN), `shortest_path` (BFS over Route edges) registered in `api/services/agent.py:TOOL_SPECS`, callable from both the main chat (B) and the inline panel on `/logistics`.
+
+### Membership & Marketing (Phase 2A + Phase 2A-G)
+
+- **Member / MembershipTier / Campaign / Transaction / Touchpoint** — five new node types beneath the 5-persona spine. Edges: `BELONGS_TO`, `MATCHES_PERSONA`, `PREFERS_CHANNEL`, `MADE`, `OF_PRODUCT`, `HAS_TOUCHPOINT`, `FROM_CAMPAIGN`, `TARGETS`. Volumes: 1,000 members · 4 tiers · 20 campaigns · 7,862 transactions · 10,021 touchpoints.
+- **Persona spine + narrative bifurcation** — 5 spine personas (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`, all `is_spine=true`) drive segment scenarios; 40 narrative `psn_*` personas drive the persona-match scenario. `(narrative)-[:DERIVED_FROM]->(spine)` edges (10, computed from label-keyword matching at load time) bridge them so any persona selection in the UI resolves through `MATCHES_PERSONA` ➝ spine ➝ Member.
+- **Member geography (Phase 2A-G)** — `(Member)-[:LIVES_IN]->(Region)` with persona-biased KOSTAT 17-sido distribution (camper×3.0 강원, kid_4yo_mom×2.0 경기, …). Reuses the same `Region` nodes that logistics created, sharing the choropleth view.
+- **Scenarios** — I (`/churn` + `/api/churn/*`) RFM dashboard with map tab, J (`/acquisition` + `/api/acquisition/dashboard`) Campaign × Channel × Persona ROI matrix, K (`/tier-up` + `/api/tier-up/*`) Silver→Gold lift with map tab, L (`/coverage` + `/api/coverage/dashboard`) member-warehouse coverage hub. All four respect the active persona via `MATCHES_PERSONA` OR DERIVED_FROM-bridged 1-hop traversal.
 
 ### AI & Memory
 
@@ -145,7 +152,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 
 `ontology-retail`은 한국 리테일/CPG 지식그래프를 위한 다층 AWS-네이티브 데모입니다. Fargate의 FastAPI 백엔드가 Bedrock + AgentCore + Neptune + OpenSearch를 앞단에서 묶고, Fargate의 Next.js 14 프런트엔드가 시나리오별 UI를 제공합니다. CloudFront + Lambda@Edge 쿠키 인증이 전체 표면을 감싸고 Cognito 사용자 풀이 접근을 통제합니다.
 
-8개 wow 시나리오(A–H)는 의미 검색, 메모리 기반 대화형 에이전트, MD 인사이트, 페르소나 매칭, 안전성, 대체재, 가격·가용성, 물류 네트워크에 걸쳐 있습니다. 온톨로지에 물류 계층(Region, Warehouse, Carrier, Route, Shipment, Event, Inventory)이 추가되었고, 한국 시도 choropleth 지도(react-simple-maps + d3-geo + KOSTAT 행정구역 GeoJSON)가 포함됩니다.
+12개 wow 시나리오(A–L)는 의미 검색, 메모리 기반 대화형 에이전트, MD 인사이트, 페르소나 매칭, 안전성, 대체재, 가격·가용성, 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지에 걸쳐 있습니다. 온톨로지는 4개 계층(상거래/라이프스타일 Phase 1–2, 물류 Phase 5, 멤버쉽/마케팅 Phase 2A, 회원 지리 Phase 2A-G)으로 구성되며, H/I/K/L 시나리오가 동일한 KOSTAT 17 시도 choropleth 지도(react-simple-maps + d3-geo)를 공유합니다.
 
 ## 계층별 컴포넌트
 
@@ -175,6 +182,13 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 - **한국 지도** — react-simple-maps + d3-geo, `web/public/korea-provinces.json` (KOSTAT 17 시도, 146 KB), 5:4 viewBox로 위도 ~36°N에서 한반도 비율 자연 유지.
 - **Inventory 모델** — `Inventory`를 first-class 노드(`{wh_id, sku_id, on_hand_pallets, capacity_pallets, days_of_cover, temperature}`)로 둬서 그래프 워크 / 검증 / 시계열 확장 모두 자연스럽게. openCypher의 엣지 속성 제약을 우회.
 - **물류 에이전트 도구** — `inventory_lookup`, `nearest_warehouses` (haversine k-NN), `shortest_path` (Route 엣지 위 BFS)를 `api/services/agent.py:TOOL_SPECS`에 등록 — 메인 채팅(B)과 `/logistics` 인라인 패널 양쪽에서 호출 가능.
+
+### 멤버쉽 & 마케팅 (Phase 2A + Phase 2A-G)
+
+- **Member / MembershipTier / Campaign / Transaction / Touchpoint** — 5-페르소나 spine 아래 5개 신규 노드 타입. 엣지: `BELONGS_TO`, `MATCHES_PERSONA`, `PREFERS_CHANNEL`, `MADE`, `OF_PRODUCT`, `HAS_TOUCHPOINT`, `FROM_CAMPAIGN`, `TARGETS`. 규모: 1,000 회원 · 4 등급 · 20 캠페인 · 7,862 거래 · 10,021 접점.
+- **Persona spine + narrative 이중 구조** — 5 spine 페르소나 (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`, `is_spine=true`)가 *세그먼트* 시나리오를 구동. 40 narrative `psn_*` 페르소나는 *persona-match* 시나리오를 구동. `(narrative)-[:DERIVED_FROM]->(spine)` 엣지 (10건, 적재 시 라벨 키워드 매칭) 가 두 모델을 연결 — UI에서 어떤 페르소나를 골라도 `MATCHES_PERSONA` ➝ spine ➝ Member 경로로 도달.
+- **회원 지리 (Phase 2A-G)** — `(Member)-[:LIVES_IN]->(Region)`, KOSTAT 17 시도에 페르소나 편향 분포(camper×3.0 강원, kid_4yo_mom×2.0 경기 등). 물류 단에서 만들어진 `Region` 노드를 *재사용*하여 같은 코로플레스 뷰를 공유.
+- **시나리오** — I (`/churn` + `/api/churn/*`) RFM 대시보드 + 지도 탭, J (`/acquisition` + `/api/acquisition/dashboard`) Campaign × Channel × Persona ROI 매트릭스, K (`/tier-up` + `/api/tier-up/*`) Silver→Gold lift + 지도 탭, L (`/coverage` + `/api/coverage/dashboard`) 회원-거점 커버리지 허브. 4개 모두 `MATCHES_PERSONA` 또는 DERIVED_FROM-bridge 1-hop 트래버설로 활성 페르소나 반영.
 
 ### AI & Memory
 
