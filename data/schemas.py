@@ -228,3 +228,29 @@ class Touchpoint(BaseModel):
     type: TouchpointType
     ts: date
     responded: bool = False
+
+
+# ─── External Consumption (Phase 2B) ───────────────────────────────────────
+#
+# Models industry-level external panel data (NICE / 마이데이터 / Nielsen
+# style) layered above internal Transactions. Two new node types + one
+# spend edge. See ADR (TBD) for the wallet-share rationale.
+
+
+class IndustryCategory(BaseModel):
+    industry_id: str               # e.g. "ind_skincare"
+    name_ko: str
+    domain: Optional[str] = None   # "beauty" | "grocery" | "lifestyle"
+    baseline_krw_q: int            # quarterly median baseline (synthesis seed)
+    gs1_brick_codes: List[str] = Field(default_factory=list)
+    # ↑ Maps to existing Category nodes via OVERLAPS_WITH edge. May be empty
+    # for "blind spot" categories (household, outdoor) — that's intentional;
+    # zero overlap = our wallet share = 0 = strongest opportunity signal.
+
+
+class ExternalCategorySpend(BaseModel):
+    """One Member's quarterly spend in one IndustryCategory."""
+    member_id: str
+    industry_id: str
+    period: str                    # e.g. "2026-Q1" — single demo bucket
+    amount_krw: int

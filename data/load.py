@@ -423,6 +423,41 @@ def load_neptune() -> Dict[str, int]:
                 {"id": tp["touchpoint_id"], "cid": tp["campaign_id"]},
             )
     counts["touchpoints"] = len(items)
+
+    # ─── External Consumption (Phase 2B) — Industry-level wallet share ───
+    # IndustryCategory + OVERLAPS_WITH (existing GS1 categories) +
+    # HAS_CATEGORY_SPEND (member quarterly amounts). Drives Scenario M
+    # (VIP — Opportunity / Loyal / Cross-category / Trajectory).
+    items = load_jsonish(OUTPUT_DIR / "industry_categories.json")
+    for ic in items:
+        bricks = ic.get("gs1_brick_codes", []) or []
+        plain = _flatten_props({k: v for k, v in ic.items()
+                                if k != "gs1_brick_codes"})
+        neptune_cypher(
+            "MERGE (n:IndustryCategory {industry_id: $id}) SET n += $p",
+            {"id": ic["industry_id"], "p": plain},
+        )
+        for bc in bricks:
+            neptune_cypher(
+                "MATCH (i:IndustryCategory {industry_id: $iid}) "
+                "MERGE (c:Category {gs1_brick_code: $bc}) "
+                "MERGE (i)-[:OVERLAPS_WITH]->(c)",
+                {"iid": ic["industry_id"], "bc": bc},
+            )
+    counts["industry_categories"] = len(items)
+
+    items = load_jsonish(OUTPUT_DIR / "external_spend.json")
+    for s in items:
+        neptune_cypher(
+            "MATCH (m:Member {member_id: $mid}), "
+            "      (i:IndustryCategory {industry_id: $iid}) "
+            "MERGE (m)-[r:HAS_CATEGORY_SPEND {period: $period}]->(i) "
+            "SET r.amount_krw = $amt",
+            {"mid": s["member_id"], "iid": s["industry_id"],
+             "period": s["period"], "amt": int(s["amount_krw"])},
+        )
+    counts["external_spend"] = len(items)
+
     return counts
 
 

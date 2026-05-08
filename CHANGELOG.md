@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Scenario M (VIP Target Builder + external consumption layer)
+- New **Phase 2B external-consumption layer** in the synthetic data + graph: `IndustryCategory` nodes (10 industry-level categories — 스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` mapping to existing GS1 bricks, and `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` quarterly spend edges (~5,200, persona-biased).
+- New **`GET /api/vip/opportunity`** endpoint — wallet-share-aware "Opportunity VIP" identification. Joins external panel data with internal Transactions via the OVERLAPS_WITH bridge to compute `our_share = our_internal / (our_internal + external)` per (Member, IndustryCategory). Filters on `share_ceiling` + `total_floor_krw` + persona; returns ranked candidates with `untapped_krw` upside.
+- New **Scenario M page (`/vip`)** with 5-tab structure (Opportunity tab fully implemented; Loyal / Whale / Cross-category / Trajectory tabs are stubs flagged "다음 반복" — same data layer, just a different Cypher each).
+- `data/synthetic/external.py` — deterministic generator (SHA1 PRNG), persona × industry multipliers (camper×3.5 outdoor, pregnant×2.5 baby food, sensitive_skin×2.5 skincare, etc.).
+
 ### Documentation
 - All seven CLAUDE.md files refreshed: scenario count `A–H` → `A–L`, router count `14` → `18`, entity counts include the membership layer (1,000 members + 4 tiers + 20 campaigns + 7,862 transactions + 10,021 touchpoints + 5 spine personas / 45 total).
 - `docs/architecture.md` gains a Membership & Marketing layer section (EN + KR halves).
@@ -210,6 +216,12 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### 추가 — 시나리오 M (VIP 타깃 빌더 + 외부 소비 레이어)
+- 신규 **Phase 2B 외부 소비 레이어** (합성 데이터 + 그래프): `IndustryCategory` 노드 10종 (스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비), `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` 기존 GS1 brick 매핑, `(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)` 분기별 지출 엣지 (~5,200건, 페르소나 편향).
+- 신규 **`GET /api/vip/opportunity`** — wallet-share 기반 Opportunity VIP 식별. 외부 패널 데이터와 내부 Transaction을 OVERLAPS_WITH 브릿지로 조인하여 (Member, IndustryCategory)당 `our_share = our_internal / (our_internal + external)` 계산. `share_ceiling` + `total_floor_krw` + 페르소나로 필터링하고 `untapped_krw`(미점유 금액) 함께 반환.
+- 신규 **시나리오 M 페이지 (`/vip`)** — 5-탭 구조 (Opportunity는 풀 구현, Loyal/Whale/Cross-category/Trajectory는 "다음 반복" stub. 모두 동일 데이터 레이어 위에서 Cypher 1개씩 추가 가능).
+- `data/synthetic/external.py` — 결정론적 generator (SHA1 PRNG), persona × industry multiplier (camper×3.5 outdoor, pregnant×2.5 영유아, sensitive_skin×2.5 스킨케어 등).
 
 ### 문서
 - 7개 CLAUDE.md 파일 전체 동기화 — 시나리오 카운트 `A–H` → `A–L`, 라우터 `14` → `18`, 엔티티 카운트에 멤버쉽 레이어 반영 (1,000 회원 + 4 등급 + 20 캠페인 + 7,862 거래 + 10,021 접점 + 5 spine 페르소나 / 총 45).

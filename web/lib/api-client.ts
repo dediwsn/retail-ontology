@@ -515,6 +515,57 @@ export async function coverageDashboard(opts: {
   return res.json();
 }
 
+// ─── Scenario M — VIP Target Builder (외부 소비 + wallet share) ──────────
+
+export type OpportunityCandidate = {
+  member_id: string;
+  name_ko: string;
+  tier: string;
+  persona_id: string | null;
+  industry_id: string;
+  industry_ko: string;
+  our_spend_krw: number;
+  external_spend_krw: number;
+  total_spend_krw: number;
+  our_share: number;          // 0..1
+  untapped_krw: number;
+  churn_risk: number;
+};
+
+export type OpportunitySummary = {
+  persona_id: string | null;
+  persona_label_ko: string | null;
+  share_ceiling: number;
+  total_floor_krw: number;
+  candidate_count: number;
+  distinct_member_count: number;
+  sum_untapped_krw: number;
+  avg_our_share: number;
+  top_industry_id: string | null;
+  top_industry_ko: string | null;
+};
+
+export type OpportunityResponse = {
+  summary: OpportunitySummary;
+  candidates: OpportunityCandidate[];
+};
+
+export async function vipOpportunity(opts: {
+  persona?: string | null;
+  share_ceiling?: number;
+  total_floor_krw?: number;
+  top_k?: number;
+} = {}): Promise<OpportunityResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('share_ceiling', String(opts.share_ceiling ?? 0.3));
+  qs.set('total_floor_krw', String(opts.total_floor_krw ?? 500_000));
+  qs.set('top_k', String(opts.top_k ?? 30));
+  const res = await fetch(`${BASE}/api/vip/opportunity?${qs}`);
+  if (!res.ok) throw new Error(`vip opportunity failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 // ─── Wide-scope passthroughs for scenarios D/E/F/G/H + objects + ontology + ops
 //
 // These functions exist to satisfy import-resolution from the untracked

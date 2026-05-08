@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import {
   Play, X, ChevronLeft, ChevronRight, Search, MessageSquare, BarChart3,
   UserCheck, ShieldAlert, ArrowLeftRight, Store, BookOpen, Map,
-  TrendingDown, Wallet, ArrowUpRight, MapPin,
+  TrendingDown, Wallet, ArrowUpRight, MapPin, Target,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'ontology-retail.tour-seen';
@@ -134,6 +134,15 @@ const STEPS: Step[] = [
     pitch: '페르소나 컨텍스트로 필터링된 회원의 시도별 분포를 한국 지도에 코로플레스로 그리고, 같은 지도 위에 Warehouse 마커를 겹쳐 "내 페르소나 회원 중 N km 안에 거점이 없는 비율"을 한 KPI로 노출합니다. 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.',
     try_it: '페르소나를 "캠퍼"로 두면 강원·경상·제주 색이 짙어지고 거점 갭이 드러납니다. 차원 토글(회원 수 / 평균 이탈 / 평균 LTV / 미도달 비율)과 반경 슬라이더로 같은 지도에서 4개 보기를 비교해 보세요.',
     tech: 'Member.region_id × Region centroid · haversine to nearest Warehouse · persona-biased KOSTAT 17-sido distribution',
+  },
+  {
+    badge: 'M',
+    ko: 'VIP 타깃 빌더',
+    href: '/vip',
+    icon: Target,
+    pitch: '외부 소비 패널 데이터(NICE/마이데이터 스타일)를 멤버쉽 위에 얹어 *우리에게 보이지 않던* VIP를 식별합니다. 헤드라인 카드 = "Opportunity VIP" — 어떤 카테고리에서 외부 지출이 크지만 우리 점유율이 30% 미만인 회원. 같은 데이터 위에서 5가지 VIP 정의를 동시에 운용하는 wallet-share 분석 허브.',
+    try_it: '점유율 슬라이더를 ≤20%로, 카테고리 총액을 ≥1M으로 좁혀 보세요. 캠퍼 페르소나로 두면 외부 캠핑 장비/식품 지출이 큰 데 우리 점유율이 0~10%인 회원이 떠오릅니다 — 미점유(untapped) 금액 컬럼이 캠페인 우선순위 신호.',
+    tech: 'IndustryCategory + OVERLAPS_WITH(GS1 brick) + HAS_CATEGORY_SPEND(member, period) · wallet share = our_internal / (our_internal + external)',
   },
   {
     badge: '메타',

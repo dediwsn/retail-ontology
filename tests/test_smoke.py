@@ -38,6 +38,7 @@ def test_api_main_imports() -> None:
         "search",
         "substitute",
         "tier_up",
+        "vip",
     ],
 )
 def test_router_imports(router_name: str) -> None:

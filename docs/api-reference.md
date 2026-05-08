@@ -186,6 +186,23 @@ Scenario K — Silver→Gold lift + upgrade candidates. Returns:
 
 시도(region)별 등급 상승 후보 분포 — `/tier-up` 페이지의 *지도 탭* 백엔드. `Member.region_id`가 부여된 회원만 대상으로 17 시도 집계 (`silver_count`, `gold_count`, `candidate_count` = Silver 중 LTV ≥ `CANDIDATE_LTV_FLOOR`(1.5M), `avg_silver_ltv_krw`, `avg_gap_to_gold_krw`). `persona`로 페르소나 슬라이스 좁힘.
 
+## VIP Target Builder (Scenario M)
+
+### `GET /api/vip/opportunity?persona=<id>&share_ceiling=<float>&total_floor_krw=<int>&top_k=<int>`
+
+Wallet-share-aware "Opportunity VIP" identification. Joins three layers:
+1. `(Member)-[:HAS_CATEGORY_SPEND]->(IndustryCategory)` — quarterly external spend per industry (Phase 2B).
+2. `(Member)-[:MADE]->(Transaction)-[:OF_PRODUCT]->(Product)-[:IN_CATEGORY]->(Category)<-[:OVERLAPS_WITH]-(IndustryCategory)` — internal spend in the same industry, summed via the OVERLAPS_WITH bridge.
+3. Persona filter via the spine-or-narrative OR pattern (ADR-0006).
+
+Wallet-share semantics: `total_spend = our_internal + external_amt`; `our_share = our_internal / total_spend`. Returns member-industry rows where `total_spend ≥ total_floor_krw` AND `our_share ≤ share_ceiling`. Ordered by `total_spend DESC, our_share ASC` so the highest-impact growth opportunities surface first.
+
+Returns `{summary, candidates[]}`. Each candidate exposes `our_spend_krw`, `external_spend_krw`, `total_spend_krw`, `our_share` (0..1), `untapped_krw` (= `total - our_internal`, the upside if we captured the rest), and `churn_risk` (carried through for prioritisation).
+
+`summary.sum_untapped_krw` is the headline addressable-revenue KPI; `top_industry_id` highlights the dominant opportunity category in the current filter.
+
+Defaults: `share_ceiling=0.3`, `total_floor_krw=500000`, `top_k=30`.
+
 ## Coverage Map (Scenario L)
 
 ### `GET /api/coverage/dashboard?persona=<id>&dimension=<count|churn|ltv|uncov>&radius_km=<int>`
