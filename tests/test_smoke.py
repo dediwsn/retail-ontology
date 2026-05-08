@@ -22,6 +22,7 @@ def test_api_main_imports() -> None:
     [
         "auth",
         "chat",
+        "coverage",
         "health",
         "ingest",
         "insights",

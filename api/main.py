@@ -15,9 +15,9 @@ from fastapi.responses import JSONResponse
 from api.config import get_settings
 from api.middleware_auth import AuthMiddleware
 from api.routers import (
-    acquisition, auth, chat, churn, health, ingest, insights, logistics,
-    objects, ontology, ops, persona_match, price, safety, search,
-    substitute, tier_up,
+    acquisition, auth, chat, churn, coverage, health, ingest, insights,
+    logistics, objects, ontology, ops, persona_match, price, safety,
+    search, substitute, tier_up,
 )
 
 logger = logging.getLogger("ontology.api")
@@ -70,6 +70,7 @@ app.include_router(ingest.router, prefix="/api")
 app.include_router(churn.router, prefix="/api")
 app.include_router(acquisition.router, prefix="/api")
 app.include_router(tier_up.router, prefix="/api")
+app.include_router(coverage.router, prefix="/api")
 app.include_router(objects.router, prefix="/api")
 app.include_router(ontology.router, prefix="/api")
 app.include_router(logistics.router, prefix="/api")

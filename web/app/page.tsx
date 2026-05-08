@@ -19,7 +19,7 @@ type Scenario = {
   tag: string;
   title: string;
   desc: string;
-  color: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'cyan' | 'sky' | 'teal' | 'orange' | 'fuchsia' | 'yellow';
+  color: 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'cyan' | 'sky' | 'teal' | 'orange' | 'fuchsia' | 'yellow' | 'lime';
   icon: React.ComponentType<{ className?: string }>;
 };
 
@@ -35,6 +35,7 @@ const SCENARIOS: Scenario[] = [
   { href: '/churn',      tag: 'I', title: '이탈 위험 진단',     desc: 'RFM 기반 churn_risk + VIP/Gold 분포 + 페르소나 맞춤 winback 캠페인 추천.',               color: 'orange',   icon: TrendingDown },
   { href: '/acquisition',tag: 'J', title: '확보 채널 ROI',      desc: 'Campaign × Channel × Persona 매트릭스 — 카카오톡 푸시 vs 이메일 ROI 직관화.',           color: 'fuchsia',  icon: Wallet },
   { href: '/tier-up',    tag: 'K', title: '등급 상승 경로',     desc: 'Silver → Gold lift + LTV ≥ 1.5M 업그레이드 후보 추출 (per-capita Laplace smoothing).',  color: 'yellow',   icon: ArrowUpRight },
+  { href: '/coverage',   tag: 'L', title: '회원-거점 커버리지', desc: '회원 시도 분포 + Warehouse 마커 오버레이 + radius 슬라이더 — "내 페르소나 회원 중 N km 안에 거점 없는 비율" 단일 KPI.', color: 'lime',     icon: MapPin },
 ];
 
 // Color-class mappings — Tailwind needs literal class strings; this lets
@@ -51,6 +52,7 @@ const CARD_COLOR: Record<Scenario['color'], string> = {
   orange:   'from-orange-500/20 to-orange-500/0 border-orange-500/40',
   fuchsia:  'from-fuchsia-500/20 to-fuchsia-500/0 border-fuchsia-500/40',
   yellow:   'from-yellow-500/20 to-yellow-500/0 border-yellow-500/40',
+  lime:     'from-lime-500/20 to-lime-500/0 border-lime-500/40',
 };
 
 type ObjectType = {
@@ -133,7 +135,7 @@ export default function HomePage() {
           </h1>
           <p className="text-ink-300 max-w-3xl leading-relaxed">
             GS1 GPC + FoodOn + INCI + schema.org 표준에 한국 어댑터(KFDA / 식약처)를 매핑한 합성 데이터로,
-            11개 시나리오(의미 검색 → 등급 상승 경로)와 16종 Knowledge Graph 객체 탐색을 한 화면에 제공합니다.
+            12개 시나리오(의미 검색 → 회원-거점 커버리지)와 16종 Knowledge Graph 객체 탐색을 한 화면에 제공합니다.
             좌측 사이드바에서 객체 타입을 탐색하거나, 아래 시나리오 카드에서 바로 진입하세요.
           </p>
         </div>

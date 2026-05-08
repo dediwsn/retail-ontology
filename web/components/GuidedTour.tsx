@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import {
   Play, X, ChevronLeft, ChevronRight, Search, MessageSquare, BarChart3,
   UserCheck, ShieldAlert, ArrowLeftRight, Store, BookOpen, Map,
-  TrendingDown, Wallet, ArrowUpRight,
+  TrendingDown, Wallet, ArrowUpRight, MapPin,
 } from 'lucide-react';
 
 const STORAGE_KEY = 'ontology-retail.tour-seen';
@@ -125,6 +125,15 @@ const STEPS: Step[] = [
     pitch: 'Gold 회원이 Silver 회원 대비 더 많이 사는 카테고리·상품을 lift(per-capita 비교)로 산출해 "등급 상승 시그널"을 식별하고, LTV 1.5M~2M 사이 Silver 회원을 "업그레이드 후보"로 함께 추출합니다.',
     try_it: '상품 lift 차트에서 가장 높은 lift를 보이는 SKU 1-2개를 메모 — 그 카테고리를 어떤 후보에게 추천할지 매핑해 보세요.',
     tech: 'Cohort lift (Gold rate ÷ Silver rate) with Laplace smoothing · LTV gap-to-Gold candidate ranking',
+  },
+  {
+    badge: 'L',
+    ko: '회원-거점 커버리지',
+    href: '/coverage',
+    icon: MapPin,
+    pitch: '페르소나 컨텍스트로 필터링된 회원의 시도별 분포를 한국 지도에 코로플레스로 그리고, 같은 지도 위에 Warehouse 마커를 겹쳐 "내 페르소나 회원 중 N km 안에 거점이 없는 비율"을 한 KPI로 노출합니다. 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.',
+    try_it: '페르소나를 "캠퍼"로 두면 강원·경상·제주 색이 짙어지고 거점 갭이 드러납니다. 차원 토글(회원 수 / 평균 이탈 / 평균 LTV / 미도달 비율)과 반경 슬라이더로 같은 지도에서 4개 보기를 비교해 보세요.',
+    tech: 'Member.region_id × Region centroid · haversine to nearest Warehouse · persona-biased KOSTAT 17-sido distribution',
   },
   {
     badge: '메타',

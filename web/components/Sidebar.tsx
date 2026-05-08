@@ -43,6 +43,7 @@ const SECTIONS: Section[] = [
       { href: '/churn',      icon: TrendingDown,   label: '이탈 위험 진단', badge: 'I' },
       { href: '/acquisition',icon: Wallet,         label: '확보 채널 ROI',  badge: 'J' },
       { href: '/tier-up',    icon: ArrowUpRight,   label: '등급 상승 경로', badge: 'K' },
+      { href: '/coverage',   icon: MapPin,         label: '회원-거점 커버리지', badge: 'L' },
     ],
   },
   {

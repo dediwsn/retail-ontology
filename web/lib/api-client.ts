@@ -407,6 +407,66 @@ export async function tierUpDashboard(topK = 25): Promise<TierUpDashboardRespons
   return res.json();
 }
 
+// ─── Scenario L — Coverage Map (회원-거점 커버리지) ────────────────────────
+
+export type CoverageDimension = 'count' | 'churn' | 'ltv' | 'uncov';
+
+export type WarehouseMarker = {
+  warehouse_id: string;
+  name_ko: string;
+  type: string;          // mfr | rdc | 3pl | lastmile
+  region_code: string;
+  lat: number;
+  lng: number;
+};
+
+export type RegionCoverage = {
+  region_code: string;
+  name_ko: string;
+  lat: number;
+  lng: number;
+  members: number;
+  avg_churn_risk: number;
+  avg_ltv_krw: number;
+  tier_mix: Record<string, number>;
+  nearest_warehouse_id: string | null;
+  nearest_warehouse_km: number | null;
+  covered: boolean;
+};
+
+export type CoverageSummary = {
+  persona_id: string | null;
+  persona_label_ko: string | null;
+  radius_km: number;
+  total_members: number;
+  covered_members: number;
+  uncovered_members: number;
+  coverage_pct: number;
+  top_uncovered_region_code: string | null;
+  top_uncovered_region_ko: string | null;
+  top_uncovered_member_count: number;
+};
+
+export type CoverageDashboardResponse = {
+  summary: CoverageSummary;
+  regions: RegionCoverage[];
+  warehouses: WarehouseMarker[];
+};
+
+export async function coverageDashboard(opts: {
+  persona?: string | null;
+  dimension?: CoverageDimension;
+  radius_km?: number;
+} = {}): Promise<CoverageDashboardResponse> {
+  const qs = new URLSearchParams();
+  if (opts.persona) qs.set('persona', opts.persona);
+  qs.set('dimension', opts.dimension ?? 'count');
+  qs.set('radius_km', String(opts.radius_km ?? 80));
+  const res = await fetch(`${BASE}/api/coverage/dashboard?${qs}`);
+  if (!res.ok) throw new Error(`coverage dashboard failed: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
 // ─── Wide-scope passthroughs for scenarios D/E/F/G/H + objects + ontology + ops
 //
 // These functions exist to satisfy import-resolution from the untracked

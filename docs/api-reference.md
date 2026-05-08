@@ -178,6 +178,27 @@ Scenario K — Silver→Gold lift + upgrade candidates. Returns:
 - `category_lift`: same for Categories (top 15)
 - `upgrade_candidates`: Silver members with LTV ≥ 1.5M, sorted by gap-to-Gold and surfaced with churn_risk + frequency
 
+## Coverage Map (Scenario L)
+
+### `GET /api/coverage/dashboard?persona=<id>&dimension=<count|churn|ltv|uncov>&radius_km=<int>`
+
+Scenario L — 회원의 시도(sido)별 분포와 Warehouse 마커를 한국 지도에 겹쳐
+"내 페르소나 회원 중 N km 안에 거점이 없는 비율"이라는 단일 KPI를 노출.
+
+Query 파라미터:
+- `persona` (optional) — 페르소나 ID(`per_pregnant` 등). 미지정 시 전체 회원 1,000명 대상.
+- `dimension` (default `count`) — 코로플레스 색 결정용 클라이언트 힌트 (`count` 회원 수 / `churn` 평균 이탈위험 / `ltv` 평균 LTV / `uncov` 미도달 비율). 응답에는 4개 차원 원본 수치가 모두 들어 있어 토글 시 재호출 불필요.
+- `radius_km` (default 80, range 10–300) — 도달권 임계.
+
+응답:
+- `summary`: total_members, covered_members, uncovered_members, coverage_pct, top_uncovered_region_*, persona meta
+- `regions[]`: 17 시도 각각에 대해 region_code, name_ko, lat/lng, members, avg_churn_risk, avg_ltv_krw, tier_mix, nearest_warehouse_id/_km, covered
+- `warehouses[]`: warehouse_id, name_ko, type, region_code, lat/lng
+
+Coverage 판정은 시도 centroid → 가장 가까운 Warehouse haversine 거리 ≤ `radius_km`. Region centroid는 그래프 측 `r.lat`/`r.lng`가 있으면 사용, 없으면 in-code fallback dict (logistics-load 갭에 견고).
+
+선행 조건: PR1에서 추가된 `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 엣지가 적재되어 있어야 함. 없으면 전체 회원이 0명으로 집계됨.
+
 ## Knowledge Graph Object Explorer
 
 ### `GET /api/objects/{type}?limit=30`

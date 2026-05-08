@@ -13,6 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Scenario L — Coverage Map** (회원-거점 커버리지). Persona-filtered choropleth of member distribution by 시도 + Warehouse markers + 4-dimension toggle (member count / avg churn / avg LTV / uncovered share) + radius slider. Single KPI "회원 중 N km 안에 거점 없는 비율" — the hub scenario that bridges membership · logistics · persona on one screen.
+- `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` edge. Persona-biased KOSTAT 17-sido distribution: 임산부 → 수도권, 캠퍼 → 강원/경상, 4세맘 → 경기 신도시, 민감성피부 → 도시, 글루텐알레르기 → 균등. Camper persona over-indexes 강원 1.8× vs the overall average.
+- `GET /api/coverage/dashboard?persona=&dimension=&radius_km=` — persona filter, all 4 dimensions in one response (no re-fetch on toggle), haversine-based reachability judgment.
+
+### Changed
+- Scenario cards 11 → 12. Sidebar / home / guided-tour auto-synced per CLAUDE.md auto-sync rules.
+- `docs/membership.md` §8 "회원 위치 없음" limitation resolved; Phase 2A-G entry added to change history.
+
 ## [0.2.0] — 2026-05-01
 
 22 commits over 24 hours — Phase 1 (graph density toggle) + Phase 2 (membership/marketing
@@ -170,6 +179,15 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### 추가
+- **시나리오 L — 회원-거점 커버리지 지도**. 페르소나 컨텍스트로 필터링된 회원의 시도별 분포(코로플레스) + Warehouse 마커 + 4 차원 토글(회원 수 / 평균 이탈 / 평균 LTV / 미도달 비율) + radius 슬라이더. KPI 하나 — "내 페르소나 회원 중 N km 안에 거점 없는 비율" — 을 우상단에 노출하여 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.
+- `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 엣지. KOSTAT 17 시도 인구 baseline에 페르소나별 multiplier(임산부=수도권, 캠퍼=강원/경상, 4세맘=경기 신도시, 민감성피부=도시, 글루텐알레르기=균등)를 곱한 weighted pick. 1,000명 기준 강원 비율이 캠퍼 페르소나에서 7.7% vs 전체 4.3% (~1.8× over-index).
+- `GET /api/coverage/dashboard?persona=&dimension=&radius_km=` — 페르소나 필터, 4 차원 원본 수치 동시 반환(클라이언트 토글 재호출 불필요), haversine 기반 거점 도달권 판정.
+
+### 변경
+- 시나리오 카드 11 → 12개. 사이드바·홈페이지·가이드투어 자동 동기화.
+- `docs/membership.md` §8 "회원 위치 없음" 한계 해소 반영, 변경 이력에 Phase 2A-G 추가.
 
 ## [0.2.0] — 2026-05-01
 
