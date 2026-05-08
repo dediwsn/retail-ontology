@@ -108,7 +108,7 @@ export function Sidebar() {
           </div>
           <div>
             <div className="text-sm font-semibold text-ink-100 leading-tight">Ontology Retail</div>
-            <div className="text-[10px] text-ink-400 leading-tight">Korean CPG Demo · v0.2.0</div>
+            <div className="text-[10px] text-ink-400 leading-tight">Korean CPG Demo · v0.5.0</div>
           </div>
         </div>
       </div>

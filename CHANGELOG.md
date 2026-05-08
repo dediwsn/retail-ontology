@@ -13,16 +13,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [0.5.0] — 2026-05-08
+
+7 commits + AWS deploy (api task-def revision 28, web revision 28). Scenario surface
+expanded 11 → 12 with the new map-based hub L. Membership data model gains a geographic
+dimension and a narrative↔spine bridge that fixes a class of pre-existing persona-filter
+bugs across scenarios I/J/K. Sidebar version bumped from `v0.2.0` → `v0.5.0`.
+
+### Added — Scenario L (member-warehouse coverage hub)
 - **Scenario L — Coverage Map** (회원-거점 커버리지). Persona-filtered choropleth of member distribution by 시도 + Warehouse markers + 4-dimension toggle (member count / avg churn / avg LTV / uncovered share) + radius slider. Single KPI "회원 중 N km 안에 거점 없는 비율" — the hub scenario that bridges membership · logistics · persona on one screen.
 - `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` edge. Persona-biased KOSTAT 17-sido distribution: 임산부 → 수도권, 캠퍼 → 강원/경상, 4세맘 → 경기 신도시, 민감성피부 → 도시, 글루텐알레르기 → 균등. Camper persona over-indexes 강원 1.8× vs the overall average.
 - `GET /api/coverage/dashboard?persona=&dimension=&radius_km=` — persona filter, all 4 dimensions in one response (no re-fetch on toggle), haversine-based reachability judgment.
+- Map tabs on `/churn` and `/tier-up`. New `GET /api/churn/map?persona=` (per-region avg churn risk + at-risk count) and `GET /api/tier-up/map?persona=` (per-region Silver/Gold/candidate density + Gold-threshold gap) endpoints back them.
+
+### Added — Persona spine ↔ narrative bridge
+- 5-spine `Persona` nodes (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`) MERGE'd at the head of `load_membership` with `is_spine=true`. Coexists non-destructively with the 40 narrative `psn_*` nodes — total Persona count 45.
+- `(narrative:Persona)-[:DERIVED_FROM]->(spine:Persona)` keyword-bridge edges (10 edges from 9 narratives, multi-mapping supported — e.g. `psn_002` "워킹맘 (4세 글루텐알레르기)" links to both `per_kid_4yo_mom` and `per_gluten_allergy`).
+- `GET /api/personas?segment_eligible=true` — filters to spine + bridged narratives only (~14 personas). Each item exposes `is_spine`, `is_bridged`, `bridge_targets` so the client can group / badge.
 
 ### Changed
 - Scenario cards 11 → 12. Sidebar / home / guided-tour auto-synced per CLAUDE.md auto-sync rules.
+- PersonaSwitch widget now calls `listPersonas` with `segment_eligible: true`, groups items as **5-spine 페르소나** (top, with SPINE badge) and **Narrative (bridged)**. Picking any visible persona is guaranteed to return non-zero members in map endpoints.
+- Coverage / churn /map / tier-up /map routers use `MATCH (m:Member)-[:LIVES_IN]->(r:Region)` traversal (LIVES_IN edge as authoritative source for region) instead of property lookup, plus OR-pattern `(m)→spine OR (m)→spine←DERIVED_FROM←narrative` to accept both ID schemes.
+- Sidebar version `v0.2.0` → `v0.5.0`. `web/package.json` version field bumped to match.
 - `docs/membership.md` §8 "회원 위치 없음" limitation resolved; Phase 2A-G entry added to change history.
-- `/churn` page gains a *지도 (map)* tab — 17-sido choropleth of avg churn risk + per-region drill-down + Top 5 ranking + persona-slice header. New `GET /api/churn/map?persona=` endpoint backs it.
-- `/tier-up` page gains a *지도 (map)* tab — 17-sido choropleth of upgrade-candidate density (Silver tier with LTV ≥ 1.5M) + per-region Silver/Gold/candidate counts + Gold-threshold gap. New `GET /api/tier-up/map?persona=` endpoint.
+
+### Fixed
+- `/coverage`, `/churn /map`, `/tier-up /map` returning **500 MalformedQueryException** under `?persona=` — Neptune's openCypher engine rejects the `EXISTS { MATCH ... }` subquery form. Switched to pattern-expression form `(m)-[:R]->(...)` (universally supported).
+- All persona-filter queries returning **0 members** even when MATCHES_PERSONA edges should exist — root cause was the synthetic data using `per_*` IDs but `personas.ndjson` shipping only the 40 narrative `psn_*` nodes, so the loader's `MATCH (per:Persona {persona_id: $pid})` silently created 0 edges. Resolved by the spine MERGE + DERIVED_FROM bridge above.
+- "**선택하면 회원수 0**" UX failure when picking any narrative persona on Coverage/Churn map/Tier-up map — narratives now resolve to one or more spines via DERIVED_FROM, and unmappable narratives are hidden from the picker via `segment_eligible=true`.
 
 ## [0.2.0] — 2026-05-01
 
@@ -182,16 +201,35 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 
 ## [Unreleased]
 
-### 추가
+## [0.5.0] — 2026-05-08
+
+7 커밋 + AWS 배포 (api task-def revision 28, web revision 28). 시나리오 표면 11 → 12개로
+확장 (지도 기반 허브 L 신규). 멤버쉽 데이터 모델에 *지리적 차원*과 *narrative ↔ spine
+브릿지*가 추가되어 시나리오 I/J/K의 *사전부터 존재하던 페르소나 필터 0명 버그*가 해결됨.
+사이드바 버전 `v0.2.0` → `v0.5.0`.
+
+### 추가 — 시나리오 L (회원-거점 커버리지 허브)
 - **시나리오 L — 회원-거점 커버리지 지도**. 페르소나 컨텍스트로 필터링된 회원의 시도별 분포(코로플레스) + Warehouse 마커 + 4 차원 토글(회원 수 / 평균 이탈 / 평균 LTV / 미도달 비율) + radius 슬라이더. KPI 하나 — "내 페르소나 회원 중 N km 안에 거점 없는 비율" — 을 우상단에 노출하여 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.
 - `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 엣지. KOSTAT 17 시도 인구 baseline에 페르소나별 multiplier(임산부=수도권, 캠퍼=강원/경상, 4세맘=경기 신도시, 민감성피부=도시, 글루텐알레르기=균등)를 곱한 weighted pick. 1,000명 기준 강원 비율이 캠퍼 페르소나에서 7.7% vs 전체 4.3% (~1.8× over-index).
 - `GET /api/coverage/dashboard?persona=&dimension=&radius_km=` — 페르소나 필터, 4 차원 원본 수치 동시 반환(클라이언트 토글 재호출 불필요), haversine 기반 거점 도달권 판정.
+- `/churn` · `/tier-up` 페이지에 *지도 탭* 추가. 백엔드 `GET /api/churn/map?persona=` (시도별 평균 이탈 위험 + at-risk 수) · `GET /api/tier-up/map?persona=` (시도별 Silver/Gold/후보 밀도 + Gold 임계 갭) 신설.
+
+### 추가 — 페르소나 spine ↔ narrative 브릿지
+- 5-spine `Persona` 노드 (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`) — `is_spine=true` 속성으로 `load_membership` 시작점에서 MERGE. 기존 40 narrative `psn_*` 노드와 비파괴 공존 → 총 Persona 수 45.
+- `(narrative:Persona)-[:DERIVED_FROM]->(spine:Persona)` keyword 기반 브릿지 엣지 (9 narrative에서 10 엣지, 다중 매핑 지원 — 예: `psn_002` "워킹맘 (4세 글루텐알레르기)" 가 `per_kid_4yo_mom` + `per_gluten_allergy` 둘 다 연결).
+- `GET /api/personas?segment_eligible=true` — spine + bridged narrative 만 반환 (~14개). 항목마다 `is_spine`, `is_bridged`, `bridge_targets` 노출하여 클라이언트가 그룹/배지 표시 가능.
 
 ### 변경
 - 시나리오 카드 11 → 12개. 사이드바·홈페이지·가이드투어 자동 동기화.
+- PersonaSwitch 위젯이 `listPersonas` 호출에 `segment_eligible: true` 부여, 항목을 **5-spine 페르소나** (상단, SPINE 배지) + **Narrative (bridged)** 두 그룹으로 표시. 표시되는 어떤 페르소나를 골라도 지도 엔드포인트가 0명을 반환하지 않음을 보장.
+- Coverage / churn /map / tier-up /map 라우터가 `MATCH (m:Member)-[:LIVES_IN]->(r:Region)` 트래버설 (LIVES_IN 엣지를 region 권위로) + OR 패턴 `(m)→spine OR (m)→spine←DERIVED_FROM←narrative` 적용.
+- 사이드바 버전 `v0.2.0` → `v0.5.0`. `web/package.json` version 필드도 동기.
 - `docs/membership.md` §8 "회원 위치 없음" 한계 해소 반영, 변경 이력에 Phase 2A-G 추가.
-- `/churn` 페이지에 *지도 탭* 추가 — 17 시도 평균 이탈 위험 코로플레스 + 시도별 드릴다운 + Top 5 랭킹 + 페르소나 슬라이스 헤더. 백엔드 `GET /api/churn/map?persona=` 신설.
-- `/tier-up` 페이지에 *지도 탭* 추가 — 17 시도 업그레이드 후보(Silver, LTV ≥ 1.5M) 밀도 코로플레스 + 시도별 Silver/Gold/후보 수 + Gold 임계 갭. 백엔드 `GET /api/tier-up/map?persona=` 신설.
+
+### 수정
+- `/coverage`, `/churn /map`, `/tier-up /map` 가 `?persona=` 부여 시 **500 MalformedQueryException** 반환하던 버그 — Neptune openCypher 엔진이 `EXISTS { MATCH ... }` subquery form을 거부. 보편적 호환성을 갖는 pattern-expression form `(m)-[:R]->(...)` 으로 전환.
+- 모든 페르소나 필터 쿼리가 **0명** 반환하던 버그 — 합성 데이터는 `per_*` ID를 쓰지만 `personas.ndjson`에는 narrative `psn_*` 40개만 들어있어 로더의 `MATCH (per:Persona {persona_id: $pid})` 가 silently 0 엣지 생성. 위 spine MERGE + DERIVED_FROM 브릿지로 해소.
+- "**선택하면 회원수 0**" UX 실패 — narrative 페르소나 선택 시 Coverage/Churn map/Tier-up map 빈 응답. narrative가 DERIVED_FROM 으로 spine에 도달, 매핑 안되는 narrative는 `segment_eligible=true` 로 picker에서 숨김.
 
 ## [0.2.0] — 2026-05-01
 
