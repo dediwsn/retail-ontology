@@ -298,7 +298,8 @@ def load_neptune() -> Dict[str, int]:
                         "Gold": "tier_gold", "VIP": "tier_vip"}
     for m in items:
         plain = _flatten_props({k: v for k, v in m.items()
-                                if k not in ("persona_id", "primary_channel_id")})
+                                if k not in ("persona_id", "primary_channel_id",
+                                             "region_id")})
         neptune_cypher(
             "MERGE (n:Member {member_id: $id}) SET n += $p",
             {"id": m["member_id"], "p": plain},
@@ -321,6 +322,16 @@ def load_neptune() -> Dict[str, int]:
                 "MERGE (c:Channel {channel_id: $cid}) "
                 "MERGE (mb)-[:PREFERS_CHANNEL]->(c)",
                 {"mid": m["member_id"], "cid": m["primary_channel_id"]},
+            )
+        if m.get("region_id"):
+            # Region 노드는 시나리오 H(logistics) 측에서 적재되어 있다고 가정.
+            # 멱등 MERGE 패턴 — Region이 이미 있으면 매칭, 없으면 region_code만 갖는
+            # 최소 노드를 만들어 LIVES_IN 엣지가 끊기지 않게 한다.
+            neptune_cypher(
+                "MATCH (mb:Member {member_id: $mid}) "
+                "MERGE (r:Region {region_code: $rid}) "
+                "MERGE (mb)-[:LIVES_IN]->(r)",
+                {"mid": m["member_id"], "rid": m["region_id"]},
             )
     counts["members"] = len(items)
 

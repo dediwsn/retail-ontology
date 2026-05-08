@@ -195,6 +195,10 @@ class Member(BaseModel):
     ltv_krw: int
     churn_risk: float = Field(ge=0.0, le=1.0)
     primary_channel_id: Optional[str] = None
+    # KOSTAT 시도 코드 (Region.region_code). Phase 2A-G에서 추가 — 회원 위치를
+    # 페르소나 편향 분포로 결정론적으로 부여해 시나리오 L(Coverage Map)과 시나리오
+    # H(Logistics) 지도를 같은 페르소나 컨텍스트로 잇는다.
+    region_id: Optional[str] = None
 
 
 class Campaign(BaseModel):

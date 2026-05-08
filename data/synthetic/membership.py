@@ -172,6 +172,54 @@ _PERSONA_IDS = [
 _CHANNEL_IDS = ["chn_emart", "chn_kurly", "chn_cu", "chn_oliveyoung"]
 
 
+# KOSTAT 17 시도 인구(백만 명, 2024 추정) — region 분포의 baseline.
+# `_persona_region_bias`가 이 값에 페르소나별 multiplier를 곱해 weighted pick.
+_REGION_POPULATION_M: Dict[str, float] = {
+    "11": 9.7,   # 서울특별시
+    "21": 3.3,   # 부산광역시
+    "22": 2.4,   # 대구광역시
+    "23": 3.0,   # 인천광역시
+    "24": 1.4,   # 광주광역시
+    "25": 1.5,   # 대전광역시
+    "26": 1.1,   # 울산광역시
+    "29": 0.4,   # 세종특별자치시
+    "31": 13.4,  # 경기도
+    "32": 1.5,   # 강원특별자치도
+    "33": 1.6,   # 충청북도
+    "34": 2.1,   # 충청남도
+    "35": 1.8,   # 전북특별자치도
+    "36": 1.8,   # 전라남도
+    "37": 2.6,   # 경상북도
+    "38": 3.3,   # 경상남도
+    "39": 0.7,   # 제주특별자치도
+}
+
+
+def _persona_region_bias(persona_id: str) -> Dict[str, float]:
+    """페르소나별 시도 분포 가중치. 인구 baseline에 도메인 기반 multiplier를
+    곱해 데모 코히런스를 만든다 — 페르소나 스위치 시 지도 색이 즉시 달라지도록.
+
+    스토리 의도:
+      - 임산부:   수도권 결혼/출산 집중 → 11/31/23 ↑
+      - 4세맘:    경기 신도시 띠 → 31 강하게, 23/11 보조
+      - 캠퍼:     산림·캠핑 인프라 → 32/37/38/34/33/39 ↑
+      - 민감성피부: 도시 미세먼지 노출 → 11/31/23/21 ↑
+      - 글루텐알레르기: 통계적 지역성 약함 → 균등(인구 비례)
+    """
+    multipliers: Dict[str, Dict[str, float]] = {
+        "per_pregnant":        {"11": 1.6, "31": 1.7, "23": 1.4},
+        "per_kid_4yo_mom":     {"31": 2.0, "23": 1.5, "11": 1.2, "34": 1.2},
+        "per_camper":          {"32": 3.0, "37": 1.6, "38": 1.5, "34": 1.4,
+                                "33": 1.4, "39": 1.8},
+        "per_sensitive_skin":  {"11": 1.4, "31": 1.4, "23": 1.2, "21": 1.2},
+        "per_gluten_allergy":  {},
+    }
+    out: Dict[str, float] = dict(_REGION_POPULATION_M)
+    for code, mult in multipliers.get(persona_id, {}).items():
+        out[code] = _REGION_POPULATION_M[code] * mult
+    return out
+
+
 def _persona_tier_bias(persona_id: str) -> Dict[str, float]:
     """Each persona has a different tier distribution — drives wow-coherence
     (e.g. pregnancy / family personas skew higher LTV; camper skews seasonal
@@ -289,6 +337,7 @@ def generate_members() -> List[Dict[str, Any]]:
 
         churn_risk = _churn_risk(recency_days, frequency, tier)
         primary_channel_id = _stable_pick(f"{seed}-chn", _CHANNEL_IDS)
+        region_id = _weighted_pick(f"{seed}-rgn", _persona_region_bias(persona_id))
 
         out.append({
             "member_id": member_id,
@@ -305,6 +354,7 @@ def generate_members() -> List[Dict[str, Any]]:
             "ltv_krw": ltv,
             "churn_risk": churn_risk,
             "primary_channel_id": primary_channel_id,
+            "region_id": region_id,
         })
     return out
 

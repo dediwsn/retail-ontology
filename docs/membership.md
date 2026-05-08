@@ -50,6 +50,7 @@
 | `ltv_krw` | int | 라이프타임 누적 — tier 결정에 사용 |
 | `churn_risk` | float (0–1) | RFM + tier 보정으로 사전 계산 |
 | `primary_channel_id` | Optional[str] | 주 사용 채널 |
+| **`region_id`** | Optional[str] | KOSTAT 시도 코드 (`Region.region_code`) — Phase 2A-G에서 추가. 페르소나 편향 분포로 결정론 부여 |
 
 #### `Campaign` — 마케팅 캠페인
 | 필드 | 타입 | 비고 |
@@ -73,6 +74,7 @@
 (Member)-[:BELONGS_TO]->(MembershipTier)
 (Member)-[:MATCHES_PERSONA]->(Persona)             # 옵셔널
 (Member)-[:PREFERS_CHANNEL]->(Channel)             # 옵셔널
+(Member)-[:LIVES_IN]->(Region)                     # 옵셔널, Phase 2A-G에서 추가
 (Member)-[:MADE]->(Transaction)
 (Transaction)-[:OF_PRODUCT]->(Product)             # 기존 Product 노드와 연결
 (Member)-[:HAS_TOUCHPOINT]->(Touchpoint)
@@ -135,6 +137,21 @@ VIP에 `tier_floor: -0.05`를 더한 것은 *현실 반영*이 아니라 *데모
   → 캠페인 효과 분석이 안정된 곡선을 그림.
 
 - **캠페인 분포** — 20건 = acquisition 5 / retention 12 / winback 3 (실제 한국 리테일의 60·25·15 비중에 가깝도록 의도).
+
+- **시도(region) 분포 — `_persona_region_bias()`** (Phase 2A-G에서 추가)
+  KOSTAT 17 시도 인구를 baseline으로 하고 페르소나별 multiplier를 곱한 weighted pick:
+  | 페르소나 | over-index 시도 | 스토리 |
+  |---|---|---|
+  | per_pregnant | 11(서울) ×1.6, 31(경기) ×1.7, 23(인천) ×1.4 | 수도권 결혼·출산 집중 |
+  | per_kid_4yo_mom | 31(경기) ×2.0, 23(인천) ×1.5, 11(서울) ×1.2, 34(충남) ×1.2 | 경기·인천 신도시 띠 |
+  | per_camper | 32(강원) ×3.0, 39(제주) ×1.8, 37(경북) ×1.6, 38(경남) ×1.5, 34(충남)/33(충북) ×1.4 | 산림·캠핑 인프라 |
+  | per_sensitive_skin | 11(서울) ×1.4, 31(경기) ×1.4, 23(인천) ×1.2, 21(부산) ×1.2 | 도시 미세먼지 노출 |
+  | per_gluten_allergy | (균등) | 통계적 지역성 약함 |
+
+  결과 (1,000명 기준):
+  - per_camper의 강원 비율 7.7% vs 전체 평균 4.3% — **~1.8× over-indexed**, 코로플레스 색이 페르소나 스위치 시 *시각적으로* 변화
+  - per_kid_4yo_mom의 경기 비율 38.7% vs 전체 29.3%
+  - 전체 분포는 한국 실제 인구 비례와 대체로 일치 (경기 29.3% vs 실제 26%, 서울 18.3% vs 19%)
 
 ### 3.4 출력 파일
 
@@ -275,7 +292,7 @@ CANDIDATE_LTV_FLOOR = 1_500_000   # Gold 임계 2M의 75% — 상위 후보군
 |---|---|---|
 | 시간-시계열 tier 전이 | 없음 — 모든 회원은 *현재* tier만 보유 | 별도 `TierHistory` 노드 또는 Member에 `tier_history: [{tier, since}]` 추가 |
 | Touchpoint → Transaction 인과 | 직접 엣지 없음, 시간 윈도우 추론만 | `(Touchpoint)-[ATTRIBUTED_TO]->(Transaction)` (decay window + 모델 학습) |
-| 회원 위치 | `Member`에 region/주소 없음 → 시나리오 H 물류와 직접 연결 불가 | `(Member)-[LIVES_IN]->(Region)` 추가, Warehouse 도달 거리 계산 |
+| ~~회원 위치~~ | ~~`Member`에 region/주소 없음~~ | **Phase 2A-G에서 해소** — `region_id` 필드 + `(Member)-[:LIVES_IN]->(Region)` 엣지 추가, 페르소나 편향 분포 적용. 시나리오 L(Coverage Map) 도입 기반 |
 | 다중 페르소나 | `MATCHES_PERSONA`는 0–1개 | 카디널리티 N:M으로 변경 (그래프 자체는 이미 지원, Pydantic만 List[str]로) |
 | Channel 이력 | `primary_channel_id` 단일값 | `(Member)-[USED_CHANNEL {ts, count}]->(Channel)` 다중 엣지 |
 | 가족·관계 | 없음 | `(Member)-[FAMILY_OF]->(Member)` — 4세 아이 엄마 시나리오 강화 |
@@ -301,4 +318,5 @@ CANDIDATE_LTV_FLOOR = 1_500_000   # Gold 임계 2M의 75% — 상위 후보군
 | 일자 | 변경 |
 |---|---|
 | 2026-04 | Phase 2A 초기 도입 — Member·Tier·Campaign·Transaction·Touchpoint 5종 + 7종 엣지. churn/acquisition/tier-up 라우터 동시 추가. |
-| 2026-05 | 본 설계 문서 작성. |
+| 2026-05-07 | 본 설계 문서 작성. |
+| 2026-05-08 | **Phase 2A-G** — `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 추가. 페르소나 편향 시도 분포(`_persona_region_bias`)로 시나리오 L(Coverage Map) 기반 마련. |
