@@ -170,20 +170,43 @@ def persona_match(req: PersonaMatchRequest) -> PersonaMatchResponse:
 
 
 @router.get("/personas")
-def list_personas(limit: int = 50) -> Dict[str, Any]:
-    """Light listing for the persona picker — no graph computation."""
+def list_personas(
+    limit: int = 50,
+    segment_eligible: bool = False,
+) -> Dict[str, Any]:
+    """Light listing for the persona picker — no graph computation.
+
+    `segment_eligible=true` 는 *세그먼트 시나리오* (Coverage / Churn /map /
+    Tier-up /map 등 spine MATCHES_PERSONA에 의존하는 화면) 에서 사용 —
+    spine persona(`is_spine=true`) 또는 narrative→spine bridge(`DERIVED_FROM`
+    엣지가 있는 narrative)만 반환해서 *선택해도 0명 나오는* 페르소나를
+    드롭다운에서 숨김. 기본값 false 는 기존 narrative-rich 시나리오
+    (/match 등)와의 backward compat 유지.
+
+    각 항목에 `is_spine`, `is_bridged`, `bridge_targets` 필드를 노출해
+    클라이언트가 시각적으로 구분 가능 (예: spine을 상단 그룹화).
+    """
+    eligibility_filter = (
+        "WHERE p.is_spine = true OR (p)-[:DERIVED_FROM]->(:Persona) "
+        if segment_eligible else ""
+    )
     rows = neptune.open_cypher(
         f"MATCH (p:Persona) "
+        f"{eligibility_filter}"
         f"OPTIONAL MATCH (p)-[:HAS_CONCERN]->(c:Concern) "
-        f"WITH p, count(DISTINCT c) AS concern_count "
-        f"RETURN p, concern_count "
-        f"ORDER BY concern_count DESC LIMIT {max(1, min(int(limit), 100))}"
+        f"OPTIONAL MATCH (p)-[:DERIVED_FROM]->(s:Persona) "
+        f"WITH p, count(DISTINCT c) AS concern_count, "
+        f"     collect(DISTINCT s.persona_id) AS bridges "
+        f"RETURN p, concern_count, bridges "
+        f"ORDER BY p.is_spine DESC, concern_count DESC "
+        f"LIMIT {max(1, min(int(limit), 100))}"
     )
     items = []
     for r in rows:
         p = _props(r.get("p"))
         if not p:
             continue
+        bridges = [b for b in (r.get("bridges") or []) if b]
         items.append({
             "persona_id": p.get("persona_id"),
             "label_ko": p.get("label_ko") or p.get("name_ko") or "(unnamed)",
@@ -192,6 +215,9 @@ def list_personas(limit: int = 50) -> Dict[str, Any]:
             "life_stage_ko": p.get("life_stage_ko"),
             "narrative_ko": p.get("narrative_ko"),
             "is_wow": bool(p.get("is_wow")),
+            "is_spine": bool(p.get("is_spine")),
+            "is_bridged": len(bridges) > 0,
+            "bridge_targets": bridges,
             "concern_count": int(r.get("concern_count") or 0),
         })
     return {"items": items, "total": len(items)}

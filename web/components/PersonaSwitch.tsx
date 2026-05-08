@@ -11,7 +11,12 @@ import { ChevronDown, X, UserCheck } from 'lucide-react';
 import * as api from '@/lib/api-client';
 import { useActivePersona } from '@/lib/persona-context';
 
-type PersonaItem = { persona_id: string; label: string };
+type PersonaItem = {
+  persona_id: string;
+  label: string;
+  is_spine?: boolean;
+  is_bridged?: boolean;
+};
 
 export function PersonaSwitch() {
   const { active, setActive } = useActivePersona();
@@ -21,15 +26,25 @@ export function PersonaSwitch() {
   const [filter, setFilter] = useState('');
   const popRef = useRef<HTMLDivElement | null>(null);
 
-  // Lazy-load on first open. Backend `/api/personas` returns up to 50.
+  // Lazy-load on first open. Backend filters to spine + bridged narratives
+  // (segment_eligible=true) — narratives without a DERIVED_FROM bridge are
+  // hidden because they always return 0 members on Coverage / Churn /map /
+  // Tier-up /map. Result: ~15 personas (5 spine + 10 bridged) instead of 40.
   useEffect(() => {
     if (!open || list) return;
-    api.listPersonas(50)
+    api.listPersonas(50, { segment_eligible: true })
       .then((res) => {
-        const items = res.items.map((p) => ({
+        const items = res.items.map((p: any) => ({
           persona_id: p.persona_id,
           label: p.label_ko || p.persona_id,
+          is_spine: !!p.is_spine,
+          is_bridged: !!p.is_bridged,
         }));
+        // Sort spine first, then bridged narratives, then alphabetical-ish.
+        items.sort((a: PersonaItem, b: PersonaItem) => {
+          if (a.is_spine !== b.is_spine) return a.is_spine ? -1 : 1;
+          return a.persona_id.localeCompare(b.persona_id);
+        });
         setList(items);
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'load failed'));
@@ -99,32 +114,62 @@ export function PersonaSwitch() {
               <div className="p-3 text-xs text-ink-500 italic">일치하는 페르소나가 없습니다.</div>
             )}
             <ul>
-              {filtered.map((p) => {
-                const isActive = active?.id === p.persona_id;
-                return (
-                  <li key={p.persona_id}>
-                    <button
-                      onClick={() => {
-                        setActive({ id: p.persona_id, label: p.label });
-                        setOpen(false);
-                      }}
-                      className={[
-                        'w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 transition',
-                        isActive
-                          ? 'bg-orange-500/15 text-orange-200'
-                          : 'text-ink-300 hover:bg-ink-800',
-                      ].join(' ')}
-                    >
-                      <span className="truncate">{p.label}</span>
-                      <span className="font-mono text-[10px] text-ink-500 shrink-0">{p.persona_id}</span>
-                    </button>
-                  </li>
-                );
-              })}
+              {/* Group label — spine vs bridged narratives */}
+              {filtered.length > 0 && filtered.some((p) => p.is_spine) && (
+                <li className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wider text-ink-500 font-semibold">
+                  5-spine 페르소나
+                </li>
+              )}
+              {filtered.filter((p) => p.is_spine).map((p) => (
+                <PersonaRow key={p.persona_id} p={p} active={active}
+                            onSelect={() => { setActive({ id: p.persona_id, label: p.label }); setOpen(false); }} />
+              ))}
+              {filtered.some((p) => !p.is_spine) && (
+                <li className="px-3 pt-3 pb-1 text-[10px] uppercase tracking-wider text-ink-500 font-semibold border-t border-ink-700/60 mt-1">
+                  Narrative (bridged)
+                </li>
+              )}
+              {filtered.filter((p) => !p.is_spine).map((p) => (
+                <PersonaRow key={p.persona_id} p={p} active={active}
+                            onSelect={() => { setActive({ id: p.persona_id, label: p.label }); setOpen(false); }} />
+              ))}
             </ul>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function PersonaRow({
+  p, active, onSelect,
+}: {
+  p: PersonaItem;
+  active: { id: string; label: string } | null;
+  onSelect: () => void;
+}) {
+  const isActive = active?.id === p.persona_id;
+  return (
+    <li>
+      <button
+        onClick={onSelect}
+        className={[
+          'w-full text-left px-3 py-2 text-xs flex items-center justify-between gap-2 transition',
+          isActive
+            ? 'bg-orange-500/15 text-orange-200'
+            : 'text-ink-300 hover:bg-ink-800',
+        ].join(' ')}
+      >
+        <span className="truncate flex items-center gap-1.5">
+          {p.is_spine && (
+            <span className="text-[9px] font-mono px-1 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40">
+              SPINE
+            </span>
+          )}
+          {p.label}
+        </span>
+        <span className="font-mono text-[10px] text-ink-500 shrink-0">{p.persona_id}</span>
+      </button>
+    </li>
   );
 }

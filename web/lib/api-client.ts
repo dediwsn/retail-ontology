@@ -579,8 +579,12 @@ export const safetyCheck = (body: unknown) =>
   _post<SafetyCheckResponse>(`/api/safety-check`, body, 'safetyCheck');
 
 // Persona match (D)
-export const listPersonas = (limit = 60) =>
-  _get<PersonaListItem[]>(`/api/personas?limit=${limit}`, 'listPersonas');
+export const listPersonas = (limit = 60, opts: { segment_eligible?: boolean } = {}) =>
+  _get<PersonaListItem[]>(
+    `/api/personas?limit=${limit}` +
+      (opts.segment_eligible ? '&segment_eligible=true' : ''),
+    'listPersonas',
+  );
 export const personaMatch = (personaId: string, topK = 10) =>
   _post<PersonaMatchResponse>(`/api/persona-match`, { persona_id: personaId, top_k: topK }, 'personaMatch');
 
