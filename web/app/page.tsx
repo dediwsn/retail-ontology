@@ -132,7 +132,7 @@ export default function HomePage() {
             Korean Retail / CPG · Ontology Demo
           </p>
           <h1 className="text-4xl font-bold text-ink-50 leading-tight mb-3">
-            편의점 · 마트 · 드럭스토어 · 프리미엄 새벽배송 데이터를{' '}
+            리테일·CPG 데이터를{' '}
             <span className="text-accent-300">온톨로지 그래프</span>로 풀어내는 데모
           </h1>
           <p className="text-ink-300 leading-relaxed">
