@@ -132,7 +132,7 @@ export default function HomePage() {
             Korean Retail / CPG · Ontology Demo
           </p>
           <h1 className="text-4xl font-bold text-ink-50 leading-tight mb-3">
-            리테일·CPG 데이터를 온톨로지/<span className="text-accent-300">Agentic AI</span>로 풀어내는 데모
+            리테일·CPG 데이터를 <span className="text-accent-300">온톨로지</span>/<span className="text-accent-300">Agentic AI</span>로 풀어내는 데모
           </h1>
           <p className="text-ink-300 leading-relaxed">
             GS1 GPC + FoodOn + INCI + schema.org 표준에 한국 어댑터(KFDA / 식약처)를 매핑한 합성 데이터로,
