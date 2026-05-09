@@ -12,26 +12,15 @@ import pytest
 from tests.fixtures import AGENT_STREAM_EVENTS
 
 
+@pytest.mark.parametrize("payload", [
+    {"session_id": "sess1234"},                            # missing message
+    {"session_id": "ab", "message": "hi"},                 # session_id < min_length=4
+    {"session_id": "sess1234", "message": "x" * 4001},     # message > max_length=4000
+])
 @pytest.mark.asyncio
-async def test_chat_rejects_missing_message(client) -> None:
-    resp = await client.post("/api/chat", json={"session_id": "sess1234"})
-    assert resp.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_chat_rejects_short_session_id(client) -> None:
-    """ChatRequest.session_id has min_length=4."""
-    resp = await client.post("/api/chat", json={"session_id": "ab", "message": "hi"})
-    assert resp.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_chat_rejects_oversize_message(client) -> None:
-    """ChatRequest.message has max_length=4000."""
-    resp = await client.post(
-        "/api/chat",
-        json={"session_id": "sess1234", "message": "x" * 4001},
-    )
+async def test_chat_rejects_invalid_payload(client, payload) -> None:
+    """ChatRequest enforces session_id (4..128) and message (1..4000) bounds."""
+    resp = await client.post("/api/chat", json=payload)
     assert resp.status_code == 422
 
 

@@ -17,6 +17,7 @@ would mis-rank or mis-route tool calls without raising errors.
 """
 from __future__ import annotations
 
+import json
 from unittest.mock import patch
 
 import pytest
@@ -48,13 +49,10 @@ class TestFlattenProps:
 
     def test_complex_list_serialized_as_json(self) -> None:
         out = _flatten_props({"refs": [{"id": 1}, {"id": 2}]})
-        # JSON encoded — must be valid JSON, must round-trip
-        import json
         assert json.loads(out["refs"]) == [{"id": 1}, {"id": 2}]
 
     def test_dict_value_serialized_as_json(self) -> None:
         out = _flatten_props({"meta": {"source": "kfda", "version": 2}})
-        import json
         assert json.loads(out["meta"]) == {"source": "kfda", "version": 2}
 
     def test_empty_input_returns_empty_dict(self) -> None:

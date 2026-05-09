@@ -127,6 +127,10 @@ BEDROCK_CONVERSE_TEXT_RESPONSE: Dict[str, Any] = {
     "usage": {"inputTokens": 120, "outputTokens": 45},
 }
 
+BEDROCK_CONVERSE_EMPTY_RESPONSE: Dict[str, Any] = {
+    "output": {"message": {"role": "assistant", "content": [{"text": ""}]}}
+}
+
 
 # ─── Agent stream events ────────────────────────────────────────────────
 # `agent.converse_stream` yields `{"type": ..., "data": {...}}` dicts.

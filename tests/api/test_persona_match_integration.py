@@ -15,18 +15,14 @@ from tests.fixtures import (
 )
 
 
+@pytest.mark.parametrize("payload", [
+    {"top_k": 5},                                           # missing persona_id
+    {"persona_id": "per_sensitive", "top_k": 999},          # top_k > 30
+])
 @pytest.mark.asyncio
-async def test_persona_match_rejects_missing_persona_id(client) -> None:
-    resp = await client.post("/api/persona-match", json={"top_k": 5})
-    assert resp.status_code == 422
-
-
-@pytest.mark.asyncio
-async def test_persona_match_rejects_top_k_out_of_range(client) -> None:
-    """PersonaMatchRequest.top_k has ge=1, le=30."""
-    resp = await client.post(
-        "/api/persona-match", json={"persona_id": "per_sensitive", "top_k": 999}
-    )
+async def test_persona_match_rejects_invalid_payload(client, payload) -> None:
+    """PersonaMatchRequest enforces persona_id (1..64) and top_k (1..30)."""
+    resp = await client.post("/api/persona-match", json=payload)
     assert resp.status_code == 422
 
 

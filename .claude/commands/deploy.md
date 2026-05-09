@@ -41,9 +41,10 @@ export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output te
    docker push $AWS_ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ontology-retail-dev-web:latest
    ```
 
-5. **Register SHA-pinned task definitions** (avoids ECR `:latest` cache). Run for each of `api` and `web`:
+5. **Register SHA-pinned task definitions** (avoids ECR `:latest` cache). api and web are independent — run them in parallel:
    ```bash
-   for svc in api web; do
+   deploy_one() {
+     local svc=$1
      # 5a. Describe the current task definition (stripping fields the register
      #     API rejects on input — registeredAt, taskDefinitionArn, status, etc.)
      aws ecs describe-task-definition \
@@ -51,18 +52,13 @@ export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output te
        --query 'taskDefinition.{family:family,taskRoleArn:taskRoleArn,executionRoleArn:executionRoleArn,networkMode:networkMode,requiresCompatibilities:requiresCompatibilities,cpu:cpu,memory:memory,runtimePlatform:runtimePlatform,containerDefinitions:containerDefinitions}' \
        > /tmp/td-$svc.json
 
-     # 5b. Swap in the SHA tag for the container image
-     python3 -c "
-   import json, sys
-   td = json.load(open('/tmp/td-$svc.json'))
-   td['containerDefinitions'][0]['image'] = (
-       '$AWS_ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ontology-retail-dev-$svc:$TAG'
-   )
-   json.dump(td, open('/tmp/td-$svc.json', 'w'))
-   "
+     # 5b. Swap in the SHA tag for the container image (pure jq — no shell→Python interpolation)
+     local img="$AWS_ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ontology-retail-dev-$svc:$TAG"
+     jq --arg img "$img" '.containerDefinitions[0].image = $img' /tmp/td-$svc.json > /tmp/td-$svc.new.json
+     mv /tmp/td-$svc.new.json /tmp/td-$svc.json
 
      # 5c. Register the new revision
-     NEW_REV=$(aws ecs register-task-definition \
+     local rev=$(aws ecs register-task-definition \
        --cli-input-json file:///tmp/td-$svc.json \
        --query 'taskDefinition.revision' --output text)
 
@@ -70,10 +66,11 @@ export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output te
      aws ecs update-service \
        --cluster ontology-retail-dev-cluster \
        --service ontology-retail-dev-$svc \
-       --task-definition ontology-retail-dev-$svc:$NEW_REV \
+       --task-definition ontology-retail-dev-$svc:$rev \
        --force-new-deployment >/dev/null
-     echo "[$svc] rolled out task def revision $NEW_REV"
-   done
+     echo "[$svc] rolled out task def revision $rev"
+   }
+   deploy_one api & deploy_one web & wait
    ```
 
 6. **Wait for rollout** to reach `COMPLETED` for both services:

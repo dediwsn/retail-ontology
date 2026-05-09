@@ -16,21 +16,23 @@ Start by running `git diff` and `git status` to capture the current state.
 
 ## Output format
 
-Mirror the `code-reviewer` agent's contract so direct command invocations and agent invocations produce structurally identical output:
+Mirror the `.claude/agents/code-reviewer.md` contract exactly so direct `/review` invocations and agent invocations produce structurally identical output:
 
 ```
-[CRITICAL|HIGH|MEDIUM|LOW] <file>:<line> — <one-line description>
-  Current: <quoted code or behavior>
-  Fix:     <concrete patch or replacement>
+[Severity] file:line — short description
+Current: <quoted code or behavior>
+Fix:     <concrete patch or replacement>
 ```
 
-Severity rubric:
-- **CRITICAL**: data loss, security breach, deploy-breaking syntax error
-- **HIGH**: bug producing wrong results, missing tests for new code with logic, IAM/auth scope creep
-- **MEDIUM**: convention drift, performance smell with measurable impact, missing error handling at a known failure boundary
-- **LOW**: style, naming, marginal optimization (suppressed unless explicitly requested)
+Severity rubric (Title Case, matching the agent file):
 
-Group findings by severity (CRITICAL first). End with a single termination line:
+- **Critical** — security exposure, data loss, broken auth
+- **High** — correctness regression, broken contract
+- **Medium** — performance issue, race condition, leak
+- **Low** — convention drift, naming, minor refactor (suppress unless explicitly requested)
 
-- If issues found: `Total: <N> CRITICAL, <N> HIGH, <N> MEDIUM blocking issues.`
-- If clean: `No high-confidence issues at MEDIUM+ severity.`
+Group findings by severity (Critical → Low). Skip severities with zero findings.
+
+If no issues at Medium+ severity, end with exactly:
+
+`No high-confidence issues at Medium+ severity.`
