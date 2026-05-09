@@ -67,3 +67,9 @@ Thumbs.db
 # graphify-out/ is regenerable via `graphify update . --force` — only the
 # bundled snapshot copied into web/public/codegraph/ is shipped.
 /graphify-out/
+
+# ----- Demo media -----
+# Demo videos/screenshots live as GitHub issue/release assets (auto-generated
+# user-images URLs) and are embedded in README. Keeping the source binaries
+# out of git history avoids clone bloat.
+/screenshot_video/

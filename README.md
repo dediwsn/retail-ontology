@@ -18,6 +18,12 @@ AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프
 
 The scenarios span semantic search, conversational agents with multi-turn memory, MD-grade analytics with streaming token summaries, persona matching, safety-lens filtering, substitution recommendations, channel-aware price/availability comparison, logistics network mapping, churn-risk diagnosis, acquisition-channel ROI, tier-up path lift analysis, member-warehouse coverage mapping, and **wallet-share-aware VIP target building with 5 strategic axes** (Opportunity / Loyal / Whale / Cross-category / Trajectory). A separate `/codegraph` meta page embeds a graphify-generated AST graph of the codebase itself, with 159 communities labelled offline via Bedrock Sonnet.
 
+## Demo
+
+[![Watch the demo on YouTube](https://img.youtube.com/vi/irGMb3x6Iys/maxresdefault.jpg)](https://youtu.be/irGMb3x6Iys)
+
+Walkthrough of all 13 wow scenarios (A–M) and the `/codegraph` meta page. Click the thumbnail to watch on YouTube.
+
 ## Features
 
 - **Semantic Search (A)** — Korean natural-language queries through OpenSearch BM25 (Nori) + Cohere KNN hybrid, fused with reciprocal-rank fusion, then reranked with `cohere.rerank-v3` and visualized as a 1-hop knowledge subgraph.
@@ -215,6 +221,12 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 `ontology-retail`은 한국 리테일/CPG 도메인 온톨로지(상품, 성분, 페르소나, 채널, 트렌드, 리뷰, 회원, 지역, **산업 카테고리**)가 AWS 매니지드 AI 서비스 위에서 **열세 가지 리테일 경험 시나리오 (A–M)** 를 어떻게 구동하는지 보여주는 PoC 데모입니다. FastAPI 백엔드, Next.js 14 프론트엔드, AWS CDK 인프라로 구성된 다층 애플리케이션이 Bedrock Sonnet 4.6, AgentCore Memory와 Code Interpreter, Neptune openCypher, OpenSearch Serverless 하이브리드 검색, CloudFront 앞단에 ECS Fargate를 통합합니다.
 
 시나리오는 의미 검색, 다회차 메모리 기반 대화형 에이전트, 토큰 스트리밍 요약을 갖춘 MD급 분석, 페르소나 매칭, 안전성 렌즈 필터링, 대체재 추천, 채널 인지 가격·가용성 비교, 한국 지도 기반 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지, **외부 소비 패널 × wallet-share 5축 VIP 타깃 빌더**(Opportunity / Loyal / Whale / Cross-category / Trajectory)에 걸쳐 있습니다. 별도 `/codegraph` 메타 페이지는 graphify가 생성한 코드베이스의 AST 그래프(159개 커뮤니티가 Bedrock Sonnet으로 자동 라벨링)를 임베드합니다.
+
+## 데모 영상
+
+[![YouTube에서 데모 보기](https://img.youtube.com/vi/irGMb3x6Iys/maxresdefault.jpg)](https://youtu.be/irGMb3x6Iys)
+
+13개 wow 시나리오(A–M)와 `/codegraph` 메타 페이지의 워크쓰루. 썸네일을 클릭하면 YouTube로 이동합니다.
 
 ## 주요 기능
 
