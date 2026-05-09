@@ -16,7 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added — Code Knowledge Graph (codegraph)
 - New `/codegraph` page (Sidebar 메타 section) embedding the `graphify`-generated AST graph as a static iframe. **No LLM at build time** — graphify is an AST-only third-party skill, fully offline. Bundle ships in `web/public/codegraph/` (`graph.html` 1.3MB, `graph.json` 1.2MB, `manifest.json` 28KB, `GRAPH_REPORT.md` 44KB). Current snapshot: **1,751 nodes, 2,217 edges, 159 communities, 151 source files**.
 - Fullscreen toggle (ESC to exit), per-node click-through into the graphify viewer, side links to raw `graph.html` / `graph.json` / `GRAPH_REPORT.md` for deeper exploration.
-- Refresh workflow documented inline: `graphify update . --force && cp graphify-out/* web/public/codegraph/` then redeploy web. Pattern adopted from the mfg-ontology project's `/codegraph` page.
+- 4-field per-community metadata via Bedrock Sonnet 4.6 (`scripts/label_codegraph_communities.py`): label / description / key_concepts / top_files. Stored in `community_meta.json` sidecar; `graph.html` patched in-place to display semantic labels (1,751 occurrences). Click-to-expand detail card in the page side-panel.
+- Refresh workflow: `./scripts/refresh_codegraph.sh` (graphify update → bundle copy → Bedrock label → graph.html patch, ~3 min). Documented in [docs/runbooks/codegraph-refresh.md](docs/runbooks/codegraph-refresh.md).
+
+### Documentation — Round 3 sync after Scenario M + v0.7.0 + codegraph
+- All 7 CLAUDE.md files refreshed: scenario count `A–L` → `A–M`, router count 18→19 (`vip` added), entity counts include Phase 2B (10 IndustryCategory + 10,410 HAS_CATEGORY_SPEND + 43 OVERLAPS_WITH).
+- `docs/architecture.md` gains §External Consumption (Phase 2B — Scenario M / VIP) and §Code Knowledge Graph (`/codegraph` — meta) subsections (EN + KR).
+- `docs/api-reference.md` documents 4 missing VIP endpoints (whale / loyal / cross-category / trajectory) including the Loyal threshold-tuning history (commit `ae4df57`).
+- `docs/membership.md` change-history table + 3 new rows (Phase 2B, Phase 2B 확장, codegraph meta).
+- `README.md` features list expanded to 13 scenarios + codegraph meta + sidebar logo (EN + KR halves).
+- New ADRs: 0008 (wallet-share VIP framework), 0009 (Phase 2B data model — IndustryCategory + OVERLAPS_WITH bridge), 0010 (codegraph community labelling via direct Bedrock), 0011 (sidebar configurable logo).
+- New runbook: `codegraph-refresh.md`. `reload-synthetic-data.md` gains Phase 2B verification queries (HAS_CATEGORY_SPEND count = 10,410 etc.).
+- IndustryCategory was registered in only 1 of 6 mandated locations through v0.7.0; round 3 closes the gap — `objects.py:_TYPE_REGISTRY`, `ontology.py:_CLASSES`/`_RELATIONS`, `web/app/objects/[type]/page.tsx:TYPE_META + LABEL_TO_SLUG`, and Sidebar 객체 탐색 all updated. Auto-sync rule in root CLAUDE.md strengthened to call out the 6-spot rule explicitly.
 
 ## [0.7.0] — 2026-05-08
 
@@ -247,9 +258,20 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 ## [Unreleased]
 
 ### 추가 — 코드 지식 그래프 (codegraph)
-- 신규 `/codegraph` 페이지 (사이드바 메타 섹션) — `graphify`가 생성한 AST 그래프를 정적 iframe으로 임베드. **빌드 시 LLM 호출 0** — graphify는 AST-only 서드파티 스킬, 오프라인 동작. 정적 자산은 `web/public/codegraph/` 에 번들 (`graph.html` 1.3MB, `graph.json` 1.2MB, `manifest.json` 28KB, `GRAPH_REPORT.md` 44KB). 현재 스냅샷: **1,751 노드, 2,217 엣지, 159 커뮤니티, 151 소스 파일**.
+- 신규 `/codegraph` 페이지 (사이드바 메타 섹션) — `graphify`가 생성한 AST 그래프를 정적 iframe으로 임베드. **빌드 시 LLM 호출 0** — graphify는 AST-only 서드파티 스킬, 오프라인 동작. 정적 자산은 `web/public/codegraph/` 에 번들. 현재 스냅샷: **1,751 노드, 2,217 엣지, 159 커뮤니티, 151 소스 파일**.
 - 전체화면 토글 (ESC 해제), graphify 뷰어 내 노드 클릭 탐색, raw `graph.html`/`graph.json`/`GRAPH_REPORT.md` 직접 링크.
-- 갱신 워크플로 문서화: `graphify update . --force && cp graphify-out/* web/public/codegraph/` 후 web 재배포. mfg-ontology 프로젝트의 `/codegraph` 패턴을 그대로 이식.
+- 4-필드 per-community 메타데이터 — Bedrock Sonnet 4.6의 구조화 JSON 출력 (`scripts/label_codegraph_communities.py`): label / description / key_concepts / top_files. `community_meta.json` sidecar에 저장; `graph.html` 1,751건 in-place 패치하여 의미 라벨 표시. 페이지 사이드 패널에 클릭-펼쳐보기 상세 카드.
+- 갱신 워크플로: `./scripts/refresh_codegraph.sh` (graphify update → bundle copy → Bedrock 라벨 → graph.html 패치, ~3분). [docs/runbooks/codegraph-refresh.md](docs/runbooks/codegraph-refresh.md) 참조.
+
+### 문서 — Round 3 sync (시나리오 M + v0.7.0 + codegraph 반영)
+- 7개 CLAUDE.md 파일 전체 새로고침 — 시나리오 카운트 `A–L` → `A–M`, 라우터 18→19 (`vip` 추가), 엔티티 카운트에 Phase 2B 포함 (10 IndustryCategory + 10,410 HAS_CATEGORY_SPEND + 43 OVERLAPS_WITH).
+- `docs/architecture.md` 에 §External Consumption (Phase 2B — Scenario M / VIP) + §Code Knowledge Graph (`/codegraph` — meta) 서브섹션 추가 (EN + KR).
+- `docs/api-reference.md` 에 누락된 VIP 4개 엔드포인트 (whale / loyal / cross-category / trajectory) 문서화. Loyal 임계 튜닝 이력(`ae4df57`) 포함.
+- `docs/membership.md` 변경 이력에 3개 row 추가 (Phase 2B, Phase 2B 확장, codegraph 메타).
+- `README.md` features 목록을 13 시나리오 + codegraph 메타 + 사이드바 로고로 확장 (EN + KR).
+- 신규 ADR 4건: 0008 (wallet-share VIP 프레임워크), 0009 (Phase 2B 데이터 모델 — IndustryCategory + OVERLAPS_WITH 브릿지), 0010 (codegraph community 라벨링 via 직접 Bedrock), 0011 (사이드바 설정 가능 로고).
+- 신규 runbook: `codegraph-refresh.md`. `reload-synthetic-data.md` 에 Phase 2B 검증 쿼리 추가 (HAS_CATEGORY_SPEND 10,410 등).
+- v0.7.0 시점에 IndustryCategory가 6개 등록 위치 중 1곳에만 등록되어 있었음. Round 3에서 갭 해소 — `objects.py:_TYPE_REGISTRY`, `ontology.py:_CLASSES`/`_RELATIONS`, `web/app/objects/[type]/page.tsx:TYPE_META + LABEL_TO_SLUG`, Sidebar 객체 탐색 모두 업데이트. 루트 CLAUDE.md auto-sync 규칙도 *6-spot 명시*로 강화.
 
 ## [0.7.0] — 2026-05-08
 

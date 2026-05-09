@@ -65,7 +65,7 @@ Fargate 모드, 2개 서비스 호스팅.
 
 - **Fargate ARM64**, 2-replica
 - **이미지**: 단일 ECR 이미지가 두 역할 — API 서버 OR command override로 일회성 데이터 로더 (단일 이미지 두 역할 트레이드오프)
-- **uvicorn + FastAPI**, 18개 라우터 (scenarios A–L + objects + ontology + ops + auth + health + ingest)
+- **uvicorn + FastAPI**, 19개 라우터 (scenarios A–M + objects + ontology + ops + auth + health + ingest; vip 라우터가 시나리오 M 5종 VIP 정의 모두 호스팅)
 - **Bedrock + Neptune + OpenSearch + AgentCore** 모두 호출
 - **Pydantic Settings**가 startup에 모든 env 검증 — fail-fast
 
@@ -73,7 +73,7 @@ Fargate 모드, 2개 서비스 호스팅.
 
 - **Fargate ARM64**, 2-replica
 - **Next.js 14 App Router standalone build**
-- 시나리오 A–L + Knowledge Graph 객체 탐색기 + 운영 콘솔
+- 시나리오 A–M + Knowledge Graph 객체 탐색기 + 운영 콘솔 + `/codegraph` 메타 페이지 + 사이드바 설정 가능 회사 로고 (CompanyLogo, 4 SVG 프리셋)
 - API와 같은 ALB 뒤, path-based routing (`/api/*` → API, 나머지 → Web)
 
 ### Application Load Balancer

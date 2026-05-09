@@ -81,6 +81,8 @@ const SECTIONS: Section[] = [
       { href: '/objects/campaign',    icon: Megaphone,    label: '캠페인 (Campaign)' },
       { href: '/objects/transaction', icon: Receipt,      label: '거래 (Transaction)' },
       { href: '/objects/touchpoint',  icon: Send,         label: '접점 (Touchpoint)' },
+      // Phase 2B external consumption (scenario M)
+      { href: '/objects/industry_category', icon: Target, label: '산업 카테고리 (Industry)' },
     ],
   },
   {

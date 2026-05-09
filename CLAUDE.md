@@ -4,7 +4,7 @@ Project memory for Claude Code. This file is auto-loaded into every session and 
 
 ## Project
 
-`ontology-retail` is a 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph that powers twelve wow scenarios on AWS Bedrock + AgentCore + Neptune. It is a multi-runtime monorepo: Python FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure, and a synthetic-data loader that doubles as a one-shot ECS task.
+`ontology-retail` is a 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph that powers thirteen wow scenarios (A–M) on AWS Bedrock + AgentCore + Neptune. It is a multi-runtime monorepo: Python FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure, and a synthetic-data loader that doubles as a one-shot ECS task. A separate `/codegraph` meta page embeds a graphify-generated AST graph (LLM-zero build, communities labelled offline via Bedrock Sonnet — see [scripts/refresh_codegraph.sh](scripts/refresh_codegraph.sh)).
 
 Custom domain: `https://retail-ontology.whchoi.net` (CloudFront + Lambda@Edge cookie auth → Cognito). Demo user: `demo / demo@whchoi.net`.
 
@@ -12,7 +12,7 @@ The five-persona spine (임산부, 4세 아이, 캠퍼, 민감성 피부, 글루
 
 ### Scenarios A–L (current)
 
-A search · B chat · C insights · D persona-match · E safety · F substitute · G price · H logistics · I churn · J acquisition · K tier-up · **L coverage map** (지도 기반 회원-거점 커버리지 허브 — 멤버쉽·물류·페르소나를 한 화면에서 직조).
+A search · B chat · C insights · D persona-match · E safety · F substitute · G price · H logistics · I churn · J acquisition · K tier-up · L coverage map · **M VIP target builder** (외부 소비 패널 × wallet share — 5축 VIP 정의: Opportunity / Loyal / Whale / Cross-category / Trajectory).
 
 ## Tech Stack
 
@@ -44,7 +44,7 @@ ontology-retail/
 │   ├── aws_clients.py    boto3 client factories (cached)
 │   └── Dockerfile        Single image used as both API server and one-shot loader
 ├── web/                  Next.js 14 App Router frontend
-│   ├── app/              Routes for scenarios A-H + objects + ops + meta
+│   ├── app/              Routes for scenarios A–M + objects + ops + meta + /codegraph
 │   ├── components/       PersonaSwitch, GuidedTour, CytoscapeView, Sidebar
 │   └── lib/api-client.ts Typed REST + SSE client
 ├── infra-cdk/            AWS CDK v2 infrastructure (TypeScript)
@@ -154,7 +154,9 @@ python -m compileall -q api data scripts   # AST validation (also a CI job)
 When a session-level decision changes any of the following, update the corresponding doc immediately rather than letting it drift:
 
 - Adding a new scenario (A–Z badge): update sidebar in `web/components/Sidebar.tsx`, add page under `web/app/<slug>/`, add API router under `api/routers/<slug>.py`, register in `api/main.py`, add a typed function + response types in `web/lib/api-client.ts`, add a card to the home page grid in `web/app/page.tsx` (with a unique color from the `CARD_COLOR` map), document the route in [docs/api-reference.md](docs/api-reference.md), add a CHANGELOG entry (EN + KR), append a smoke-test parametrize entry in `tests/test_smoke.py`, and add a step to `web/components/GuidedTour.tsx`.
-- Adding a new Knowledge Graph node type: update `_TYPE_REGISTRY` in `api/routers/objects.py`, `TYPE_META` in `web/app/objects/[type]/page.tsx`, sidebar 객체 탐색 section in `web/components/Sidebar.tsx`, `_CLASSES`/`_RELATIONS` in `api/routers/ontology.py`, the home page chip group in `web/app/page.tsx`, and (if persistent in synthetic data) `data/schemas.py` + a generator in `data/synthetic/`.
+- Adding a new Knowledge Graph node type: update **all six** registration spots — `_TYPE_REGISTRY` in `api/routers/objects.py`, `TYPE_META` + `LABEL_TO_SLUG` in `web/app/objects/[type]/page.tsx`, sidebar 객체 탐색 section in `web/components/Sidebar.tsx`, `_CLASSES`/`_RELATIONS` in `api/routers/ontology.py`, the home page chip group in `web/app/page.tsx`, and (if persistent in synthetic data) `data/schemas.py` + a generator in `data/synthetic/`. **Missing any one of these makes the new type invisible to its consumer** — e.g., IndustryCategory was registered in only 1 of 6 spots through v0.7.0, breaking Object Explorer navigation. Run `grep -l <NodeLabel> api/routers/{objects,ontology}.py web/app/objects/\[type\]/page.tsx web/components/Sidebar.tsx` after to verify all 4 frontend/router files mention it.
+- Adding a new logo preset: drop SVG into `web/public/logos/<id>.svg`, append to `LOGO_PRESETS` in `web/components/CompanyLogo.tsx`. Default preset can be overridden at build time via `NEXT_PUBLIC_DEFAULT_LOGO_PRESET=<id>` in `web/Dockerfile` or task-def env. Live demo swap is just clicking the logo (localStorage-persisted, no rebuild).
+- Refreshing the code-knowledge graph (`/codegraph`): run `./scripts/refresh_codegraph.sh` after non-trivial code changes — this regenerates `web/public/codegraph/{graph.html, graph.json, manifest.json, GRAPH_REPORT.md, community_labels.json, community_meta.json}`. Bedrock Sonnet labels each community in 4-field structured JSON (label / description / key_concepts / top_files); graph.html is patched in-place to show semantic community names instead of "Community NNN".
 - Adding a new agent tool: register in `api/services/agent.py:TOOL_SPECS` (JSON Schema), add a branch to `_dispatch_tool`, and update the system prompt with chaining hints if the tool depends on another (e.g., `semantic_search` → `inventory_lookup`).
 - Adding a new domain or alias: update CloudFront alias, ACM cert (us-east-1), Cognito callback URLs (full re-PUT — `update-user-pool-client` clobbers config), API task-def `PUBLIC_DOMAIN` env, and Route53. Lambda@Edge derives `redirect_uri` from the request `Host` header so it adapts automatically.
 - Changing an environment variable: update [.env.example](.env.example), CDK task-definition env block in `infra-cdk/lib/compute-stack.ts`, the env section in [README.md](README.md), and the deployment runbook in `docs/runbooks/`.

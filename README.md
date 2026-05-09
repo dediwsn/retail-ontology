@@ -4,9 +4,9 @@
 [![English](https://img.shields.io/badge/lang-English-blue.svg)](#english)
 [![한국어](https://img.shields.io/badge/lang-한국어-red.svg)](#한국어)
 
-A 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph on AWS Bedrock + AgentCore + Neptune (12 wow scenarios).
+A 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph on AWS Bedrock + AgentCore + Neptune (13 wow scenarios + meta `/codegraph`).
 
-AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프 12개 wow 시나리오를 보여주는 30–60분 PoC 데모.
+AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프 13개 wow 시나리오 + 메타 `/codegraph` 페이지를 보여주는 30–60분 PoC 데모.
 
 ---
 
@@ -14,9 +14,9 @@ AWS Bedrock + AgentCore + Neptune 위에서 한국 리테일/CPG 지식그래프
 
 ## Overview
 
-`ontology-retail` is a hands-on demonstration of how a domain ontology (products, ingredients, personas, channels, trends, reviews, members, regions) can power **twelve distinct retail-experience scenarios (A–L)** on AWS managed AI services. The demo deploys a multi-tier application — FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure — that integrates Bedrock Sonnet 4.6, AgentCore Memory and Code Interpreter, Neptune openCypher, OpenSearch Serverless hybrid search, and CloudFront-fronted ECS Fargate.
+`ontology-retail` is a hands-on demonstration of how a domain ontology (products, ingredients, personas, channels, trends, reviews, members, regions, **industry categories**) can power **thirteen distinct retail-experience scenarios (A–M)** on AWS managed AI services. The demo deploys a multi-tier application — FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure — that integrates Bedrock Sonnet 4.6, AgentCore Memory and Code Interpreter, Neptune openCypher, OpenSearch Serverless hybrid search, and CloudFront-fronted ECS Fargate.
 
-The scenarios span semantic search, conversational agents with multi-turn memory, MD-grade analytics with streaming token summaries, persona matching, safety-lens filtering, substitution recommendations, channel-aware price/availability comparison, logistics network mapping, churn-risk diagnosis, acquisition-channel ROI, tier-up path lift analysis, and member-warehouse coverage mapping.
+The scenarios span semantic search, conversational agents with multi-turn memory, MD-grade analytics with streaming token summaries, persona matching, safety-lens filtering, substitution recommendations, channel-aware price/availability comparison, logistics network mapping, churn-risk diagnosis, acquisition-channel ROI, tier-up path lift analysis, member-warehouse coverage mapping, and **wallet-share-aware VIP target building with 5 strategic axes** (Opportunity / Loyal / Whale / Cross-category / Trajectory). A separate `/codegraph` meta page embeds a graphify-generated AST graph of the codebase itself, with 159 communities labelled offline via Bedrock Sonnet.
 
 ## Features
 
@@ -32,7 +32,10 @@ The scenarios span semantic search, conversational agents with multi-turn memory
 - **Acquisition ROI (J)** — Per-campaign and per-channel ROI rollup (cost ÷ attributed LTV from responded touchpoints), plus a Persona × Channel response-rate heatmap (best channel per persona archetype).
 - **Tier-up Path (K)** — Silver→Gold lift on products and categories (per-capita Gold-rate ÷ Silver-rate with Laplace smoothing), upgrade-candidate ranking (Silver with LTV ≥ 1.5M sorted by gap-to-Gold), plus a 17-sido map tab keyed on candidate density.
 - **Coverage Map (L)** — Persona-filtered choropleth of member distribution by 시도 + Warehouse markers + 4-dimension toggle (count / avg churn / avg LTV / uncovered share) + radius slider. Single KPI "회원 중 N km 안에 거점 없는 비율" — the hub scenario that bridges membership · logistics · persona on one screen.
-- **Knowledge Graph Explorer** — Per-type browsers for products, ingredients, concerns, trends, brands, categories, personas, channels, manufacturers, reviews, regions, warehouses, carriers, events, members, tiers, campaigns, transactions, and touchpoints.
+- **VIP Target Builder (M)** — Phase 2B external consumption panel (10 IndustryCategory × 10,410 quarterly spend edges across Q1+Q4) layered above internal Transactions through the OVERLAPS_WITH bridge. Five wallet-share-aware VIP definitions on one screen — Opportunity (low share / high total) · Loyal (share≥0.5 majority defenders) · Whale (tier=VIP & LTV≥5M) · Cross-category (single-internal-cat buyer + big external in non-overlapping industry) · Trajectory (Q1/Q0 growth ≥1.2 + tier≠VIP "future VIPs"). Indigo color identity.
+- **Code Knowledge Graph (`/codegraph`, meta)** — graphify-generated AST graph (1,751 nodes / 2,217 edges / 159 communities / 151 source files), no LLM at build time. Communities are labelled offline via Bedrock Sonnet 4.6 returning 4-field JSON (label / description / key_concepts / top_files); graph.html is patched in-place to show semantic Korean community names. Refresh via `./scripts/refresh_codegraph.sh`.
+- **Sidebar Company Logo** — Configurable company logo at sidebar top (default AWS), click-cycles through 4 bundled SVG presets and persists in localStorage. Default preset overridable at build time via `NEXT_PUBLIC_DEFAULT_LOGO_PRESET=<id>`. See `web/public/logos/README.md` for adding a custom brand SVG.
+- **Knowledge Graph Explorer** — Per-type browsers for products, ingredients, concerns, trends, brands, categories, personas, channels, manufacturers, reviews, regions, warehouses, carriers, events, members, tiers, campaigns, transactions, touchpoints, and **industry categories**.
 - **Ontology Meta** — Cytoscape ER diagram, standards mapping CSV browser, and validation coverage report (INCI/FoodOn/GS1+KFDA/Loader).
 - **Operations Console** — Ingest counts, guardrail logs, AgentCore memory snapshots, eval pass-rate scoreboard, and tool-call trace timeline.
 
@@ -128,7 +131,7 @@ ontology-retail/
 │   ├── middleware_auth.py # Cognito JWT verification
 │   └── Dockerfile        # Multi-purpose: API server + one-shot data loader
 ├── web/                  # Next.js 14 frontend (TypeScript, ARM64)
-│   ├── app/              # App Router scenarios A-L + objects + ops + meta
+│   ├── app/              # App Router scenarios A-M + objects + ops + meta + /codegraph
 │   ├── components/       # PersonaSwitch, GuidedTour, CytoscapeView, Sidebar
 │   └── lib/api-client.ts # Typed SSE + REST client
 ├── infra-cdk/            # AWS CDK v2 infrastructure (TypeScript)
@@ -209,9 +212,9 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## 개요
 
-`ontology-retail`은 한국 리테일/CPG 도메인 온톨로지(상품, 성분, 페르소나, 채널, 트렌드, 리뷰, 회원, 지역)가 AWS 매니지드 AI 서비스 위에서 **열두 가지 리테일 경험 시나리오 (A–L)** 를 어떻게 구동하는지 보여주는 PoC 데모입니다. FastAPI 백엔드, Next.js 14 프론트엔드, AWS CDK 인프라로 구성된 다층 애플리케이션이 Bedrock Sonnet 4.6, AgentCore Memory와 Code Interpreter, Neptune openCypher, OpenSearch Serverless 하이브리드 검색, CloudFront 앞단에 ECS Fargate를 통합합니다.
+`ontology-retail`은 한국 리테일/CPG 도메인 온톨로지(상품, 성분, 페르소나, 채널, 트렌드, 리뷰, 회원, 지역, **산업 카테고리**)가 AWS 매니지드 AI 서비스 위에서 **열세 가지 리테일 경험 시나리오 (A–M)** 를 어떻게 구동하는지 보여주는 PoC 데모입니다. FastAPI 백엔드, Next.js 14 프론트엔드, AWS CDK 인프라로 구성된 다층 애플리케이션이 Bedrock Sonnet 4.6, AgentCore Memory와 Code Interpreter, Neptune openCypher, OpenSearch Serverless 하이브리드 검색, CloudFront 앞단에 ECS Fargate를 통합합니다.
 
-시나리오는 의미 검색, 다회차 메모리 기반 대화형 에이전트, 토큰 스트리밍 요약을 갖춘 MD급 분석, 페르소나 매칭, 안전성 렌즈 필터링, 대체재 추천, 채널 인지 가격·가용성 비교, 한국 지도 기반 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지에 걸쳐 있습니다.
+시나리오는 의미 검색, 다회차 메모리 기반 대화형 에이전트, 토큰 스트리밍 요약을 갖춘 MD급 분석, 페르소나 매칭, 안전성 렌즈 필터링, 대체재 추천, 채널 인지 가격·가용성 비교, 한국 지도 기반 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지, **외부 소비 패널 × wallet-share 5축 VIP 타깃 빌더**(Opportunity / Loyal / Whale / Cross-category / Trajectory)에 걸쳐 있습니다. 별도 `/codegraph` 메타 페이지는 graphify가 생성한 코드베이스의 AST 그래프(159개 커뮤니티가 Bedrock Sonnet으로 자동 라벨링)를 임베드합니다.
 
 ## 주요 기능
 
@@ -227,7 +230,10 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 - **확보 채널 ROI (J)** — 캠페인별·채널별 ROI 롤업(비용 ÷ 응답 touchpoint 귀속 LTV) + Persona × Channel 응답률 히트맵.
 - **등급 상승 경로 (K)** — 상품·카테고리별 Silver→Gold lift(per-capita Laplace smoothing), LTV ≥ 1.5M Silver 회원 업그레이드 후보 + 17 시도 후보 밀도 *지도 탭*.
 - **회원-거점 커버리지 (L)** — 페르소나 컨텍스트로 필터링된 회원의 시도별 분포 코로플레스 + Warehouse 마커 + 4 차원 토글 + radius 슬라이더. KPI 하나 — "회원 중 N km 안에 거점 없는 비율" — 으로 멤버쉽·물류·페르소나를 한 화면에서 직조하는 *허브* 시나리오.
-- **지식그래프 객체 탐색** — 상품, 성분, 관심사, 트렌드, 브랜드, 카테고리, 페르소나, 채널, 제조사, 리뷰, 지역, 거점, 운송사, 이벤트, 회원, 등급, 캠페인, 거래, 접점 별 탐색기.
+- **VIP 타깃 빌더 (M)** — Phase 2B 외부 소비 패널 (10 IndustryCategory × 10,410 분기별 지출 엣지, Q1+Q4) 을 내부 Transaction 위에 OVERLAPS_WITH 브릿지로 join. 한 화면에서 5종 wallet-share VIP 정의 — Opportunity (저점유·고총액) · Loyal (점유율≥0.5 방어) · Whale (tier=VIP & LTV≥5M) · Cross-category (단일 내부 카테고리 + 인접 외부 큰 지출) · Trajectory (Q1/Q0 성장률≥1.2 + tier≠VIP, 잠재 VIP). Indigo 색.
+- **코드 지식 그래프 (`/codegraph`, 메타)** — graphify가 생성한 코드베이스 AST 그래프 (1,751 노드 / 2,217 엣지 / 159 커뮤니티 / 151 파일), 빌드 시 LLM 호출 0. 커뮤니티는 Bedrock Sonnet 4.6의 4-필드 JSON (라벨 / 설명 / 핵심 개념 / 대표 파일)으로 오프라인 라벨링. graph.html을 in-place 패치하여 의미 있는 한국어 라벨로 표시. 갱신은 `./scripts/refresh_codegraph.sh`.
+- **사이드바 회사 로고** — 사이드바 상단에 설정 가능 회사 로고(기본 AWS), 클릭으로 4개 번들 SVG 프리셋 순환 + localStorage 영속화. 빌드 시 기본값을 `NEXT_PUBLIC_DEFAULT_LOGO_PRESET=<id>` 로 override 가능. 커스텀 브랜드 SVG 추가는 `web/public/logos/README.md` 참조.
+- **지식그래프 객체 탐색** — 상품, 성분, 관심사, 트렌드, 브랜드, 카테고리, 페르소나, 채널, 제조사, 리뷰, 지역, 거점, 운송사, 이벤트, 회원, 등급, 캠페인, 거래, 접점, **산업 카테고리** 별 탐색기.
 - **온톨로지 메타** — Cytoscape ER 다이어그램, 표준 매핑 CSV 브라우저, 검증 커버리지 리포트(INCI/FoodOn/GS1+KFDA/Loader).
 - **운영 콘솔** — 적재 카운트, 가드레일 로그, AgentCore 메모리 스냅샷, 평가 pass-rate 스코어보드, 도구 호출 트레이스 타임라인.
 

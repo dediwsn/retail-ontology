@@ -12,7 +12,7 @@
 
 `ontology-retail` is a multi-tier AWS-native demo for a Korean Retail/CPG knowledge graph. A FastAPI backend on Fargate fronts Bedrock + AgentCore + Neptune + OpenSearch, while a Next.js 14 frontend on Fargate provides scenario-specific UIs. CloudFront with Lambda@Edge cookie auth wraps the entire surface and a Cognito user pool gates access.
 
-Twelve wow scenarios (A–L) span semantic search, conversational agent with memory, MD insights, persona match, safety, substitution, price/availability comparison, logistics network, churn diagnosis, acquisition ROI, tier-up path, and member-warehouse coverage map. The ontology covers four layers — commerce/lifestyle (Phase 1–2), logistics (Phase 5), membership/marketing (Phase 2A), and member geography (Phase 2A-G) — with two Korean choropleth views (`react-simple-maps` + d3-geo + KOSTAT 행정구역 GeoJSON) shared across H/I/K/L.
+Thirteen wow scenarios (A–M) span semantic search, conversational agent with memory, MD insights, persona match, safety, substitution, price/availability comparison, logistics network, churn diagnosis, acquisition ROI, tier-up path, member-warehouse coverage map, and **VIP target builder with 5-axis wallet-share analysis**. The ontology covers five layers — commerce/lifestyle (Phase 1–2), logistics (Phase 5), membership/marketing (Phase 2A), member geography (Phase 2A-G), and **external consumption panel (Phase 2B)** — with two Korean choropleth views (`react-simple-maps` + d3-geo + KOSTAT 행정구역 GeoJSON) shared across H/I/K/L. A separate `/codegraph` meta page embeds the graphify-generated AST graph, with 159 communities labelled offline via Bedrock Sonnet 4.6 (4-field structured-JSON output: label, description, key_concepts, top_files).
 
 ## Components by Layer
 
@@ -49,6 +49,19 @@ Twelve wow scenarios (A–L) span semantic search, conversational agent with mem
 - **Persona spine + narrative bifurcation** — 5 spine personas (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`, all `is_spine=true`) drive segment scenarios; 40 narrative `psn_*` personas drive the persona-match scenario. `(narrative)-[:DERIVED_FROM]->(spine)` edges (10, computed from label-keyword matching at load time) bridge them so any persona selection in the UI resolves through `MATCHES_PERSONA` ➝ spine ➝ Member.
 - **Member geography (Phase 2A-G)** — `(Member)-[:LIVES_IN]->(Region)` with persona-biased KOSTAT 17-sido distribution (camper×3.0 강원, kid_4yo_mom×2.0 경기, …). Reuses the same `Region` nodes that logistics created, sharing the choropleth view.
 - **Scenarios** — I (`/churn` + `/api/churn/*`) RFM dashboard with map tab, J (`/acquisition` + `/api/acquisition/dashboard`) Campaign × Channel × Persona ROI matrix, K (`/tier-up` + `/api/tier-up/*`) Silver→Gold lift with map tab, L (`/coverage` + `/api/coverage/dashboard`) member-warehouse coverage hub. All four respect the active persona via `MATCHES_PERSONA` OR DERIVED_FROM-bridged 1-hop traversal.
+
+### External Consumption (Phase 2B — Scenario M / VIP)
+
+- **IndustryCategory** — 10 industry-level nodes (스킨케어 / 메이크업 / 바디·선케어 / 음료·티 / 건강기능식품 / 영유아 식품 / 캠핑·BBQ 식품 / 일반 식료품 / 생활용품 / 캠핑 장비). 8 of them carry `OVERLAPS_WITH` edges to existing GS1 brick `Category` nodes (43 edges total); 2 are deliberate "blind spots" (household, outdoor) where our wallet share = 0% — strongest Opportunity-VIP signal.
+- **(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)** — 10,410 edges = Q1 2026 (5,205) + Q4 2025 (5,205). Persona-biased generation (camper×3.5 outdoor, pregnant×2.5 baby food, sensitive×2.5 skincare, etc.) plus per-member growth factor (25% strong / 35% mild / 30% flat / 10% declining) so the Trajectory VIP can compute Q1/Q0 ratios.
+- **5-axis VIP definitions** — Opportunity (low share / high total) · Loyal (share≥0.5 / total≥300k) · Whale (tier=VIP / LTV≥5M) · Cross-category (single internal cat + big external) · Trajectory (Q1/Q0 ≥ 1.2 / tier≠VIP). All 5 share a generic `CandidatesTable<T>` on the frontend and a `_persona_filter_fragment()` helper on the backend. See ADR-0008 / 0009.
+- **Scenario M page** (`/vip` + `/api/vip/*`) — 5 tabs, persona-aware via the same OR-pattern, all 5 reachable from a single PersonaSwitch toggle.
+
+### Code Knowledge Graph (`/codegraph` — meta)
+
+- **graphify static bundle** — `web/public/codegraph/{graph.html, graph.json, manifest.json, GRAPH_REPORT.md}`. AST-only extraction, no LLM at build time. Current snapshot: 1,751 nodes / 2,217 edges / 159 communities / 151 source files.
+- **Bedrock Sonnet 4.6 community labelling** — `scripts/label_codegraph_communities.py` produces `community_labels.json` + `community_meta.json` with 4-field structured JSON per community (label / description / key_concepts / top_files). graph.html is patched in-place to replace `community_name: "Community NNN"` with the semantic label (1,751 occurrences).
+- **One-shot refresh** — `scripts/refresh_codegraph.sh` chains graphify update → bundle copy → Bedrock label → graph.html in-place patch. Runtime ~3 min including 159 Bedrock calls. See ADR-0010.
 
 ### AI & Memory
 
@@ -152,7 +165,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 
 `ontology-retail`은 한국 리테일/CPG 지식그래프를 위한 다층 AWS-네이티브 데모입니다. Fargate의 FastAPI 백엔드가 Bedrock + AgentCore + Neptune + OpenSearch를 앞단에서 묶고, Fargate의 Next.js 14 프런트엔드가 시나리오별 UI를 제공합니다. CloudFront + Lambda@Edge 쿠키 인증이 전체 표면을 감싸고 Cognito 사용자 풀이 접근을 통제합니다.
 
-12개 wow 시나리오(A–L)는 의미 검색, 메모리 기반 대화형 에이전트, MD 인사이트, 페르소나 매칭, 안전성, 대체재, 가격·가용성, 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지에 걸쳐 있습니다. 온톨로지는 4개 계층(상거래/라이프스타일 Phase 1–2, 물류 Phase 5, 멤버쉽/마케팅 Phase 2A, 회원 지리 Phase 2A-G)으로 구성되며, H/I/K/L 시나리오가 동일한 KOSTAT 17 시도 choropleth 지도(react-simple-maps + d3-geo)를 공유합니다.
+13개 wow 시나리오(A–M)는 의미 검색, 메모리 기반 대화형 에이전트, MD 인사이트, 페르소나 매칭, 안전성, 대체재, 가격·가용성, 물류 네트워크, 이탈 위험 진단, 확보 채널 ROI, 등급 상승 경로, 회원-거점 커버리지, **외부 소비 패널 × wallet-share 5축 VIP 타깃 빌더**에 걸쳐 있습니다. 온톨로지는 5개 계층(상거래/라이프스타일 Phase 1–2, 물류 Phase 5, 멤버쉽/마케팅 Phase 2A, 회원 지리 Phase 2A-G, **외부 소비 Phase 2B**)으로 구성되며, H/I/K/L 시나리오가 동일한 KOSTAT 17 시도 choropleth 지도를 공유합니다. 별도 `/codegraph` 메타 페이지는 graphify가 생성한 AST 그래프를 임베드하며, 159개 커뮤니티가 Bedrock Sonnet 4.6의 4-필드 JSON 출력(라벨·설명·핵심 개념·대표 파일)으로 오프라인 라벨링됩니다.
 
 ## 계층별 컴포넌트
 
@@ -189,6 +202,19 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 - **Persona spine + narrative 이중 구조** — 5 spine 페르소나 (`per_pregnant`, `per_kid_4yo_mom`, `per_camper`, `per_sensitive_skin`, `per_gluten_allergy`, `is_spine=true`)가 *세그먼트* 시나리오를 구동. 40 narrative `psn_*` 페르소나는 *persona-match* 시나리오를 구동. `(narrative)-[:DERIVED_FROM]->(spine)` 엣지 (10건, 적재 시 라벨 키워드 매칭) 가 두 모델을 연결 — UI에서 어떤 페르소나를 골라도 `MATCHES_PERSONA` ➝ spine ➝ Member 경로로 도달.
 - **회원 지리 (Phase 2A-G)** — `(Member)-[:LIVES_IN]->(Region)`, KOSTAT 17 시도에 페르소나 편향 분포(camper×3.0 강원, kid_4yo_mom×2.0 경기 등). 물류 단에서 만들어진 `Region` 노드를 *재사용*하여 같은 코로플레스 뷰를 공유.
 - **시나리오** — I (`/churn` + `/api/churn/*`) RFM 대시보드 + 지도 탭, J (`/acquisition` + `/api/acquisition/dashboard`) Campaign × Channel × Persona ROI 매트릭스, K (`/tier-up` + `/api/tier-up/*`) Silver→Gold lift + 지도 탭, L (`/coverage` + `/api/coverage/dashboard`) 회원-거점 커버리지 허브. 4개 모두 `MATCHES_PERSONA` 또는 DERIVED_FROM-bridge 1-hop 트래버설로 활성 페르소나 반영.
+
+### 외부 소비 (Phase 2B — 시나리오 M / VIP)
+
+- **IndustryCategory** — 10개 industry-level 노드. 8개는 GS1 brick `Category`에 `OVERLAPS_WITH` 엣지 (총 43건) 매핑, 2개는 의도적 *blind spot* (생활용품·캠핑 장비 — 우리 점유율 0%, Opportunity VIP 최강 신호).
+- **(Member)-[:HAS_CATEGORY_SPEND {amount_krw, period}]->(IndustryCategory)** — 10,410 엣지 = Q1 2026 (5,205) + Q4 2025 (5,205). 페르소나 편향 분포 + 회원별 성장률(25% 강성장 / 35% 약성장 / 30% flat / 10% 하락)로 Trajectory VIP의 Q1/Q0 ratio 산출 가능.
+- **5축 VIP 정의** — Opportunity / Loyal / Whale / Cross-category / Trajectory. 5개 모두 frontend에서 공통 `CandidatesTable<T>` + backend에서 공통 `_persona_filter_fragment()` 사용. ADR-0008 / 0009 참조.
+- **시나리오 M 페이지** (`/vip` + `/api/vip/*`) — 5개 탭, 동일 OR 패턴으로 persona 인식, 단일 PersonaSwitch 토글로 5종 모두 탐색 가능.
+
+### 코드 지식 그래프 (`/codegraph` — 메타)
+
+- **graphify 정적 번들** — `web/public/codegraph/{graph.html, graph.json, manifest.json, GRAPH_REPORT.md}`. AST 전용 추출, 빌드 시 LLM 호출 0. 현재 스냅샷: 1,751 노드 / 2,217 엣지 / 159 커뮤니티 / 151 파일.
+- **Bedrock Sonnet 4.6 커뮤니티 라벨링** — `scripts/label_codegraph_communities.py` 가 4-필드 JSON (label / description / key_concepts / top_files) 을 생성하여 `community_labels.json` + `community_meta.json` 작성. graph.html 의 `community_name: "Community NNN"` 1,751건을 in-place 패치하여 의미 라벨로 교체.
+- **One-shot 갱신** — `scripts/refresh_codegraph.sh` 가 graphify update → bundle copy → Bedrock label → graph.html 패치 4단계를 ~3분에 자동 실행. ADR-0010 참조.
 
 ### AI & Memory
 

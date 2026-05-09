@@ -2,13 +2,14 @@
 
 ## Role
 
-Generates the synthetic Korean Retail/CPG dataset (45 personas — 40 narrative `psn_*` + 5 spine `per_*`, 250 products, 2,480 reviews, 30 manufacturers, 60 brands, 53 categories, 25 concerns, 30 trends, 4 channels, 1,000 members, 4 membership tiers, 20 campaigns, 7,862 transactions, 10,021 touchpoints) and loads it into Neptune (graph) + OpenSearch (BM25 + KNN). Deterministic — same input always produces same output.
+Generates the synthetic Korean Retail/CPG dataset (45 personas — 40 narrative `psn_*` + 5 spine `per_*`, 250 products, 2,480 reviews, 30 manufacturers, 60 brands, 53 categories, 25 concerns, 30 trends, 4 channels, 1,000 members, 4 membership tiers, 20 campaigns, 7,862 transactions, 10,021 touchpoints, **10 industry categories, 10,410 external-spend edges (Q1+Q4 2026)**) and loads it into Neptune (graph) + OpenSearch (BM25 + KNN). Deterministic — same input always produces same output.
 
 ## Layout
 
 - `load.py` — main entry point. CLI flags: `--neptune`, `--opensearch`, `--all`, `--from-s3`. Runs as a one-shot ECS task using the API container image. Loads commerce + logistics + inventory in dependency order (Region → Warehouse → Carrier → Route → Shipment → Event → Inventory).
 - `schemas.py` — Pydantic models for every entity. Phase 1-4: Product, Brand, Manufacturer, Persona, Review, Trend, Concern, Ingredient, Nutrient, Category, Channel. Phase 5 (logistics): Region, Warehouse, Carrier, Route, Shipment, Event, Inventory. Phase 2A (membership): MembershipTier, Member, Campaign, Transaction, Touchpoint. Phase 2A-G: `Member.region_id` (KOSTAT 시도 코드, 페르소나 편향 분포로 결정론 부여 — see `_persona_region_bias` in `synthetic/membership.py`).
 - `synthetic/membership.py` — RFM-based churn risk + persona-biased KOSTAT 17-sido distribution. `_SPINE_KEYWORDS` keyword dict feeds `(narrative)-[:DERIVED_FROM]->(spine)` MERGE in `load.py` so the 40 `psn_*` narratives bridge to the 5 `per_*` spine personas (multi-mapping supported).
+- `synthetic/external.py` — Phase 2B external consumption panel. 10 IndustryCategory nodes (8 with GS1 brick OVERLAPS_WITH mapping, 2 deliberate "blind spots" at zero our-share) + per-member quarterly spend edges with `_PERSONA_INDUSTRY_BIAS` multipliers (camper×3.5 outdoor, pregnant×2.5 baby food, sensitive×2.5 skincare, etc.) + per-member growth factor (25% strong / 35% mild / 30% flat / 10% declining) producing both 2026-Q1 and 2025-Q4 snapshots for the Trajectory VIP.
 - `synthetic/` — generators that produce the JSON/NDJSON outputs. `logistics.py` is fully deterministic (sha1-based PRNG); commerce generators use Bedrock for narrative fields.
 - `public/` — adapters for external standards: `inci.py`, `foodon.py`, `kfda.py`, `beauty_categories.py`. Each reads a CSV/JSON in `ontology/mappings/` and yields domain entities.
 - `output/` — generated files. Not gitignored (we want them as ground-truth references); also synced to S3 `ontology-retail-dev-synthetic-data-<account>/data/output/`.

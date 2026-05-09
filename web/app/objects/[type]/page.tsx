@@ -46,6 +46,8 @@ const TYPE_META: Record<
   campaign:    { ko: '캠페인',     desc: 'acquisition / retention / winback — 채널별 캠페인',  color: '#d946ef', icon: Megaphone },
   transaction: { ko: '거래',       desc: '회원-상품 구매 이력 (~6/회원, ANCHOR 12개월 윈도우)', color: '#38bdf8', icon: Receipt },
   touchpoint:  { ko: '마케팅 접점', desc: '캠페인 발송·반응 이벤트 — 이메일/푸시/SMS/카카오/방문', color: '#c084fc', icon: Send },
+  // Phase 2B external consumption layer (Scenario M / VIP)
+  industry_category: { ko: '산업 카테고리', desc: '외부 소비 패널 industry-level 카테고리 10종 — Member-HAS_CATEGORY_SPEND·OVERLAPS_WITH-Category 브릿지', color: '#34d399', icon: Layers },
 };
 
 // Neptune label (graph-side, "Persona") → URL slug ("persona") so a tap
@@ -59,6 +61,7 @@ const LABEL_TO_SLUG: Record<string, string> = {
   Shipment: 'shipment', Event: 'event', Inventory: 'inventory',
   Member: 'member', MembershipTier: 'tier', Campaign: 'campaign',
   Transaction: 'transaction', Touchpoint: 'touchpoint',
+  IndustryCategory: 'industry_category',
 };
 
 export default function ObjectTypePage({ params }: { params: { type: string } }) {

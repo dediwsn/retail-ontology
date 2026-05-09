@@ -203,6 +203,17 @@ _TYPE_REGISTRY: Dict[str, Dict[str, str]] = {
             "RETURN n, r AS rank_score ORDER BY r DESC, n.ts DESC"
         ),
     },
+    # Phase 2B external consumption layer — IndustryCategory rolls up GS1
+    # bricks across HAS_CATEGORY_SPEND. Order by aggregate quarterly spend
+    # (sum across all members + periods) to surface most-consumed verticals.
+    "industry_category": {
+        "label": "IndustryCategory", "id_prop": "industry_id", "name_prop": "name_ko",
+        "order_by": (
+            "OPTIONAL MATCH (n)<-[r:HAS_CATEGORY_SPEND]-(:Member) "
+            "WITH n, coalesce(sum(r.amount_krw), 0) AS spend "
+            "RETURN n, spend AS rank_score ORDER BY spend DESC"
+        ),
+    },
 }
 
 

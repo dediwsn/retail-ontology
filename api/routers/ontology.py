@@ -58,6 +58,11 @@ _CLASSES: List[Dict[str, Any]] = [
     {"label": "Campaign",        "ko": "캠페인",     "color": "#d946ef", "domain": "membership"},
     {"label": "Transaction",     "ko": "거래",       "color": "#38bdf8", "domain": "membership"},
     {"label": "Touchpoint",      "ko": "마케팅 접점","color": "#c084fc", "domain": "membership"},
+    # Phase 2B external consumption layer (Scenario M / VIP)
+    {"label": "IndustryCategory","ko": "산업 카테고리","color": "#34d399", "domain": "external"},
+    # Persona spine/narrative bridge edges live as a self-loop on Persona
+    # already covered by HAS_CONCERN. The DERIVED_FROM bridge edge is
+    # captured in _RELATIONS below.
 ]
 
 _RELATIONS: List[Dict[str, Any]] = [
@@ -99,6 +104,11 @@ _RELATIONS: List[Dict[str, Any]] = [
     {"source": "Member",      "target": "Touchpoint",     "label": "HAS_TOUCHPOINT"},
     {"source": "Touchpoint",  "target": "Campaign",       "label": "FROM_CAMPAIGN"},
     {"source": "Campaign",    "target": "Persona",        "label": "TARGETS"},
+    {"source": "Member",      "target": "Region",         "label": "LIVES_IN"},
+    {"source": "Persona",     "target": "Persona",        "label": "DERIVED_FROM"},
+    # Phase 2B external consumption (Scenario M / VIP wallet share)
+    {"source": "Member",          "target": "IndustryCategory", "label": "HAS_CATEGORY_SPEND"},
+    {"source": "IndustryCategory","target": "Category",         "label": "OVERLAPS_WITH"},
 ]
 
 

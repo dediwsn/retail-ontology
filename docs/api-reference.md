@@ -203,6 +203,38 @@ Returns `{summary, candidates[]}`. Each candidate exposes `our_spend_krw`, `exte
 
 Defaults: `share_ceiling=0.3`, `total_floor_krw=500000`, `top_k=30`.
 
+### `GET /api/vip/whale?persona=<id>&ltv_floor_krw=<int>&top_k=<int>`
+
+Internal Whale VIP — `tier="VIP"` AND `ltv_krw ≥ ltv_floor_krw` (default 5,000,000). Persona-aware via the spine-or-narrative OR pattern. Returns `summary` (sum_ltv_krw, avg_recency_days, high_risk_count for retention prioritisation) + `candidates[]` with monetary, frequency, recency, churn_risk per Member.
+
+Defaults: `ltv_floor_krw=5000000`, `top_k=50`.
+
+### `GET /api/vip/loyal?persona=<id>&share_floor=<float>&total_floor_krw=<int>&top_k=<int>`
+
+Loyal VIP — Opportunity's symmetric mirror: members where `our_share ≥ share_floor` AND `total_spend ≥ total_floor_krw` per (Member, IndustryCategory). Surfaces categories where we hold majority share — defensive marketing target.
+
+**Defaults tuned for the synthetic distribution** (`ae4df57`): `share_floor=0.5`, `total_floor_krw=300000`. The original 0.7 / 1M defaults yielded 0 candidates because the synthetic data has median wallet share ≈ 0% and p90 ≈ 26%. The slider lets the user dial up to 0.95 for stricter "dominant share" selection.
+
+Returns `summary.sum_protected_krw` (our_internal at risk if we lose share) + ranked candidates.
+
+### `GET /api/vip/cross-category?persona=<id>&external_floor_krw=<int>&top_k=<int>`
+
+Cross-category VIP — members who buy in *exactly 1 distinct internal Category* (`distinct_internal_cats=1`) AND have `external_floor_krw`+ external spend in *non-overlapping* industries. Up-sell / cross-sell candidates — tells you which industry to extend each member into.
+
+Returns `summary.top_target_industry_ko` (most-common expansion target across the cohort) + ranked candidates with `internal_industry_ko` (our 1 category) and `target_industry_ko` (the external opportunity).
+
+Default: `external_floor_krw=500000`, `top_k=50`.
+
+### `GET /api/vip/trajectory?persona=<id>&growth_floor=<float>&exclude_tier_vip=<bool>&top_k=<int>`
+
+Trajectory VIP — members whose Q1/Q0 spend growth ratio ≥ `growth_floor` (default 1.2 = +20% growth) AND `tier ≠ VIP` (so the cohort is *future* VIPs, not current ones). Joins `[:HAS_CATEGORY_SPEND {period: "2026-Q1"}]` and `{period: "2025-Q4"}` edges.
+
+Synthetic data ships per-member growth factors: 25% strong (≥1.5×) / 35% mild (1.18×–1.54×) / 30% flat / 10% declining. At default threshold, the cohort is ~437 distinct members.
+
+Returns `summary.avg_growth_ratio` + `top_industry_ko` (where growth concentrates) + candidates with `q0_amount_krw`, `q1_amount_krw`, `growth_ratio`.
+
+Defaults: `growth_floor=1.2`, `exclude_tier_vip=true`, `top_k=50`.
+
 ## Coverage Map (Scenario L)
 
 ### `GET /api/coverage/dashboard?persona=<id>&dimension=<count|churn|ltv|uncov>&radius_km=<int>`

@@ -118,6 +118,20 @@ MATCH (m:Member)-[:LIVES_IN]->(r:Region)
 WHERE (m)-[:MATCHES_PERSONA]->(:Persona {persona_id:"per_camper"})
 RETURN r.region_code AS rc, r.name_ko AS ko, count(m) AS n
 ORDER BY n DESC LIMIT 3
+
+-- Phase 2B: External consumption layer (after Scenario M)
+MATCH (i:IndustryCategory) RETURN count(i) AS n   -- expect 10
+MATCH (:IndustryCategory)-[:OVERLAPS_WITH]->(:Category)
+RETURN count(*) AS n                                -- expect ~43
+MATCH (:Member)-[:HAS_CATEGORY_SPEND]->(:IndustryCategory)
+RETURN count(*) AS n                                -- expect 10,410 (Q1+Q4)
+
+-- Wallet-share spot check (Camper persona, Outdoor industry —
+-- our_share should be 0% because outdoor has no GS1 OVERLAPS_WITH)
+MATCH (m:Member)-[hcs:HAS_CATEGORY_SPEND {period: "2026-Q1"}]->(i:IndustryCategory {industry_id: "ind_outdoor"})
+WHERE (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: "per_camper"})
+RETURN count(m) AS members, avg(hcs.amount_krw) AS avg_q_spend
+-- expect ~190 members with avg_q_spend ~750k
 ```
 
 Expected camper top-3: `경기 40 / 서울 37 / 강원 16` — 강원 is **over-indexed** vs the overall 4.3% (the 1.8× signal that confirms persona-biased synthesis is loaded correctly).

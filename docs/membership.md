@@ -323,3 +323,6 @@ CANDIDATE_LTV_FLOOR = 1_500_000   # Gold 임계 2M의 75% — 상위 후보군
 | 2026-05-07 | 본 설계 문서 작성. |
 | 2026-05-08 | **Phase 2A-G** — `Member.region_id` + `(Member)-[:LIVES_IN]->(Region)` 추가. 페르소나 편향 시도 분포(`_persona_region_bias`)로 시나리오 L(Coverage Map) 기반 마련. |
 | 2026-05-08 | **Phase 2A-G+** — 5-spine `Persona` 노드 (`is_spine=true`) + `(narrative)-[:DERIVED_FROM]->(spine)` keyword 브릿지 (10 엣지) 추가. 라우터들이 spine·narrative 모두 받는 OR 패턴으로 전환. `/api/personas?segment_eligible=true` 필터 도입. ADR-0005 / 0006 참조. |
+| 2026-05-08 | **Phase 2B** — 외부 소비 패널 레이어 도입. `IndustryCategory` 10 노드 + `(IndustryCategory)-[:OVERLAPS_WITH]->(Category)` 43 엣지 + `(Member)-[:HAS_CATEGORY_SPEND {period, amount_krw}]->(IndustryCategory)` 5,205 엣지 (Q1 2026). 시나리오 M (VIP Target Builder, Opportunity 단일 탭). ADR-0008 / 0009 참조. |
+| 2026-05-08 | **Phase 2B 확장** — Q4 2025 prior-period 추가 (총 10,410 엣지) + 시나리오 M 5축 풀 구현 (Whale / Loyal / Cross-category / Trajectory). |
+| 2026-05-09 | **Codegraph 메타 페이지** — `/codegraph` 추가, 159 커뮤니티 Bedrock Sonnet 라벨링 (4-필드 JSON). 멤버쉽 도메인은 변경 없으나 객체 탐색 routing layer에 IndustryCategory 등록(round-2 갭 해소). ADR-0010 참조. |
