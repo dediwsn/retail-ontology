@@ -111,6 +111,12 @@ const OBJECT_GROUPS: { title: string; types: ObjectType[] }[] = [
       { href: '/objects/touchpoint',  label_en: 'Touchpoint',     label_ko: '접점 (10,021)',    color: '#c084fc', icon: Send },
     ],
   },
+  {
+    title: '외부 소비 (Phase 2B) — 신규',
+    types: [
+      { href: '/objects/industry_category', label_en: 'IndustryCategory', label_ko: '산업 카테고리 (10)', color: '#818cf8', icon: Target },
+    ],
+  },
 ];
 
 export default function HomePage() {
@@ -136,7 +142,7 @@ export default function HomePage() {
           </h1>
           <p className="text-ink-300 leading-relaxed">
             GS1 GPC + FoodOn + INCI + schema.org 표준에 한국 어댑터(KFDA / 식약처)를 매핑한 합성 데이터로,
-            13개 시나리오(의미 검색 → VIP 타깃 빌더)와 19종 Knowledge Graph 객체 탐색을 한 화면에 제공합니다.
+            13개 시나리오(의미 검색 → VIP 타깃 빌더)와 20종 Knowledge Graph 객체 탐색을 한 화면에 제공합니다.
             좌측 사이드바에서 객체 타입을 탐색하거나, 아래 시나리오 카드에서 바로 진입하세요.
           </p>
         </div>
@@ -174,7 +180,7 @@ export default function HomePage() {
               <Network className="w-5 h-5 text-accent-400" />
               Knowledge Graph 객체 타입
             </h2>
-            <span className="text-xs text-ink-400">19 types · Neptune openCypher · 합성 데이터</span>
+            <span className="text-xs text-ink-400">20 types · Neptune openCypher · 합성 데이터</span>
           </div>
 
           {OBJECT_GROUPS.map((g) => (

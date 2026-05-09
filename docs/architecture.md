@@ -19,8 +19,9 @@ Thirteen wow scenarios (A–M) span semantic search, conversational agent with m
 ### Edge & Auth
 
 - **CloudFront distribution** (`<distribution-id>`) — TLS termination, viewer/origin caching, custom domain `retail-ontology.whchoi.net` with ACM `*.whchoi.net` cert.
-- **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — cookie-based auth check, redirects unauthenticated viewers to Cognito Hosted UI.
-- **Cognito User Pool** (`<user-pool-id>`) — RS256 JWTs, OAuth code grant, email-as-username, demo password policy (8 chars).
+- **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — cookie-based auth check on every request. `PUBLIC_PATHS` whitelist (`callback`, `logout`, `_next`, `favicon`, `api/health`) is intentionally narrow — the root path `/` is gated, so anonymous viewers see a 302 to Cognito Hosted UI immediately, not a half-loaded SPA shell. See [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md).
+- **Cognito User Pool** (`<user-pool-id>`) — RS256 JWTs, OAuth code grant, email-as-username, demo password policy (8 chars). Hosted UI logout URL must include `https://<PUBLIC_DOMAIN>/` (with trailing slash) for `/api/auth/logout` to land cleanly.
+- **Auth router** (`api/routers/auth.py`) — `/api/auth/login` (sidebar re-auth), `/api/auth/callback` (OAuth code → token exchange + cookie set), `/api/auth/logout` (cookie clear + Cognito Hosted UI logout 302), `/api/auth/whoami` (always JSON 200, `{authenticated: bool, ...}`).
 - **Origin Auth** — CloudFront forwards a Secrets-Manager-backed `X-Origin-Auth-Token` header to ALB; ALB SG restricts ingress to `com.amazonaws.global.cloudfront.origin-facing`.
 
 ### Compute
@@ -61,7 +62,7 @@ Thirteen wow scenarios (A–M) span semantic search, conversational agent with m
 
 - **graphify static bundle** — `web/public/codegraph/{graph.html, graph.json, manifest.json, GRAPH_REPORT.md}`. AST-only extraction, no LLM at build time. Current snapshot: 1,751 nodes / 2,217 edges / 159 communities / 151 source files.
 - **Bedrock Sonnet 4.6 community labelling** — `scripts/label_codegraph_communities.py` produces `community_labels.json` + `community_meta.json` with 4-field structured JSON per community (label / description / key_concepts / top_files). graph.html is patched in-place to replace `community_name: "Community NNN"` with the semantic label (1,751 occurrences).
-- **One-shot refresh** — `scripts/refresh_codegraph.sh` chains graphify update → bundle copy → Bedrock label → graph.html in-place patch. Runtime ~3 min including 159 Bedrock calls. See ADR-0010.
+- **One-shot refresh** — `scripts/refresh_codegraph.sh` chains graphify update → bundle copy → Bedrock label → graph.html in-place patch. Step 4 patches *both* `RAW_NODES[].community_name` (node detail tooltip) and `LEGEND[].label` (always-visible right-hand legend) so all surfaces show the semantic label, not the raw `Community <N>` ID. Runtime ~3 min including 159 Bedrock calls. See ADR-0010 + [ADR-0013](decisions/0013-codegraph-legend-label-patch.md).
 
 ### AI & Memory
 
@@ -147,6 +148,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 - **AgentCore Memory via AwsCustomResource** — four-layer-explicit pattern (SDK package + IAM prefix + API parameters + name regex). See [ADR-0001](decisions/0001-agentcore-memory-via-aws-custom-resource.md).
 - **CloudTrail via L1 CfnTrail** — CDK 2.150 L2 `cloudtrail.Trail` emits empty `EventSelectors`. Workaround documented in [ADR-0002](decisions/0002-cloudtrail-via-cfntrail-with-manual-bucket-policy.md).
 - **Cognito UserPoolClient CDK-only authoring** — `update-user-pool-client` has PUT semantics; drive every config change through `cdk deploy edge`. See [ADR-0004](decisions/0004-cognito-user-pool-client-cdk-driven.md).
+- **Root-path Cognito gate + explicit logout endpoint** — `PUBLIC_PATHS` does NOT include `/`; anonymous viewers are 302'd to Cognito immediately rather than racing the SPA shell. `/api/auth/logout` clears all three token cookies and bounces to the Cognito Hosted UI logout. See [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md).
 - **Sonnet 4.6 only** — chat and insights both use Sonnet 4.6 (env `BEDROCK_CHAT_MODEL_ID`). Haiku Lite was tested and rejected for analytical voice quality.
 
 ## Operations
@@ -172,8 +174,9 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 ### Edge & Auth
 
 - **CloudFront 배포** (`<distribution-id>`) — TLS 종단, viewer/origin 캐싱, 커스텀 도메인 `retail-ontology.whchoi.net` + ACM `*.whchoi.net` 인증서.
-- **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — 쿠키 기반 인증 검사, 미인증 viewer는 Cognito Hosted UI로 302 리다이렉트.
-- **Cognito User Pool** (`<user-pool-id>`) — RS256 JWT, OAuth code grant, 이메일=사용자명, 데모용 8자 비밀번호 정책.
+- **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — 모든 요청에 대해 쿠키 기반 인증 검사. `PUBLIC_PATHS` 화이트리스트(`callback`, `logout`, `_next`, `favicon`, `api/health`)는 의도적으로 좁게 — 루트 경로 `/`도 게이트되므로 미인증 viewer는 즉시 Cognito Hosted UI 302를 받고, half-loaded SPA 셸이 노출되지 않습니다. [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md) 참조.
+- **Cognito User Pool** (`<user-pool-id>`) — RS256 JWT, OAuth code grant, 이메일=사용자명, 데모용 8자 비밀번호 정책. Hosted UI logout URL은 `https://<PUBLIC_DOMAIN>/`(슬래시 포함)을 등록해야 `/api/auth/logout`이 깨끗하게 착륙합니다.
+- **Auth 라우터** (`api/routers/auth.py`) — `/api/auth/login`(사이드바 재인증), `/api/auth/callback`(OAuth code → 토큰 교환 + 쿠키 설정), `/api/auth/logout`(쿠키 삭제 + Cognito Hosted UI logout 302), `/api/auth/whoami`(항상 JSON 200, `{authenticated: bool, ...}`).
 - **Origin Auth** — CloudFront가 Secrets Manager에 저장된 `X-Origin-Auth-Token` 헤더를 ALB로 전달, ALB SG는 `com.amazonaws.global.cloudfront.origin-facing`에 한정.
 
 ### Compute
@@ -214,7 +217,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 
 - **graphify 정적 번들** — `web/public/codegraph/{graph.html, graph.json, manifest.json, GRAPH_REPORT.md}`. AST 전용 추출, 빌드 시 LLM 호출 0. 현재 스냅샷: 1,751 노드 / 2,217 엣지 / 159 커뮤니티 / 151 파일.
 - **Bedrock Sonnet 4.6 커뮤니티 라벨링** — `scripts/label_codegraph_communities.py` 가 4-필드 JSON (label / description / key_concepts / top_files) 을 생성하여 `community_labels.json` + `community_meta.json` 작성. graph.html 의 `community_name: "Community NNN"` 1,751건을 in-place 패치하여 의미 라벨로 교체.
-- **One-shot 갱신** — `scripts/refresh_codegraph.sh` 가 graphify update → bundle copy → Bedrock label → graph.html 패치 4단계를 ~3분에 자동 실행. ADR-0010 참조.
+- **One-shot 갱신** — `scripts/refresh_codegraph.sh` 가 graphify update → bundle copy → Bedrock label → graph.html 패치 4단계를 ~3분에 자동 실행. 4단계는 `RAW_NODES[].community_name`(노드 툴팁)과 `LEGEND[].label`(우측 항상-노출 범례) **둘 다** 패치 — 한쪽만 패치하면 표면 간 불일치가 생깁니다. ADR-0010 + [ADR-0013](decisions/0013-codegraph-legend-label-patch.md) 참조.
 
 ### AI & Memory
 
@@ -299,8 +302,9 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 - **하드코딩된 Cognito ID를 가진 Lambda@Edge inline 코드** — Lambda@Edge는 SSM/Secrets에 접근할 수 없어 사용자 풀/클라이언트 ID를 synth 시점에 baked in. CDK가 `UserPoolId` / `UserPoolClientId` / `UserPoolDomain`을 drift 감지용으로 출력합니다 (ADR-0003 참조).
 - **AgentCore Memory CDK gotchas** — AwsCustomResource v3 explicit form + fromStatements + underscore-only names 사용 (`agentcore_gotchas.md`에 기록).
 - **Sonnet 4.6만 사용** — 채팅·인사이트 모두 Sonnet 4.6 (env `BEDROCK_CHAT_MODEL_ID`). Haiku Lite는 분석 어조 품질 문제로 기각.
+- **루트 경로 Cognito 게이트 + 명시적 logout 엔드포인트** — `PUBLIC_PATHS`에 `/`가 포함되지 않아 미인증 viewer는 SPA 셸을 받지 않고 즉시 Cognito 302를 받습니다. `/api/auth/logout`이 3종 토큰 쿠키를 모두 지우고 Cognito Hosted UI 로그아웃으로 바운스. [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md) 참조.
 
-> 4개의 기술 결정([ADR-0001 AgentCore Memory](decisions/0001-agentcore-memory-via-aws-custom-resource.md), [0002 CloudTrail](decisions/0002-cloudtrail-via-cfntrail-with-manual-bucket-policy.md), [0003 Lambda@Edge](decisions/0003-lambda-edge-stable-id-hardcode-strategy.md), [0004 Cognito](decisions/0004-cognito-user-pool-client-cdk-driven.md))이 `docs/decisions/`에 Context/Decision/Alternatives/Consequences 형식으로 정리되어 있습니다.
+> `docs/decisions/`에 ADR-0001 ~ 0013까지 13개의 결정이 Context/Decision/Alternatives/Consequences 형식으로 정리되어 있습니다 — Bedrock·AgentCore·CloudTrail·Lambda@Edge·Cognito·페르소나 spine·멤버십·VIP·codegraph·사이드바 로고 등 영역별로 묶여 있습니다.
 
 ## 운영
 

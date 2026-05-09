@@ -30,6 +30,7 @@
 CloudFront viewer-request 트리거:
 
 - **쿠키 기반 인증 게이트** — `id_token` 쿠키 없으면 Cognito Hosted UI로 302 리다이렉트
+- **`PUBLIC_PATHS` 화이트리스트는 의도적으로 좁음** — `callback`, `logout`, `_next`, `favicon`, `api/health` 만 우회. **루트 경로 `/`는 게이트되며**, 따라서 미인증 viewer는 SPA 셸을 받지 않고 즉시 Cognito로 redirect됩니다. [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md) 참조
 - **us-east-1 강제 배치** — Lambda@Edge 요건. CDK `experimental.EdgeFunction`이 CloudFront와 별도 sibling stack 생성
 - **[ADR-0003](decisions/0003-lambda-edge-stable-id-hardcode-strategy.md)**: Cognito 식별자(user_pool_id, client_id, domain)를 inline 코드에 hardcode (Lambda@Edge가 SSM/Secrets 못 읽기 때문). drift detection은 CDK output(`UserPoolId`, `UserPoolClientId`, `UserPoolDomain`)이 매 deploy 시 노출
 
@@ -42,6 +43,16 @@ CloudFront viewer-request 트리거:
 - **데모 사용자**: `demo / demo@whchoi.net`, 비밀번호 정책 8자 (production은 더 강하게)
 - **App Client ID는 Lambda@Edge inline + API env 양쪽에서 사용** — ADR-0003이 Lambda@Edge 측 hardcode trade-off 명시 (API 측은 required env로 강제)
 - **Cognito는 PUT semantics** — `update-user-pool-client`가 미지정 필드를 null로 clobber. 그래서 ALL Cognito 변경은 CDK only ([ADR-0004](decisions/0004-cognito-user-pool-client-cdk-driven.md))
+- **Hosted UI Logout URL** — `https://<PUBLIC_DOMAIN>/`(슬래시 포함) 등록 필수. `/api/auth/logout`이 이 URL로 바운스하므로 누락 시 로그아웃 후 빈 화면
+
+### Auth Router (`/api/auth/*`, FastAPI 측)
+
+Cognito Hosted UI 보완용 ApplicationAPI 4개 엔드포인트. 모두 [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md)에 정리:
+
+- **`/api/auth/login`** — 사이드바 재인증 진입점, `/oauth2/authorize` 302
+- **`/api/auth/callback`** — Hosted UI에서 받은 `?code=` 를 토큰 교환 + `id_token` / `access_token` / `refresh_token` 3종 쿠키 (HttpOnly, Secure, SameSite=Lax) 설정 후 `/`로 302
+- **`/api/auth/logout`** — 3종 쿠키 모두 삭제 + Cognito Hosted UI `/logout` 302 (IdP 세션도 무효화)
+- **`/api/auth/whoami`** — 항상 JSON 200 — `{authenticated: true, sub, email, username, groups}` 또는 `{authenticated: false}`. 절대 401을 던지지 않음 (Sidebar 위젯이 미인증 상태를 정상 UI 분기로 렌더할 수 있도록)
 
 ### ACM Certificate
 
