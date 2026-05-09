@@ -79,27 +79,57 @@ def auth_login() -> RedirectResponse:
 
 @router.get("/auth/whoami")
 def auth_whoami(request: Request) -> Dict[str, Any]:
-    """Return identity claims from the id_token cookie. The middleware
-    (`AuthMiddleware`) already validated the JWT, so we can decode-only
-    here without re-verifying signatures."""
+    """Return identity claims from the id_token cookie.
+
+    Always returns JSON 200 — the SidebarAuth widget reads the
+    `authenticated` boolean to render the right state. Returning 401
+    here would fight with the auth middleware bypass for /api/auth/*
+    and force the client into noisy error handling for what is a
+    completely normal "logged-out" UI state. Mirrors mfg-ontology's
+    pattern (see ADR-0004 + their api/routers/auth.py).
+    """
     id_token = request.cookies.get("id_token")
     if not id_token:
-        raise HTTPException(status_code=401, detail="not authenticated")
+        return {"authenticated": False}
     parts = id_token.split(".")
     if len(parts) != 3:
-        raise HTTPException(status_code=400, detail="malformed id_token")
+        return {"authenticated": False, "error": "malformed id_token"}
     # JWT base64url decoding requires padding adjustment.
     payload_b64 = parts[1] + "=" * (-len(parts[1]) % 4)
     try:
         claims = _json.loads(base64.urlsafe_b64decode(payload_b64).decode("utf-8"))
     except (ValueError, _json.JSONDecodeError):
-        raise HTTPException(status_code=400, detail="invalid id_token payload")
+        return {"authenticated": False, "error": "invalid id_token payload"}
     return {
+        "authenticated": True,
         "sub":      claims.get("sub"),
         "email":    claims.get("email"),
         "username": claims.get("cognito:username") or claims.get("preferred_username"),
         "groups":   claims.get("cognito:groups") or [],
     }
+
+
+@router.get("/auth/logout")
+def auth_logout() -> RedirectResponse:
+    """Clear auth cookies and redirect to Cognito Hosted UI logout.
+
+    Mirrors mfg-ontology pattern: the Cognito App Client must list
+    `https://<PUBLIC_DOMAIN>/` (with trailing slash) as a LogoutURL.
+    We strip+re-add exactly one trailing slash to avoid drift if
+    PUBLIC_DOMAIN ever changes shape.
+    """
+    logout_redirect = f"https://{_PRIMARY_DOMAIN.rstrip('/')}/"
+    cognito_logout = (
+        f"https://{COGNITO_DOMAIN}/logout"
+        f"?client_id={CLIENT_ID}"
+        f"&logout_uri={logout_redirect}"
+    )
+    response = RedirectResponse(url=cognito_logout, status_code=302)
+    # Clear all 3 cookies set on /callback. path="/" matches what
+    # set_cookie used (default), so the deletion fires.
+    for name in ("id_token", "access_token", "refresh_token"):
+        response.delete_cookie(name, path="/")
+    return response
 
 
 @router.get("/auth/callback")

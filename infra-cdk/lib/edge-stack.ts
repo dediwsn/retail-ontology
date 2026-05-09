@@ -99,10 +99,22 @@ export class EdgeStack extends Stack {
     // distribution that depends on this lambda → cycle). Update if pool
     // recreated. Stable across redeploys of this stack alone.
     // Public asset paths bypass auth (favicon, fonts, _next static).
+    // Public paths bypass the auth gate entirely. Match mfg-ontology's
+    // pattern: ONLY OAuth round-trip endpoints are public; the root path
+    // ("/") MUST trigger Cognito redirect on cold visit so unauthenticated
+    // users land on Hosted UI rather than seeing the un-authed shell.
+    // _next/* is also bypassed (Next.js static assets — required for the
+    // Cognito redirect target page itself to render after login).
     const edgeFnCode = `
 'use strict';
 const COGNITO_DOMAIN = ${JSON.stringify(cognitoDomain)};
-const PUBLIC_PATHS = [/^\\/$/, /^\\/api\\/auth\\//, /^\\/_next\\//, /^\\/favicon/, /^\\/api\\/health/];
+const PUBLIC_PATHS = [
+  /^\\/api\\/auth\\/callback/,
+  /^\\/api\\/auth\\/logout/,
+  /^\\/_next\\//,
+  /^\\/favicon/,
+  /^\\/api\\/health/,
+];
 
 function readCookie(headers, name) {
   const list = headers['cookie'] || [];
