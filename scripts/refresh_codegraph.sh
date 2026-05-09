@@ -29,18 +29,31 @@ echo "[3/4] enriching communities via Bedrock Sonnet (~3 min: label + descriptio
 python3 scripts/label_codegraph_communities.py
 
 echo "[4/4] patching graph.html + graph.json with semantic community names"
+# graphify embeds two parallel data structures inside graph.html:
+#   1. RAW_NODES[i].community_name  — used by the node-detail tooltip
+#   2. LEGEND[i].label               — used by the right-hand 'Communities' sidebar
+# Both default to "Community <cid>". Patch both, otherwise the legend keeps
+# showing raw IDs even after node tooltips show the semantic Korean labels.
 python3 - <<'PY'
 import json
 labels = json.load(open('web/public/codegraph/community_labels.json'))
 html = open('web/public/codegraph/graph.html').read()
-patched = 0
+cn_patched = 0
+lg_patched = 0
 for cid, label in labels.items():
-    pattern = f'"community_name": "Community {cid}"'
-    replacement = '"community_name": "' + label.replace('"', '\\"') + '"'
-    n = html.count(pattern)
+    safe = label.replace('"', '\\"')
+    cn_pat = f'"community_name": "Community {cid}"'
+    cn_rep = '"community_name": "' + safe + '"'
+    n = html.count(cn_pat)
     if n:
-        html = html.replace(pattern, replacement)
-        patched += n
+        html = html.replace(cn_pat, cn_rep)
+        cn_patched += n
+    lg_pat = f'"label": "Community {cid}"'
+    lg_rep = '"label": "' + safe + '"'
+    n = html.count(lg_pat)
+    if n:
+        html = html.replace(lg_pat, lg_rep)
+        lg_patched += n
 gj = json.load(open('web/public/codegraph/graph.json'))
 for n in gj.get('nodes', []):
     cid = str(n.get('community', ''))
@@ -49,7 +62,7 @@ for n in gj.get('nodes', []):
 open('web/public/codegraph/graph.html', 'w').write(html)
 open('web/public/codegraph/graph.json', 'w').write(
     json.dumps(gj, ensure_ascii=False, indent=2))
-print(f'  patched {patched} community_name occurrences in graph.html')
+print(f'  patched {cn_patched} community_name + {lg_patched} LEGEND label occurrences in graph.html')
 PY
 
 echo "Done. Review web/public/codegraph/community_labels.json, then:"
