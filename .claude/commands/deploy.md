@@ -41,13 +41,55 @@ export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output te
    docker push $AWS_ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ontology-retail-dev-web:latest
    ```
 
-5. **Register SHA-pinned task definitions** (avoids ECR `:latest` cache):
-   - Describe current task definition.
-   - Replace the container image with the SHA tag.
-   - Register a new revision.
-   - Update the service to use the new revision with `--force-new-deployment`.
+5. **Register SHA-pinned task definitions** (avoids ECR `:latest` cache). Run for each of `api` and `web`:
+   ```bash
+   for svc in api web; do
+     # 5a. Describe the current task definition (stripping fields the register
+     #     API rejects on input — registeredAt, taskDefinitionArn, status, etc.)
+     aws ecs describe-task-definition \
+       --task-definition ontology-retail-dev-$svc \
+       --query 'taskDefinition.{family:family,taskRoleArn:taskRoleArn,executionRoleArn:executionRoleArn,networkMode:networkMode,requiresCompatibilities:requiresCompatibilities,cpu:cpu,memory:memory,runtimePlatform:runtimePlatform,containerDefinitions:containerDefinitions}' \
+       > /tmp/td-$svc.json
 
-6. **Wait for rollout** to reach `COMPLETED` for both services.
+     # 5b. Swap in the SHA tag for the container image
+     python3 -c "
+   import json, sys
+   td = json.load(open('/tmp/td-$svc.json'))
+   td['containerDefinitions'][0]['image'] = (
+       '$AWS_ACCOUNT_ID.dkr.ecr.ap-northeast-2.amazonaws.com/ontology-retail-dev-$svc:$TAG'
+   )
+   json.dump(td, open('/tmp/td-$svc.json', 'w'))
+   "
+
+     # 5c. Register the new revision
+     NEW_REV=$(aws ecs register-task-definition \
+       --cli-input-json file:///tmp/td-$svc.json \
+       --query 'taskDefinition.revision' --output text)
+
+     # 5d. Force a new deployment pinned to the new revision
+     aws ecs update-service \
+       --cluster ontology-retail-dev-cluster \
+       --service ontology-retail-dev-$svc \
+       --task-definition ontology-retail-dev-$svc:$NEW_REV \
+       --force-new-deployment >/dev/null
+     echo "[$svc] rolled out task def revision $NEW_REV"
+   done
+   ```
+
+6. **Wait for rollout** to reach `COMPLETED` for both services:
+   ```bash
+   aws ecs wait services-stable \
+     --cluster ontology-retail-dev-cluster \
+     --services ontology-retail-dev-api ontology-retail-dev-web
+   ```
+   If `wait services-stable` times out (>10 min), the rollout is stuck. Inspect:
+   ```bash
+   aws ecs describe-services \
+     --cluster ontology-retail-dev-cluster \
+     --services ontology-retail-dev-api ontology-retail-dev-web \
+     --query 'services[].events[0:5].message'
+   ```
+   `events[0].message` usually points at the root cause (image pull failure, ENI/SG, ELB health check). Roll back by updating the service to the previous task-def revision (`--task-definition ontology-retail-dev-$svc:$((NEW_REV-1))`).
 
 7. **Verify** with the smoke checks from `/test-all`.
 

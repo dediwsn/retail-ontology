@@ -36,6 +36,19 @@ If pass rate drops below 85%, investigate in this order:
 
 A query passes when at least one keyword in its expected-keyword list appears in the top-5 hits' text or metadata fields (case-insensitive substring match). The keyword list per query is curated manually in `scripts/eval_wow_queries.py:21-58`; expand it when adding new wow personas or scenarios.
 
+## Outputs
+
+When this skill completes, emit a single verdict line followed by the per-persona breakdown so the result is comparable across invocations:
+
+```
+Pass rate: <N>/30 (<P>%) — [PASS|FAIL]
+By persona: 민감성 X/5 · 임산부 X/5 · 글루텐 X/5 · 헬스 X/5 · MD X/5 · cross X/5
+First 3 failing queries:
+  - q##: "<query>" — top-5 contained no expected keywords (got: <top-1 hit text>)
+```
+
+The `[PASS]` verdict requires ≥85% (script's `sys.exit(1)` threshold). `[FAIL]` requires identifying which of the 4 root-cause categories applies (per-persona / vocabulary / RRF tuning / reranker fallback) — at least one category in the verdict block.
+
 ## Related
 
 - `.claude/commands/test-all.md` — wraps this eval in the broader test suite (TS type-check + Python AST + wow eval + smoke).

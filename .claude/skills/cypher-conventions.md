@@ -73,8 +73,22 @@ This is a frequent cause of stack traces during scenario additions; if you see `
 - Writing new scenarios that pull from the knowledge graph
 - When `code-reviewer` agent is invoked on a diff containing Cypher
 
+## Outputs
+
+When this skill applies to a diff or new code, emit a verdict block:
+
+```
+Cypher convention check: [PASS|FAIL]
+Rules applied: [keyword-only-params, no-fstring-injection, flatten-props, fstring-trap]
+Violations (if any):
+  - <file>:<line> — <rule-name>: <one-line summary>
+```
+
+`[PASS]` means every Cypher call site in scope obeys all 4 rules. Each violation must cite the rule name from the rubric (rule-1 keyword-only, rule-2 no f-string, rule-3 flatten-props, rule-4 f-string traps) so downstream auto-fix tooling can route to the correct remediation.
+
 ## Related
 
-- `api/services/neptune.py` — the wrapper module (look at `_flatten_props` source)
+- `data/load.py` — `_flatten_props` source (Neptune-bound scalar coercion used by the loader; query consumers should mirror its scalar discipline)
+- `api/services/neptune.py` — the openCypher wrapper module (`open_cypher`, `subgraph_for_skus`, `_node_props`)
 - `api/CLAUDE.md` — module conventions including SSE event vocabulary and Pydantic discipline
 - Project memory: keyword-only `parameters` is a recurring gotcha that has bitten this project before

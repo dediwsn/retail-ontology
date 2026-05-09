@@ -1,25 +1,25 @@
 {
-  "score": 7.9,
-  "grade": "B",
+  "scores": {
+    "overall": 8.8,
+    "grade": "A"
+  },
+  "score": 8.8,
+  "grade": "A",
   "mode": "full",
+  "timestamp": "2026-05-09T14:45:22Z",
   "dimensions": {
     "correctness": 8,
-    "safety": 8,
-    "completeness": 7,
-    "consistency": 8,
+    "safety": 10,
+    "completeness": 10,
+    "consistency": 10,
     "actionability": 7,
-    "testability": 7,
-    "costEfficiency": 7,
-    "contractBasedTesting": 7,
+    "testability": 5,
+    "costEfficiency": 9,
+    "contractBasedTesting": 6,
     "agentCommunication": 9,
     "contextManagement": 10,
     "feedbackLoopMaturity": 10,
-    "evolvability": 8
+    "evolvability": 9
   },
-  "id": "eval-2026-04-28-004",
-  "scores": {
-    "overall": 7.9,
-    "grade": "B"
-  },
-  "timestamp": "2026-04-28T10:19:46Z"
+  "id": "eval-2026-05-09-001"
 }
