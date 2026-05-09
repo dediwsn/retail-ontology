@@ -25,7 +25,7 @@ echo "[2/4] copying graphify-out → web/public/codegraph/"
 cp graphify-out/graph.html graphify-out/graph.json graphify-out/manifest.json \
    graphify-out/GRAPH_REPORT.md web/public/codegraph/
 
-echo "[3/4] labelling 159 communities via Bedrock Sonnet (~2 min)"
+echo "[3/4] enriching communities via Bedrock Sonnet (~3 min: label + description + key_concepts + top_files)"
 python3 scripts/label_codegraph_communities.py
 
 echo "[4/4] patching graph.html + graph.json with semantic community names"

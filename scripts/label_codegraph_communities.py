@@ -1,27 +1,42 @@
-"""Annotate graphify-out/graph.json communities with Korean semantic labels.
+"""Annotate graphify-out/graph.json communities with semantic Korean
+metadata via AWS Bedrock Sonnet 4.6.
 
-Inspired by the labelled `community_labels` block in mfg-ontology's
-graph.json (which graphify normally writes via its `extract --backend X`
-LLM pipeline). We get the same effect by calling AWS Bedrock Sonnet
-ourselves, so the retail repo doesn't need an external API key — the
-EC2 IAM role already has Bedrock access.
+Replaces the simple `community_labels` map with a richer
+`community_meta` schema:
+
+    {
+      "0": {
+        "label": "API 클라이언트 타입 정의",                   <- 5–15자
+        "description": "프론트엔드 fetch helpers + Pydantic 미러 타입.",  <- 1줄, ≤80자
+        "top_files": ["web/lib/api-client.ts", ...],          <- 5개
+        "key_concepts": ["TypeScript", "fetch", "타입 미러"],  <- 3개
+        "node_count": 85
+      },
+      ...
+    }
+
+Two output files:
+  - graph.community_labels  (legacy, just {cid: label}) — for backward compat
+  - graph.community_meta    (new, full metadata)
+  - sidecars: community_labels.json + community_meta.json
+
+The page reads community_meta.json. graph.html keeps using the simple
+labels via the in-place `community_name` patch (separate step, see
+`scripts/refresh_codegraph.sh`).
 
 Usage:
     python3 scripts/label_codegraph_communities.py \\
-        --graph web/public/codegraph/graph.json \\
-        [--limit 200] [--dry-run]
+        --graph web/public/codegraph/graph.json [--limit 200] [--dry-run]
 
-Idempotent — re-running re-labels (Bedrock is non-deterministic at
-temperature 0.2 but the labels stay close to the same surface form).
-Writes back to the same `graph.json` adding/replacing the top-level
-`community_labels: {community_id: "한국어 라벨"}` key, plus a sidecar
-`community_labels.json` mirror for clients that want a separate file.
+Re-running re-derives metadata. Bedrock at temperature 0.2 keeps labels
+stable across runs (drift ≤ small word-order changes).
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -32,22 +47,15 @@ import boto3
 REGION = os.environ.get("AWS_REGION", "ap-northeast-2")
 MODEL_ID = os.environ.get("BEDROCK_CHAT_MODEL_ID", "global.anthropic.claude-sonnet-4-6")
 
-# Per-community node payload sent to the LLM. Cap to keep prompts small.
-NODES_PER_COMMUNITY_FOR_PROMPT = 12
+NODES_PER_COMMUNITY_FOR_PROMPT = 15
 
 
 def _representative_nodes(nodes: List[Dict[str, Any]],
                            edges: List[Dict[str, Any]]) -> Dict[int, List[Dict[str, Any]]]:
-    """For each community, pick up to N representative nodes ordered by
-    in-degree + out-degree (a cheap proxy for "central" in that cluster).
-    Returns {community_id: [node_dict, ...]}.
-    """
     degree: Counter = Counter()
     for e in edges:
-        s = e.get("source")
-        t = e.get("target")
-        if s: degree[s] += 1
-        if t: degree[t] += 1
+        if e.get("source"): degree[e["source"]] += 1
+        if e.get("target"): degree[e["target"]] += 1
 
     by_com: Dict[int, List[Dict[str, Any]]] = defaultdict(list)
     for n in nodes:
@@ -56,7 +64,6 @@ def _representative_nodes(nodes: List[Dict[str, Any]],
             continue
         by_com[cid].append(n)
 
-    # Sort each bucket by degree desc, take top-N.
     out: Dict[int, List[Dict[str, Any]]] = {}
     for cid, ns in by_com.items():
         ns.sort(key=lambda n: degree.get(n.get("id", ""), 0), reverse=True)
@@ -65,9 +72,6 @@ def _representative_nodes(nodes: List[Dict[str, Any]],
 
 
 def _format_for_prompt(reps: List[Dict[str, Any]]) -> str:
-    """One-line per node: `path/to/file.py · LabelOrName · L42` style.
-    Same shape graphify uses internally so the LLM sees familiar structure.
-    """
     lines = []
     for n in reps:
         src = n.get("source_file") or ""
@@ -77,90 +81,155 @@ def _format_for_prompt(reps: List[Dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _label_one_community(client, cid: int, reps: List[Dict[str, Any]]) -> str:
-    """Ask Sonnet for a 5–15-character Korean label that summarises
-    the cluster's purpose. Returns plain string (no JSON wrapping).
-    """
+_JSON_BLOCK = re.compile(r"\{[\s\S]*\}", re.MULTILINE)
+
+
+def _enrich_one(client, cid: int, reps: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Single Bedrock call → JSON with label + description + concepts."""
     snippet = _format_for_prompt(reps)
     prompt = (
-        "다음은 한 코드베이스 내에서 자동 군집화로 묶인 한 *커뮤니티*의 대표 노드들입니다. "
-        "이 커뮤니티가 무엇에 관한 것인지 *한국어 5~15자 이내의 라벨*로 요약해 주세요. "
-        "불필요한 설명·따옴표·접두사 없이 라벨 텍스트만 단독으로 반환합니다.\n\n"
-        f"커뮤니티 #{cid} 대표 노드 (degree 내림차순):\n{snippet}\n\n"
-        "라벨:"
+        "코드베이스 자동 군집화로 묶인 한 *커뮤니티*의 대표 노드 목록입니다. "
+        "이 클러스터의 목적을 분석해 다음 JSON 형식으로 응답하세요. "
+        "JSON 외 다른 텍스트(설명, 코드 펜스)는 절대 포함하지 마세요.\n\n"
+        '{\n'
+        '  "label": "5~15자 한국어 라벨 (제목 형태)",\n'
+        '  "description": "이 클러스터가 무엇을 하는지 1줄 요약 (≤80자)",\n'
+        '  "key_concepts": ["핵심 개념 1", "핵심 개념 2", "핵심 개념 3"]\n'
+        '}\n\n'
+        f"커뮤니티 #{cid} 대표 노드 (degree 내림차순, top {len(reps)}):\n"
+        f"{snippet}\n\n"
+        "JSON 응답:"
     )
     resp = client.converse(
         modelId=MODEL_ID,
         messages=[{"role": "user", "content": [{"text": prompt}]}],
-        inferenceConfig={"maxTokens": 60, "temperature": 0.2},
+        inferenceConfig={"maxTokens": 400, "temperature": 0.2},
     )
     raw = resp["output"]["message"]["content"][0]["text"].strip()
-    # Strip stray quotes / trailing punctuation the model sometimes adds.
-    raw = raw.strip("\"'`「」 .,。")
-    # Cap to 30 chars defensively (instruction said ≤15 but Sonnet wanders).
-    return raw[:30] if raw else f"커뮤니티 {cid}"
+    # Strip optional ```json ... ``` fences
+    raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.MULTILINE).rstrip("`").strip()
+    # Extract first {...} block (Sonnet sometimes adds a trailing newline)
+    m = _JSON_BLOCK.search(raw)
+    if not m:
+        raise ValueError(f"no JSON found in response: {raw[:200]}")
+    parsed = json.loads(m.group(0))
+    label = str(parsed.get("label") or "").strip()[:30] or f"커뮤니티 {cid}"
+    desc = str(parsed.get("description") or "").strip()[:120]
+    concepts_raw = parsed.get("key_concepts") or []
+    if not isinstance(concepts_raw, list):
+        concepts_raw = [str(concepts_raw)]
+    concepts = [str(c).strip()[:30] for c in concepts_raw[:3] if c]
+    return {"label": label, "description": desc, "key_concepts": concepts}
+
+
+def _top_files(reps: List[Dict[str, Any]], n: int = 5) -> List[str]:
+    """Return up to n distinct source_file paths from the representative
+    nodes. Order preserved (= degree order)."""
+    seen: set = set()
+    out: List[str] = []
+    for node in reps:
+        sf = (node.get("source_file") or "").strip()
+        if not sf or sf in seen:
+            continue
+        seen.add(sf)
+        out.append(sf)
+        if len(out) >= n:
+            break
+    return out
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--graph", default="web/public/codegraph/graph.json")
-    ap.add_argument("--sidecar", default=None,
-                    help="optional path for the community_labels.json mirror "
-                         "(default: <graph dir>/community_labels.json)")
+    ap.add_argument("--meta-out", default=None,
+                    help="path for community_meta.json (default <graph dir>/community_meta.json)")
+    ap.add_argument("--labels-out", default=None,
+                    help="path for community_labels.json (default <graph dir>/community_labels.json)")
     ap.add_argument("--limit", type=int, default=999,
-                    help="cap labelling to top-N largest communities; rest get "
-                         "auto-labels '커뮤니티 N' as graceful fallback")
+                    help="cap LLM calls; remaining communities get an auto-label '커뮤니티 N'")
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
     graph_path = Path(args.graph)
-    sidecar_path = Path(args.sidecar) if args.sidecar \
+    meta_path = Path(args.meta_out) if args.meta_out \
+        else graph_path.parent / "community_meta.json"
+    labels_path = Path(args.labels_out) if args.labels_out \
         else graph_path.parent / "community_labels.json"
 
     g = json.loads(graph_path.read_text(encoding="utf-8"))
     nodes = g.get("nodes") or []
-    # graphify schema uses "links" (D3) but accept "edges" too.
     edges = g.get("links") or g.get("edges") or []
     if not nodes:
         print("error: graph.json has no nodes", file=sys.stderr)
         sys.exit(1)
 
     reps = _representative_nodes(nodes, edges)
-    # Order communities by size (largest first) — labelling them earlier
-    # so a partial run still produces useful coverage.
-    communities = sorted(reps.items(), key=lambda kv: len(kv[1]), reverse=True)
+    sized = [(cid, len(by_com), by_com) for cid, by_com_list in reps.items()
+             for by_com in [by_com_list]]
+    # community sizes from the *full* node list (reps cap at 15, sizes can be larger)
+    full_sizes: Counter = Counter()
+    for n in nodes:
+        cid = n.get("community")
+        if cid is not None:
+            full_sizes[cid] += 1
+    communities = sorted(reps.keys(), key=lambda c: full_sizes[c], reverse=True)
+
     print(f"Found {len(communities)} communities; "
-          f"largest has {len(communities[0][1])} representative nodes.")
+          f"largest = {full_sizes[communities[0]]} nodes.")
 
     if args.dry_run:
-        for cid, rs in communities[:5]:
-            print(f"\n#{cid} ({len(rs)} reps):")
-            print(_format_for_prompt(rs))
+        for cid in communities[:3]:
+            print(f"\n#{cid} ({full_sizes[cid]} nodes, top-files: "
+                  f"{_top_files(reps[cid])}):")
+            print(_format_for_prompt(reps[cid]))
         return
 
     client = boto3.client("bedrock-runtime", region_name=REGION)
+    meta: Dict[str, Dict[str, Any]] = {}
     labels: Dict[str, str] = {}
-    for i, (cid, rs) in enumerate(communities):
+    for i, cid in enumerate(communities):
+        rs = reps[cid]
+        size = full_sizes[cid]
         if i >= args.limit:
-            labels[str(cid)] = f"커뮤니티 {cid}"
-            continue
-        try:
-            label = _label_one_community(client, cid, rs)
-        except Exception as e:
-            print(f"  ! community {cid}: {e}", file=sys.stderr)
-            label = f"커뮤니티 {cid}"
-        labels[str(cid)] = label
+            entry = {
+                "label": f"커뮤니티 {cid}",
+                "description": "",
+                "key_concepts": [],
+                "top_files": _top_files(rs),
+                "node_count": size,
+            }
+        else:
+            try:
+                enriched = _enrich_one(client, cid, rs)
+            except Exception as e:
+                print(f"  ! community {cid}: {e}", file=sys.stderr)
+                enriched = {"label": f"커뮤니티 {cid}", "description": "",
+                            "key_concepts": []}
+            entry = {
+                **enriched,
+                "top_files": _top_files(rs),
+                "node_count": size,
+            }
+        meta[str(cid)] = entry
+        labels[str(cid)] = entry["label"]
         if (i + 1) % 10 == 0 or i < 5:
-            print(f"  [{i+1}/{len(communities)}] #{cid} → {label}")
+            preview = entry["description"][:50]
+            print(f"  [{i+1}/{len(communities)}] #{cid} ({size}n) "
+                  f"→ {entry['label']!r}  {preview!r}")
 
     g["community_labels"] = labels
+    g["community_meta"] = meta
+
     graph_path.write_text(json.dumps(g, ensure_ascii=False, indent=2),
                           encoding="utf-8")
-    sidecar_path.write_text(json.dumps(labels, ensure_ascii=False, indent=2),
-                            encoding="utf-8")
-    print(f"\nWrote {len(labels)} community labels to:")
-    print(f"  - {graph_path}  (graph.community_labels)")
-    print(f"  - {sidecar_path}  (sidecar mirror)")
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2),
+                         encoding="utf-8")
+    labels_path.write_text(json.dumps(labels, ensure_ascii=False, indent=2),
+                           encoding="utf-8")
+    print(f"\nWrote enriched metadata for {len(meta)} communities:")
+    print(f"  - {graph_path}  (graph.community_labels + community_meta)")
+    print(f"  - {meta_path}   (rich metadata sidecar)")
+    print(f"  - {labels_path} (legacy label-only sidecar)")
 
 
 if __name__ == "__main__":

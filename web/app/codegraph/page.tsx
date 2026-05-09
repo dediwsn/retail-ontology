@@ -24,6 +24,16 @@ interface Manifest {
 
 type CommunityLabels = Record<string, string>;
 
+type CommunityMeta = {
+  label: string;
+  description: string;
+  key_concepts: string[];
+  top_files: string[];
+  node_count: number;
+};
+
+type CommunityMetaMap = Record<string, CommunityMeta>;
+
 const STATIC_BASE = '/codegraph';
 
 export default function CodeGraphPage() {
@@ -31,6 +41,7 @@ export default function CodeGraphPage() {
   const [manifestError, setManifestError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [communityLabels, setCommunityLabels] = useState<CommunityLabels | null>(null);
+  const [communityMeta, setCommunityMeta] = useState<CommunityMetaMap | null>(null);
   const [communitySizes, setCommunitySizes] = useState<Record<string, number>>({});
   const [showCommunityPanel, setShowCommunityPanel] = useState(false);
 
@@ -47,6 +58,11 @@ export default function CodeGraphPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) setCommunityLabels(d as CommunityLabels); })
       .catch(() => { /* optional asset */ });
+    // Load richer per-community metadata (description + key concepts + top files)
+    fetch(`${STATIC_BASE}/community_meta.json`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setCommunityMeta(d as CommunityMetaMap); })
+      .catch(() => { /* optional asset; falls back to labels-only mode */ });
     // Compute community sizes from graph.json (only first time)
     fetch(`${STATIC_BASE}/graph.json`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
@@ -234,7 +250,11 @@ export default function CodeGraphPage() {
             />
           </div>
           {showCommunityPanel && communityLabels && (
-            <CommunityListPanel labels={communityLabels} sizes={communitySizes} />
+            <CommunityListPanel
+              labels={communityLabels}
+              meta={communityMeta}
+              sizes={communitySizes}
+            />
           )}
         </div>
       </div>
@@ -244,29 +264,41 @@ export default function CodeGraphPage() {
 
 
 function CommunityListPanel({
-  labels, sizes,
+  labels, meta, sizes,
 }: {
   labels: Record<string, string>;
+  meta: CommunityMetaMap | null;
   sizes: Record<string, number>;
 }) {
   const [filter, setFilter] = useState('');
+  const [expandedCid, setExpandedCid] = useState<string | null>(null);
 
   const sorted = useMemo(() => {
-    const entries = Object.entries(labels).map(([cid, label]) => ({
-      cid,
-      label,
-      size: sizes[cid] ?? 0,
-    }));
+    const entries = Object.entries(labels).map(([cid, label]) => {
+      const m = meta?.[cid];
+      return {
+        cid,
+        label,
+        size: m?.node_count ?? sizes[cid] ?? 0,
+        description: m?.description ?? '',
+        key_concepts: m?.key_concepts ?? [],
+        top_files: m?.top_files ?? [],
+      };
+    });
     entries.sort((a, b) => b.size - a.size);
     if (!filter) return entries;
     const q = filter.toLowerCase();
     return entries.filter((e) =>
-      e.label.toLowerCase().includes(q) || e.cid.includes(q),
+      e.label.toLowerCase().includes(q) ||
+      e.cid.includes(q) ||
+      e.description.toLowerCase().includes(q) ||
+      e.key_concepts.some((c) => c.toLowerCase().includes(q)) ||
+      e.top_files.some((f) => f.toLowerCase().includes(q)),
     );
-  }, [labels, sizes, filter]);
+  }, [labels, meta, sizes, filter]);
 
   return (
-    <aside className="w-72 shrink-0 rounded-lg border border-ink-700 bg-ink-900 flex flex-col overflow-hidden">
+    <aside className="w-80 shrink-0 rounded-lg border border-ink-700 bg-ink-900 flex flex-col overflow-hidden">
       <div className="px-3 py-2 border-b border-ink-700 flex items-center gap-2">
         <Tag className="w-3.5 h-3.5 text-emerald-300" />
         <span className="text-xs font-semibold text-ink-100">코드 커뮤니티</span>
@@ -279,26 +311,66 @@ function CommunityListPanel({
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          placeholder="커뮤니티 검색…"
+          placeholder="라벨·설명·파일·개념 검색…"
           className="w-full text-xs bg-ink-800 border border-ink-700 rounded px-2 py-1 text-ink-100 outline-none focus:border-emerald-500"
         />
       </div>
       <ul className="flex-1 overflow-y-auto text-xs">
-        {sorted.map(({ cid, label, size }) => (
-          <li
-            key={cid}
-            className="px-3 py-1.5 border-b border-ink-700/50 hover:bg-ink-800 flex items-center gap-2"
-            title={`Community #${cid} — ${size} 노드`}
-          >
-            <span className="font-mono text-[10px] text-ink-500 shrink-0 w-7 text-right">
-              #{cid}
-            </span>
-            <span className="text-ink-200 flex-1 min-w-0 truncate">{label}</span>
-            <span className="font-mono text-[10px] text-emerald-300 shrink-0">
-              {size}
-            </span>
-          </li>
-        ))}
+        {sorted.map((entry) => {
+          const expanded = expandedCid === entry.cid;
+          const hasRich = !!entry.description || entry.key_concepts.length > 0 || entry.top_files.length > 0;
+          return (
+            <li key={entry.cid} className="border-b border-ink-700/50">
+              <button
+                type="button"
+                onClick={() => setExpandedCid(expanded ? null : entry.cid)}
+                className="w-full text-left px-3 py-1.5 hover:bg-ink-800 flex items-center gap-2 transition"
+                title={hasRich ? '클릭하여 상세 정보' : `Community #${entry.cid} — ${entry.size} 노드`}
+              >
+                <span className="font-mono text-[10px] text-ink-500 shrink-0 w-7 text-right">
+                  #{entry.cid}
+                </span>
+                <span className="text-ink-200 flex-1 min-w-0 truncate">{entry.label}</span>
+                <span className="font-mono text-[10px] text-emerald-300 shrink-0">
+                  {entry.size}
+                </span>
+              </button>
+              {expanded && hasRich && (
+                <div className="px-3 pb-2.5 pt-1 bg-ink-800/40 space-y-2 text-[11px]">
+                  {entry.description && (
+                    <p className="text-ink-200 leading-relaxed">{entry.description}</p>
+                  )}
+                  {entry.key_concepts.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {entry.key_concepts.map((c) => (
+                        <span
+                          key={c}
+                          className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-200 border border-emerald-500/30"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {entry.top_files.length > 0 && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-wider text-ink-500 mb-0.5">
+                        대표 파일
+                      </div>
+                      <ul className="space-y-0.5 font-mono text-[10px]">
+                        {entry.top_files.map((f) => (
+                          <li key={f} className="text-ink-300 truncate" title={f}>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
         {sorted.length === 0 && (
           <li className="px-3 py-4 text-center text-ink-500 text-[11px]">
             매칭되는 커뮤니티가 없습니다.
@@ -306,7 +378,9 @@ function CommunityListPanel({
         )}
       </ul>
       <div className="px-3 py-1.5 border-t border-ink-700 text-[10px] text-ink-500">
-        라벨은 Bedrock Sonnet 4.6이 각 커뮤니티의 중심 노드를 분석해 자동 생성.
+        {meta
+          ? '라벨·설명·핵심 개념·대표 파일 — Bedrock Sonnet 4.6 자동 추출. 클릭하여 펼쳐보기.'
+          : '라벨은 Bedrock Sonnet 4.6이 각 커뮤니티의 중심 노드를 분석해 자동 생성.'}
       </div>
     </aside>
   );
