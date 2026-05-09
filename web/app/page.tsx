@@ -135,7 +135,7 @@ export default function HomePage() {
             편의점 · 마트 · 드럭스토어 · 프리미엄 새벽배송 데이터를<br />
             <span className="text-accent-300">온톨로지 그래프</span>로 풀어내는 데모
           </h1>
-          <p className="text-ink-300 max-w-3xl leading-relaxed">
+          <p className="text-ink-300 leading-relaxed">
             GS1 GPC + FoodOn + INCI + schema.org 표준에 한국 어댑터(KFDA / 식약처)를 매핑한 합성 데이터로,
             13개 시나리오(의미 검색 → VIP 타깃 빌더)와 19종 Knowledge Graph 객체 탐색을 한 화면에 제공합니다.
             좌측 사이드바에서 객체 타입을 탐색하거나, 아래 시나리오 카드에서 바로 진입하세요.
