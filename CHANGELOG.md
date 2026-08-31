@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — persona lens on Scenario A + insights output guardrail
+- **`SearchRequest.persona` was declared and never read.** The web client sent it (`api-client.ts`) and `PersonaSwitch` is mounted globally in `layout.tsx`, so the persona was transmitted and silently discarded — Scenario A results were identical for every persona. New `services/search.py:apply_persona_lens()` re-slices retrieved hits through the persona's ontology context: products carrying an avoided ingredient are dropped, products matching a preferred ingredient (`+0.15`) or favourite GS1 brick (`+0.08`) are boosted, and the reason is written into hit metadata (`persona_preferred` / `persona_favorite_category` / `persona_conflict`) so the UI can explain the re-ordering. Applied after retrieval, not as an OpenSearch filter — the prefer/avoid facts live in Neptune, and keeping retrieval persona-blind preserves the RAG-retrieves / ontology-explains split.
+- Router over-fetches (`top_k * 2`, capped at 50) when a persona is active so the lens can drop hits and still return `top_k`. `/api/search/stream` emits an extra `persona` phase event after `rerank`.
+- Neptune failure, an unknown persona, or a persona with no preferences all return the hits unchanged — the lens is an enhancement and never fails a search. Non-Product hits (reviews) pass through untouched.
+- **`/api/insights` applied no guardrail at all**, despite the documented "Guardrails on chat input and insights output" contract. New `_guard_output()` applies the OUTPUT guardrail to the assembled answer in both the streaming and non-streaming endpoints, emitting a `guardrail` SSE event when it intervenes. Matches `services/agent.py`: deltas stream unscrubbed and the terminal event carries the authoritative text — a deliberate streaming trade-off, now documented rather than accidental. Never raises; degrades to the raw answer.
+- 11 new tests in `tests/api/test_persona_lens.py` (78 total, was 67).
+
+### Documentation — runtime trace corrections
+- New `docs/diagrams/ontology-rag-llm.puml` + `.svg` — sequence diagram of the ontology / RAG / LLM interplay across Scenarios A, B and C, with a call-site index in `docs/diagrams/README.md`. Rendered by `scripts/render_puml_sequence.py` (no Java on the build host); `plantuml -tsvg` produces the same diagram from the same source.
+- **Code Interpreter is not on the insights path.** `api/services/code_interpreter.py` is implemented but no router imports it; `/api/insights` returns a `chart_spec` derived from the Neptune aggregation and rendered client-side. README (EN + KR) and `docs/architecture.md` (EN + KR) corrected — they had described server-side matplotlib PNG rendering as active.
+- `SECURITY.md` §2 rewritten: Lambda@Edge is not a pass-through (ADR-0012), and `_verify_jwt` already performs full RS256 + JWKS + iss/exp/aud verification. The remaining gap is `DEMO_PUBLIC_MODE` defaulting to `true`.
+- New `docs/product/` — PRD, user stories, and a bilingual sales narrative.
+
+
 ### Added — Code Knowledge Graph (codegraph)
 - New `/codegraph` page (Sidebar 메타 section) embedding the `graphify`-generated AST graph as a static iframe. **No LLM at build time** — graphify is an AST-only third-party skill, fully offline. Bundle ships in `web/public/codegraph/` (`graph.html` 1.3MB, `graph.json` 1.2MB, `manifest.json` 28KB, `GRAPH_REPORT.md` 44KB). Current snapshot: **1,751 nodes, 2,217 edges, 159 communities, 151 source files**.
 - Fullscreen toggle (ESC to exit), per-node click-through into the graphify viewer, side links to raw `graph.html` / `graph.json` / `GRAPH_REPORT.md` for deeper exploration.
@@ -256,6 +270,20 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### Fixed — 시나리오 A 페르소나 렌즈 + 인사이트 출력 가드레일
+- **`SearchRequest.persona`가 선언만 되고 읽히지 않았습니다.** 웹 클라이언트는 값을 보내고(`api-client.ts`) `PersonaSwitch`는 `layout.tsx`에 전역 마운트되어 있었으므로, 페르소나는 전달된 뒤 조용히 버려졌습니다 — 시나리오 A 결과가 모든 페르소나에서 동일했습니다. 새 `services/search.py:apply_persona_lens()`가 검색 결과를 페르소나의 온톨로지 컨텍스트로 다시 자릅니다: 회피 성분을 가진 상품은 제외, 선호 성분(`+0.15`) 또는 선호 GS1 브릭(`+0.08`) 일치 상품은 가점, 그리고 그 이유를 메타데이터(`persona_preferred` / `persona_favorite_category` / `persona_conflict`)에 기록해 UI가 재정렬을 설명할 수 있게 했습니다. OpenSearch 필터가 아니라 검색 **이후**에 적용 — 선호/회피 사실은 Neptune에 있고, 검색 단계를 페르소나-블라인드로 두어야 "RAG가 찾고 온톨로지가 설명한다"는 분업이 유지됩니다.
+- 페르소나가 있을 때 라우터가 `top_k * 2`(최대 50)로 over-fetch 하여, 렌즈가 결과를 제외해도 `top_k`를 채웁니다. `/api/search/stream`은 `rerank` 다음에 `persona` phase 이벤트를 추가로 방출합니다.
+- Neptune 장애, 알 수 없는 페르소나, 선호 정보가 없는 페르소나는 모두 입력을 그대로 반환합니다 — 렌즈는 부가 기능이며 검색을 실패시키지 않습니다. Product가 아닌 결과(리뷰)는 그대로 통과합니다.
+- **`/api/insights`에 가드레일이 전혀 적용되지 않고 있었습니다.** 문서화된 "챗 입력 + 인사이트 출력 가드레일" 계약과 어긋난 상태였습니다. 새 `_guard_output()`이 스트리밍/비스트리밍 양쪽에서 완성된 답변에 OUTPUT 가드레일을 적용하고, 개입 시 `guardrail` SSE 이벤트를 방출합니다. `services/agent.py`와 동일한 패턴 — delta는 스크럽 없이 흐르고 종료 이벤트가 정본을 전달하는 스트리밍 트레이드오프를, 이제 우연이 아니라 문서화된 선택으로 둡니다. 예외를 던지지 않고 원문으로 degrade 합니다.
+- `tests/api/test_persona_lens.py`에 11개 테스트 추가 (총 78개, 기존 67개).
+
+### Documentation — 런타임 추적 기반 수정
+- 신규 `docs/diagrams/ontology-rag-llm.puml` + `.svg` — 시나리오 A·B·C 전반의 온톨로지 / RAG / LLM 상호작용 시퀀스 다이어그램, 호출 지점 색인은 `docs/diagrams/README.md`. 빌드 호스트에 Java가 없어 `scripts/render_puml_sequence.py`로 렌더링했으며, 같은 소스에서 `plantuml -tsvg`도 동일한 다이어그램을 생성합니다.
+- **Code Interpreter는 인사이트 경로에 없습니다.** `api/services/code_interpreter.py`는 구현되어 있으나 어떤 라우터도 import 하지 않으며, `/api/insights`는 Neptune 집계에서 파생한 `chart_spec`을 반환하고 클라이언트가 렌더링합니다. README(EN+KR)와 `docs/architecture.md`(EN+KR)를 수정 — 서버측 matplotlib PNG 렌더링이 동작 중인 것처럼 서술되어 있었습니다.
+- `SECURITY.md` §2 재작성: Lambda@Edge는 pass-through가 아니며(ADR-0012), `_verify_jwt`는 이미 완전한 RS256 + JWKS + iss/exp/aud 검증을 수행합니다. 남은 격차는 `DEMO_PUBLIC_MODE` 기본값 `true`입니다.
+- 신규 `docs/product/` — PRD, 사용자 스토리, 이중 언어 세일즈 내러티브.
+
 
 ### 추가 — 코드 지식 그래프 (codegraph)
 - 신규 `/codegraph` 페이지 (사이드바 메타 섹션) — `graphify`가 생성한 AST 그래프를 정적 iframe으로 임베드. **빌드 시 LLM 호출 0** — graphify는 AST-only 서드파티 스킬, 오프라인 동작. 정적 자산은 `web/public/codegraph/` 에 번들. 현재 스냅샷: **1,751 노드, 2,217 엣지, 159 커뮤니티, 151 소스 파일**.

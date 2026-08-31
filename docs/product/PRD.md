@@ -68,7 +68,11 @@ makes the LLM answers *explainable*: every answer ships with the subgraph that p
 
 ### 3.1 Goals
 
-- **G1 — One coherent context.** A single persona selection propagates across all thirteen scenarios.
+- **G1 — One coherent context.** A single persona selection propagates across every scenario whose
+  output depends on it (nine of thirteen today — see FR-15).
+- **G1a — Persona coherence where it means something.** Persona re-slices the nine scenarios whose
+  analysis depends on who is asking; the four that do not take a persona parameter say so rather than
+  pretending otherwise.
 - **G2 — Explainable AI.** Every generated answer is accompanied by the graph path, source rows, or
   tool-call trace that produced it.
 - **G3 — Korean-first.** Nori analyzer, Korean embeddings, Korean chart glyphs (NanumGothic),
@@ -122,6 +126,11 @@ narrative persona selection still resolves to spine-linked members and transacti
 Each scenario is a distinct page, a distinct API surface, and a distinct decision it supports.
 
 ### A — Semantic Search (`/search`)
+Persona-aware: when a persona is active, retrieved hits are re-sliced through its
+ontology context — products carrying an avoided ingredient are dropped, products matching a preferred
+ingredient or favourite category are promoted, and the reason is attached to each hit so the
+re-ordering is explainable rather than silent.
+
 Korean natural-language query → OpenSearch BM25 with the **Nori** Korean analyzer, in parallel with
 Cohere `embed-v4` 1024-dim KNN vector search → **reciprocal-rank fusion** → **Cohere `rerank-v3`**
 cross-encoder reranking → results rendered with a **1-hop knowledge subgraph** showing why each SKU
@@ -356,7 +365,7 @@ labelling (0010/0013), and the Lambda@Edge root gate and logout flow (0012).
 | FR-03 | The system SHALL stream every LLM response token-by-token and emit a structured event per tool call. | B, C |
 | FR-04 | The system SHALL derive every charted value from a graph aggregation rather than from model output. | C |
 | FR-05 | The system SHALL evaluate SKU suitability against a named safety profile and name the specific violating ingredient. | E |
-| FR-06 | The system SHALL apply Bedrock Guardrails to chat input and insights output. | B, C, Ops |
+| FR-06 | The system SHALL apply Bedrock Guardrails to search input, chat input and output, and insights output. | A, B, C, Ops |
 | FR-07 | The system SHALL compare price, discount and stock across at least four retail channels for a given SKU. | G |
 | FR-08 | The system SHALL compute nearest-warehouse (haversine k-NN) and shortest-path (BFS over lanes) results on demand. | H |
 | FR-09 | The system SHALL precompute churn risk per member from RFM and expose it sliced by tier, persona and region. | I |
@@ -365,7 +374,8 @@ labelling (0010/0013), and the Lambda@Edge root gate and logout flow (0012).
 | FR-12 | The system SHALL report the share of a persona's members with no fulfilment node within an operator-chosen radius. | L |
 | FR-13 | The system SHALL compute per-member per-category wallet share by joining an external consumption panel to internal transactions. | M |
 | FR-14 | The system SHALL expose five independently tunable VIP definitions over the same underlying data. | M |
-| FR-15 | A single persona selection SHALL propagate to every scenario without re-selection. | All |
+| FR-15 | A single persona selection SHALL propagate, without re-selection, to every scenario whose analysis is persona-dependent — currently nine of thirteen: A, D, E, G, I, J, K, L, M. | A · D · E · G · I · J · K · L · M |
+| FR-15a | Scenarios B (chat), C (insights), F (substitute) and H (logistics) are persona-blind by design today; B derives context from conversational memory instead. Extending the persona parameter to them is a roadmap item. | B · C · F · H |
 | FR-16 | The system SHALL expose every registered node type through a browsable explorer with 1-hop neighbourhood drilldown. | Objects |
 | FR-17 | The system SHALL expose ingest counts, guardrail interventions, memory contents, evaluation scores and tool traces to an operator. | Ops |
 | FR-18 | All Cypher SHALL be parameterised; no user input is ever string-interpolated into a query. | All |

@@ -28,6 +28,12 @@ plus the **capability** that satisfies it.
   trend or brand that caused the match.
 - **Given** a slow query, **when** streaming is used (`/api/search/stream`), **then** partial results
   render progressively.
+- **Given** an active persona, **when** I search, **then** products containing an ingredient that
+  persona avoids are removed, products matching a preferred ingredient or favourite category are
+  promoted, and each hit carries the reason (`persona_preferred` / `persona_favorite_category` /
+  `persona_conflict`) so the re-ordering can be explained.
+- **Given** Neptune is unavailable, **when** a persona is active, **then** search still returns its
+  unfiltered results — the persona lens never fails a search.
 
 ### US-1.2 — Explain why a product matched ✅ `A` `OBJ`
 > **As a** merchandiser reviewing search quality,
@@ -439,8 +445,12 @@ plus the **capability** that satisfies it.
 > **so that** the demo tells a single story rather than thirteen disconnected ones.
 
 **Acceptance criteria**
-- **Given** the persona switch, **when** I select 캠퍼, **then** search, match, safety, churn,
-  coverage and VIP all re-slice to camper-linked members and products.
+- **Given** the persona switch, **when** I select 캠퍼, **then** the nine persona-dependent scenarios
+  (A search · D match · E safety · G price · I churn · J acquisition · K tier-up · L coverage ·
+  M VIP) all re-slice to camper-linked members and products.
+- **Given** scenarios B (chat), C (insights), F (substitute) or H (logistics), **when** the persona
+  changes, **then** their output is unchanged — they take no persona parameter today. B instead
+  carries context through AgentCore Memory across turns.
 - **Given** the guided tour, **when** started, **then** it steps through every scenario with
   explanatory copy.
 - **Given** a reload before a meeting, **when** the seeded loader runs, **then** the demo data is

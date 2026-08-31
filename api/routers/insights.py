@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 
 from api.aws_clients import bedrock_runtime
 from api.config import get_settings
-from api.services import neptune
+from api.services import guardrails, neptune
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["insights"])
@@ -113,6 +113,29 @@ def _bedrock_summarize(question: str, period_days: int, trends: List[Dict[str, A
             yield f"- {t.get('trend')} (관련 성분 {t.get('fanout')}개: {ings})\n"
 
 
+def _guard_output(text: str) -> str:
+    """Apply the OUTPUT guardrail to the assembled answer.
+
+    Matches the pattern in services/agent.py: text deltas stream unscrubbed and
+    the terminal event carries the authoritative, guardrailed text. That is a
+    deliberate streaming trade-off, not an oversight — buffering the whole
+    answer to scrub it first would remove the token-by-token effect the
+    scenario exists to show.
+
+    Never raises: insights degrades to the raw answer rather than 500-ing, the
+    same way it falls back when Bedrock or Neptune is unavailable."""
+    if not text:
+        return text
+    try:
+        safe, intervened = guardrails.apply(text, source="OUTPUT")
+        if intervened:
+            logger.info("insights output guardrail intervened")
+        return safe
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("insights output guardrail failed (non-fatal): %s", str(exc)[:200])
+        return text
+
+
 def _chart_spec_from(trends: List[Dict[str, Any]], q: str, period_days: int) -> Dict[str, Any]:
     return {
         "type": "bar",
@@ -131,7 +154,7 @@ def _chart_spec_from(trends: List[Dict[str, Any]], q: str, period_days: int) -> 
 def insights_endpoint(req: InsightsRequest) -> InsightsResponse:
     """Non-streaming: full Bedrock answer materialised then returned."""
     trends = _aggregate_trends()
-    answer = "".join(_bedrock_summarize(req.q, req.period_days, trends))
+    answer = _guard_output("".join(_bedrock_summarize(req.q, req.period_days, trends)))
     return InsightsResponse(
         answer_ko=answer or f"'{req.q}'에 대한 트렌드 데이터가 부족합니다.",
         chart_spec=_chart_spec_from(trends, req.q, req.period_days),
@@ -145,7 +168,10 @@ def _sse(event: str, data: Dict[str, Any]) -> str:
 
 @router.post("/insights/stream")
 def insights_stream(req: InsightsRequest) -> StreamingResponse:
-    """SSE: phase(neptune) → phase(bedrock) → delta tokens → result event."""
+    """SSE: phase(neptune) → phase(bedrock) → delta tokens → result event.
+
+    A `guardrail` event precedes `result` when the OUTPUT guardrail changed the
+    assembled answer."""
     def stream():
         yield _sse("phase", {"name": "neptune", "detail": "Trend ↔ Ingredient 집계"})
         trends = _aggregate_trends()
@@ -156,8 +182,11 @@ def insights_stream(req: InsightsRequest) -> StreamingResponse:
             full_answer += chunk
             yield _sse("delta", {"text": chunk})
 
+        safe_answer = _guard_output(full_answer)
+        if safe_answer != full_answer:
+            yield _sse("guardrail", {"action": "output_scrub"})
         yield _sse("result", {
-            "answer_ko": full_answer or f"'{req.q}'에 대한 트렌드 데이터가 부족합니다.",
+            "answer_ko": safe_answer or f"'{req.q}'에 대한 트렌드 데이터가 부족합니다.",
             "chart_spec": _chart_spec_from(trends, req.q, req.period_days),
             "drill_down_subgraph": {"nodes": [], "edges": []},
         })

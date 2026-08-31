@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from functools import lru_cache
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List, Optional, TypedDict
 from urllib.parse import urlparse
 
 from opensearchpy import AWSV4SignerAuth, OpenSearch, RequestsHttpConnection
@@ -171,3 +171,109 @@ def _os_client() -> OpenSearch:
         connection_class=RequestsHttpConnection, pool_maxsize=4,
         timeout=settings.request_timeout_seconds,
     )
+
+
+# ─── Persona lens (Scenario A) ─────────────────────────────────────────────
+#
+# `SearchRequest.persona` was accepted by the router and never read, so the
+# global PersonaSwitch had no effect on Scenario A results. The lens re-slices
+# already-retrieved hits through the persona's own ontology context: products
+# carrying an ingredient the persona avoids are dropped, and products matching
+# preferred ingredients or favourite GS1 bricks are promoted.
+#
+# Applied *after* retrieval rather than as an OpenSearch filter, deliberately:
+# the prefer/avoid facts live in Neptune, not in the index, and keeping the
+# retrieval stage persona-blind preserves the division of labour the whole
+# design rests on — RAG retrieves, the ontology explains and constrains.
+# @see docs/diagrams/ontology-rag-llm.puml
+
+_PERSONA_CYPHER = (
+    "MATCH (p:Persona) WHERE p.persona_id = $pid "
+    "RETURN coalesce(p.avoided_ingredient_ids, []) AS avoided, "
+    "       coalesce(p.preferred_ingredient_ids, []) AS preferred, "
+    "       coalesce(p.favorite_brick_codes, []) AS bricks"
+)
+
+_PRODUCT_FACTS_CYPHER = (
+    "MATCH (pr:Product) WHERE pr.sku_id IN $skus "
+    "OPTIONAL MATCH (pr)-[:HAS_INGREDIENT]->(i:Ingredient) "
+    "OPTIONAL MATCH (pr)-[:IN_CATEGORY]->(c:Category) "
+    "RETURN pr.sku_id AS sku_id, "
+    "       collect(DISTINCT i.ingredient_id) AS ingredients, "
+    "       collect(DISTINCT c.gs1_brick_code) AS bricks"
+)
+
+PREFERRED_BOOST = 0.15
+FAVORITE_BRICK_BOOST = 0.08
+
+
+def apply_persona_lens(
+    hits: List[SearchHit], persona_id: Optional[str], *, drop_avoided: bool = True,
+) -> List[SearchHit]:
+    """Re-slice `hits` through the ontology context of `persona_id`.
+
+    Drops products containing an avoided ingredient, boosts products matching a
+    preferred ingredient or favourite category, and annotates metadata with the
+    reason (`persona_preferred`, `persona_favorite_category`, `persona_conflict`)
+    so the UI can explain the re-ordering rather than silently changing it.
+
+    Hits that are not Products (reviews, unknown ids) pass through untouched.
+    Any Neptune failure returns the input unchanged — a persona lens is an
+    enhancement and must never fail the search.
+    """
+    if not persona_id or not hits:
+        return hits
+
+    from api.services import neptune  # local import keeps the import graph flat
+
+    try:
+        prow = neptune.open_cypher(_PERSONA_CYPHER, parameters={"pid": persona_id})
+        if not prow:
+            return hits
+        avoided = set(prow[0].get("avoided") or [])
+        preferred = set(prow[0].get("preferred") or [])
+        fav_bricks = set(prow[0].get("bricks") or [])
+        if not (avoided or preferred or fav_bricks):
+            return hits
+        skus = [h["sku_id"] for h in hits if h.get("sku_id")]
+        if not skus:
+            return hits
+        facts = {
+            r["sku_id"]: r
+            for r in neptune.open_cypher(_PRODUCT_FACTS_CYPHER, parameters={"skus": skus})
+        }
+    except Exception:  # noqa: BLE001
+        return hits
+
+    out: List[SearchHit] = []
+    for h in hits:
+        f = facts.get(h.get("sku_id", ""))
+        if f is None:
+            out.append(h)
+            continue
+        ings = set(f.get("ingredients") or [])
+        bricks = set(f.get("bricks") or [])
+        conflict = sorted(ings & avoided)
+        if conflict and drop_avoided:
+            continue
+
+        hit = dict(h)
+        meta = dict(hit.get("metadata") or {})
+        boost = 0.0
+        matched = sorted(ings & preferred)
+        if matched:
+            boost += PREFERRED_BOOST
+            meta["persona_preferred"] = matched
+        fav = sorted(bricks & fav_bricks)
+        if fav:
+            boost += FAVORITE_BRICK_BOOST
+            meta["persona_favorite_category"] = fav
+        if conflict:
+            meta["persona_conflict"] = conflict
+        meta["persona_id"] = persona_id
+        hit["metadata"] = meta
+        hit["score"] = float(hit.get("score", 0.0)) + boost
+        out.append(hit)  # type: ignore[arg-type]
+
+    out.sort(key=lambda h: h["score"], reverse=True)
+    return out
