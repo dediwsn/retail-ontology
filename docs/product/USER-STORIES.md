@@ -56,6 +56,11 @@ plus the **capability** that satisfies it.
   category and a different brand.
 - **Given** each candidate, **when** it is displayed, **then** it shows the ingredient/concern overlap
   score and the price delta against the original.
+- **Given** an active persona, **when** substitutes are ranked, **then** alternatives containing an
+  ingredient that persona must avoid are removed *before* the top-K cut, so dropping one promotes a
+  real alternative rather than leaving a gap.
+- **Given** `drop_persona_conflicts=false`, **when** substitutes are returned, **then** conflicting
+  alternatives appear flagged via `persona_conflict` rather than hidden.
 
 ### US-1.4 — Compare price and stock across channels ✅ `G`
 > **As a** price-sensitive shopper (or a pricing manager),
@@ -289,6 +294,10 @@ plus the **capability** that satisfies it.
   time, exceptions and active events.
 - **Given** an active disruption event, **when** it affects a region or category, **then** the affected
   geography is visibly marked.
+- **Given** an active persona, **when** the network loads, **then** every region and warehouse carries
+  `persona_member_count`, so nodes sitting where that persona has no members are visible at a glance.
+- **Given** the overlay query fails, **when** the page loads, **then** the network still renders
+  without the overlay — the map must always draw.
 
 ### US-6.2 — Quantify the coverage gap for a persona ✅ `L`
 > **As a** network-planning lead building an expansion business case,
@@ -445,12 +454,12 @@ plus the **capability** that satisfies it.
 > **so that** the demo tells a single story rather than thirteen disconnected ones.
 
 **Acceptance criteria**
-- **Given** the persona switch, **when** I select 캠퍼, **then** the nine persona-dependent scenarios
-  (A search · D match · E safety · G price · I churn · J acquisition · K tier-up · L coverage ·
-  M VIP) all re-slice to camper-linked members and products.
-- **Given** scenarios B (chat), C (insights), F (substitute) or H (logistics), **when** the persona
-  changes, **then** their output is unchanged — they take no persona parameter today. B instead
-  carries context through AgentCore Memory across turns.
+- **Given** the persona switch, **when** I select 캠퍼, **then** the eleven persona-dependent
+  scenarios (A search · D match · E safety · F substitute · G price · H logistics · I churn ·
+  J acquisition · K tier-up · L coverage · M VIP) all re-slice to camper-linked members and products.
+- **Given** scenarios B (chat) or C (insights), **when** the persona changes, **then** their output is
+  unchanged: B carries context through AgentCore Memory across turns instead, and C is a
+  category-level rollup that is deliberately persona-independent.
 - **Given** the guided tour, **when** started, **then** it steps through every scenario with
   explanatory copy.
 - **Given** a reload before a meeting, **when** the seeded loader runs, **then** the demo data is

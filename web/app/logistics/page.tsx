@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import * as api from '@/lib/api-client';
+import { useActivePersona } from '@/lib/persona-context';
 import { KoreaMapView, Marker as MapMarker, Lane } from '@/components/map/KoreaMapView';
 import { LogisticsChatPanel } from '@/components/LogisticsChatPanel';
 
@@ -31,13 +32,16 @@ export default function LogisticsPage() {
   const [showLanes, setShowLanes] = useState(true);
   const [typeFilter, setTypeFilter] = useState<Set<string>>(new Set(['mfr','rdc','3pl','lastmile']));
   const [rightTab, setRightTab] = useState<RightTab>('detail');
+  const { active } = useActivePersona();
 
   useEffect(() => {
-    api.logisticsNetwork().then(setData).catch((e) =>
+    api.logisticsNetwork(active?.id).then(setData).catch((e) =>
       setError(e instanceof Error ? e.message : String(e))
     ).finally(() => setLoading(false));
     api.logisticsStatus().then(setKpi).catch(() => { /* KPI is non-essential */ });
-  }, []);
+    // Re-fetch on persona change: the topology is identical, but every region and
+    // warehouse gains persona_member_count so the map can shade demand.
+  }, [active?.id]);
 
   useEffect(() => {
     if (!selectedWh) { setDetail(null); setInventory(null); return; }

@@ -814,8 +814,14 @@ export const personaMatch = (personaId: string, topK = 10) =>
 // Substitute (F)
 export const substituteSamples = (limit = 15) =>
   _get<SubstituteSampleProduct[]>(`/api/substitute/sample-products?limit=${limit}`, 'substituteSamples');
-export const substitute = (skuId: string, sameBrandOk = false, topK = 8) =>
-  _post<SubstituteResponse>(`/api/substitute`, { sku_id: skuId, same_brand_ok: sameBrandOk, top_k: topK }, 'substitute');
+export const substitute = (
+  skuId: string, sameBrandOk = false, topK = 8, persona?: string | null,
+) =>
+  _post<SubstituteResponse>(
+    `/api/substitute`,
+    { sku_id: skuId, same_brand_ok: sameBrandOk, top_k: topK, persona: persona ?? undefined },
+    'substitute',
+  );
 
 // Price (G)
 export const priceCompare = (q: string, opts: { topK?: number; persona?: string } = {}) =>
@@ -836,8 +842,11 @@ export const ontologyValidation = () =>
   _get<ValidationResponse>(`/api/ontology/validation`, 'ontologyValidation');
 
 // Logistics (H)
-export const logisticsNetwork = () =>
-  _get<LogisticsNetworkResponse>(`/api/logistics/network`, 'logisticsNetwork');
+export const logisticsNetwork = (persona?: string | null) =>
+  _get<LogisticsNetworkResponse>(
+    `/api/logistics/network${persona ? `?persona=${encodeURIComponent(persona)}` : ''}`,
+    'logisticsNetwork',
+  );
 export const logisticsStatus = () =>
   _get<LogisticsKpi>(`/api/logistics/status`, 'logisticsStatus');
 export const warehouseDetail = (whId: string) =>

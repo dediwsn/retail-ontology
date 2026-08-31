@@ -207,6 +207,39 @@ PREFERRED_BOOST = 0.15
 FAVORITE_BRICK_BOOST = 0.08
 
 
+def persona_context(persona_id: Optional[str]) -> Optional[Dict[str, set]]:
+    """Fetch a persona's avoid / prefer / favourite-category sets from the graph.
+
+    Shared by Scenario A (search) and Scenario F (substitute) so both read the
+    *same* ontology facts and cannot drift apart — a product rejected as unsafe
+    in search must not reappear as a "substitute".
+
+    Returns None when the persona is unknown, states no preferences, or the
+    graph is unreachable. Every caller treats None as "no lens", so a Neptune
+    outage degrades to unfiltered results rather than an error.
+    """
+    if not persona_id:
+        return None
+
+    from api.services import neptune  # local import keeps the import graph flat
+
+    try:
+        rows = neptune.open_cypher(_PERSONA_CYPHER, parameters={"pid": persona_id})
+    except Exception:  # noqa: BLE001
+        return None
+    if not rows:
+        return None
+
+    ctx = {
+        "avoided": set(rows[0].get("avoided") or []),
+        "preferred": set(rows[0].get("preferred") or []),
+        "bricks": set(rows[0].get("bricks") or []),
+    }
+    if not (ctx["avoided"] or ctx["preferred"] or ctx["bricks"]):
+        return None
+    return ctx
+
+
 def apply_persona_lens(
     hits: List[SearchHit], persona_id: Optional[str], *, drop_avoided: bool = True,
 ) -> List[SearchHit]:
@@ -224,17 +257,14 @@ def apply_persona_lens(
     if not persona_id or not hits:
         return hits
 
+    ctx = persona_context(persona_id)
+    if ctx is None:
+        return hits
+    avoided, preferred, fav_bricks = ctx["avoided"], ctx["preferred"], ctx["bricks"]
+
     from api.services import neptune  # local import keeps the import graph flat
 
     try:
-        prow = neptune.open_cypher(_PERSONA_CYPHER, parameters={"pid": persona_id})
-        if not prow:
-            return hits
-        avoided = set(prow[0].get("avoided") or [])
-        preferred = set(prow[0].get("preferred") or [])
-        fav_bricks = set(prow[0].get("bricks") or [])
-        if not (avoided or preferred or fav_bricks):
-            return hits
         skus = [h["sku_id"] for h in hits if h.get("sku_id")]
         if not skus:
             return hits

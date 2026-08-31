@@ -41,6 +41,9 @@ class RegionOut(BaseModel):
     lat: float
     lng: float
     population: Optional[int] = None
+    # Members of the requested persona living in this region. None when no
+    # persona was supplied — distinguishes "not asked" from "asked, zero here".
+    persona_member_count: Optional[int] = None
 
 
 class WarehouseOut(BaseModel):
@@ -53,6 +56,9 @@ class WarehouseOut(BaseModel):
     capacity_pallets: int
     cold_chain: bool
     operator_label: Optional[str] = None
+    # Persona demand in this warehouse's own region — lets the map show nodes
+    # sitting where the persona is not, which is the whole point of the overlay.
+    persona_member_count: Optional[int] = None
 
 
 class CarrierOut(BaseModel):
@@ -92,13 +98,41 @@ def _coerce_int(v: Any, default: int = 0) -> int:
 
 
 @router.get("/logistics/network", response_model=NetworkResponse)
-def network() -> NetworkResponse:
+def network(persona: Optional[str] = None) -> NetworkResponse:
+    """Network topology, optionally overlaid with persona demand.
+
+    With `persona`, every region and warehouse carries `persona_member_count` —
+    how many of that persona's members live there. The network itself does not
+    change; the overlay makes "our nodes are here, this persona is there" legible
+    on the same map. Scenario L answers the derived coverage KPI; this is the
+    raw demand layer behind it."""
     # Regions — sido + sigungu for the choropleth + marker layers
     region_rows = neptune.open_cypher(
         "MATCH (r:Region) RETURN r.region_code AS region_code, r.name_ko AS name_ko, "
         "       r.level AS level, r.lat AS lat, r.lng AS lng, r.population AS population "
         "ORDER BY r.region_code"
     )
+    # Persona demand overlay. Same OR-pattern as coverage / churn / tier-up so a
+    # narrative persona still reaches spine-linked Members through DERIVED_FROM.
+    # Failure degrades to no overlay — the network map must always render.
+    demand: Dict[str, int] = {}
+    if persona:
+        try:
+            demand_rows = neptune.open_cypher(
+                "MATCH (m:Member)-[:LIVES_IN]->(r:Region) "
+                "WHERE (m)-[:MATCHES_PERSONA]->(:Persona {persona_id: $pid}) "
+                "   OR (m)-[:MATCHES_PERSONA]->(:Persona)<-[:DERIVED_FROM]-"
+                "(:Persona {persona_id: $pid}) "
+                "RETURN r.region_code AS region_code, count(m) AS members",
+                parameters={"pid": persona},
+            ) or []
+            demand = {
+                str(r["region_code"]): _coerce_int(r.get("members"))
+                for r in demand_rows if r.get("region_code")
+            }
+        except Exception:  # noqa: BLE001
+            demand = {}
+
     regions = [
         RegionOut(
             region_code=str(r.get("region_code", "")),
@@ -107,6 +141,9 @@ def network() -> NetworkResponse:
             lat=_coerce_float(r.get("lat")),
             lng=_coerce_float(r.get("lng")),
             population=int(r["population"]) if r.get("population") is not None else None,
+            persona_member_count=(
+                demand.get(str(r.get("region_code", "")), 0) if persona else None
+            ),
         )
         for r in region_rows
         if r.get("region_code")
@@ -133,6 +170,9 @@ def network() -> NetworkResponse:
             capacity_pallets=_coerce_int(w.get("capacity_pallets")),
             cold_chain=bool(w.get("cold_chain")),
             operator_label=str(w["operator_label"]) if w.get("operator_label") else None,
+            persona_member_count=(
+                demand.get(str(w.get("region_code", "")), 0) if persona else None
+            ),
         )
         for w in wh_rows
         if w.get("wh_id")

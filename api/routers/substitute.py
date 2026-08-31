@@ -4,6 +4,8 @@ Given a product (sku_id), return same-category alternatives ranked by:
   • shared ingredients      (compositional similarity)
   • shared targeted concerns (use-case similarity)
   • price proximity          (avoids "premium-as-substitute-for-budget")
+  • persona fit              (optional — drops alternatives the active persona
+                              must avoid, promotes ones it prefers)
 
 The wow-moment is showing WHY each alternative is a substitute — visible
 "shared ingredients" + "shared concerns" + price delta tags. Subgraph
@@ -22,10 +24,21 @@ from api.services import neptune
 router = APIRouter(tags=["substitute"])
 
 
+# A preferred-ingredient match is worth slightly more than a shared ingredient
+# (3) and less than a shared concern (5): it says the alternative suits *this
+# shopper*, which is weaker evidence of substitutability than shared use-case
+# but stronger than incidental composition overlap.
+PERSONA_PREFERRED_BONUS = 4
+
+
 class SubstituteRequest(BaseModel):
     sku_id: str = Field(min_length=1, max_length=64)
     top_k: int = Field(default=8, ge=1, le=20)
     same_brand_ok: bool = False  # if False, prefer cross-brand alternatives
+    persona: Optional[str] = None
+    # A substitute that the active persona must avoid is not a substitute.
+    # Set false to surface conflicts (flagged, not hidden) instead of dropping.
+    drop_persona_conflicts: bool = True
 
 
 class SubstituteCandidate(BaseModel):
@@ -38,6 +51,8 @@ class SubstituteCandidate(BaseModel):
     score: int
     shared_ingredients: List[str] = Field(default_factory=list)
     shared_concerns: List[str] = Field(default_factory=list)
+    persona_preferred: List[str] = Field(default_factory=list)
+    persona_conflict: List[str] = Field(default_factory=list)
     properties: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -105,13 +120,13 @@ def substitute(req: SubstituteRequest) -> SubstituteResponse:
     WITH alt, collect(DISTINCT aing.ingredient_id) AS alt_ings
     OPTIONAL MATCH (alt)-[:TARGETS_CONCERN]->(aconcern:Concern)
     WITH alt, alt_ings, collect(DISTINCT aconcern.concern_id) AS alt_concerns
-    WITH alt,
+    WITH alt, alt_ings,
          [x IN $base_ings WHERE x IN alt_ings] AS shared_ings,
          [x IN $base_concerns WHERE x IN alt_concerns] AS shared_concerns
-    WITH alt, shared_ings, shared_concerns,
+    WITH alt, alt_ings, shared_ings, shared_concerns,
          (size(shared_ings) * 3 + size(shared_concerns) * 5) AS overlap_score
     WHERE overlap_score > 0
-    RETURN alt, shared_ings, shared_concerns, overlap_score
+    RETURN alt, alt_ings, shared_ings, shared_concerns, overlap_score
     ORDER BY overlap_score DESC LIMIT 50
     """
     crows = neptune.open_cypher(
@@ -125,6 +140,21 @@ def substitute(req: SubstituteRequest) -> SubstituteResponse:
             "same_brand_ok": bool(req.same_brand_ok),
         },
     )
+
+    # 2b) Persona pass — runs across the whole candidate set *before* the top_k
+    #     cut, so dropping a conflicting alternative promotes a real one rather
+    #     than leaving a hole. Same ontology facts Scenario A's lens reads.
+    from api.services.search import persona_context
+
+    ctx = persona_context(req.persona)
+    scored: List[tuple] = []
+    for r in crows:
+        alt_ings = set(r.get("alt_ings") or [])
+        conflict = sorted(alt_ings & ctx["avoided"]) if ctx else []
+        if conflict and req.drop_persona_conflicts:
+            continue
+        preferred = sorted(alt_ings & ctx["preferred"]) if ctx else []
+        scored.append((r, conflict, preferred))
 
     candidates: List[SubstituteCandidate] = []
     subgraph_nodes: Dict[str, Dict[str, Any]] = {}
@@ -140,7 +170,7 @@ def substitute(req: SubstituteRequest) -> SubstituteResponse:
         if pid_n:
             subgraph_edges.append({"data": {"source": pid_n, "target": cid_n, "label": "IN_CATEGORY"}})
 
-    for r in crows[: req.top_k]:
+    for r, persona_conflict, persona_preferred in scored[: req.top_k]:
         alt_node = r.get("alt") or {}
         ap = _props(alt_node)
         shared_ings = list(r.get("shared_ings") or [])
@@ -166,9 +196,11 @@ def substitute(req: SubstituteRequest) -> SubstituteResponse:
             domain=ap.get("domain"),
             price_krw=int(alt_price) if isinstance(alt_price, (int, float)) else None,
             price_delta_pct=delta_pct,
-            score=overlap + price_bonus,
+            score=overlap + price_bonus + PERSONA_PREFERRED_BONUS * len(persona_preferred),
             shared_ingredients=shared_ings,
             shared_concerns=shared_concerns,
+            persona_preferred=persona_preferred,
+            persona_conflict=persona_conflict,
             properties=ap,
         ))
 

@@ -69,10 +69,9 @@ makes the LLM answers *explainable*: every answer ships with the subgraph that p
 ### 3.1 Goals
 
 - **G1 — One coherent context.** A single persona selection propagates across every scenario whose
-  output depends on it (nine of thirteen today — see FR-15).
-- **G1a — Persona coherence where it means something.** Persona re-slices the nine scenarios whose
-  analysis depends on who is asking; the four that do not take a persona parameter say so rather than
-  pretending otherwise.
+  output depends on it (eleven of thirteen — see FR-15).
+- **G1a — Persona coherence where it means something.** Persona re-slices the eleven scenarios whose
+  analysis depends on who is asking; the two that do not say so rather than pretending otherwise.
 - **G2 — Explainable AI.** Every generated answer is accompanied by the graph path, source rows, or
   tool-call trace that produced it.
 - **G3 — Korean-first.** Nori analyzer, Korean embeddings, Korean chart glyphs (NanumGothic),
@@ -176,7 +175,10 @@ ingredient mappings. Violations are highlighted with the offending ingredient na
 
 ### F — Substitute Finder (`/substitute`)
 Same-category, cross-brand traversal weighted by ingredient and concern overlap, presented as
-price-delta cards.
+price-delta cards. Persona-aware: alternatives containing an ingredient the active persona must avoid
+are removed before the top-K cut (so a dropped candidate promotes a real one rather than leaving a
+hole), and preferred-ingredient matches earn a ranking bonus. It reads the *same* ontology facts as
+Scenario A, so a product rejected as unsafe in search cannot reappear here as a "substitute".
 *Decision supported:* out-of-stock substitution, private-label switching, margin optimisation.
 *Endpoints:* `POST /api/substitute`, `GET /api/substitute/sample-products`.
 
@@ -191,6 +193,9 @@ Korean choropleth (react-simple-maps + d3-geo over KOSTAT 17-시도 GeoJSON) sho
 76 lanes, 940 inventory rows**, a KPI strip (OTD rate, active shipments, transit time, exceptions,
 active events), and an **inline LLM panel** answering natural-language logistics questions via
 `inventory_lookup`, `nearest_warehouses` (haversine k-NN) and `shortest_path` (BFS over route edges).
+Persona-aware: `?persona=` attaches `persona_member_count` to every region and warehouse, so the map
+shows where that persona's demand actually sits against where the nodes are. Scenario L answers the
+derived coverage KPI; this is the raw demand layer beneath it.
 *Decision supported:* network design, disruption response.
 *Endpoints:* `GET /api/logistics/{network,status,events,warehouse/{id},inventory/sku/{id},inventory/wh/{id},shortest-path}`, `POST /api/logistics/nearest`.
 
@@ -374,8 +379,8 @@ labelling (0010/0013), and the Lambda@Edge root gate and logout flow (0012).
 | FR-12 | The system SHALL report the share of a persona's members with no fulfilment node within an operator-chosen radius. | L |
 | FR-13 | The system SHALL compute per-member per-category wallet share by joining an external consumption panel to internal transactions. | M |
 | FR-14 | The system SHALL expose five independently tunable VIP definitions over the same underlying data. | M |
-| FR-15 | A single persona selection SHALL propagate, without re-selection, to every scenario whose analysis is persona-dependent — currently nine of thirteen: A, D, E, G, I, J, K, L, M. | A · D · E · G · I · J · K · L · M |
-| FR-15a | Scenarios B (chat), C (insights), F (substitute) and H (logistics) are persona-blind by design today; B derives context from conversational memory instead. Extending the persona parameter to them is a roadmap item. | B · C · F · H |
+| FR-15 | A single persona selection SHALL propagate, without re-selection, to every scenario whose analysis is persona-dependent — eleven of thirteen: A, D, E, F, G, H, I, J, K, L, M. | eleven scenarios |
+| FR-15a | Scenarios B (chat) and C (insights) take no persona parameter: B derives its context from conversational memory across turns, and C is a category-level rollup that is deliberately persona-independent. | B · C |
 | FR-16 | The system SHALL expose every registered node type through a browsable explorer with 1-hop neighbourhood drilldown. | Objects |
 | FR-17 | The system SHALL expose ingest counts, guardrail interventions, memory contents, evaluation scores and tool traces to an operator. | Ops |
 | FR-18 | All Cypher SHALL be parameterised; no user input is ever string-interpolated into a query. | All |

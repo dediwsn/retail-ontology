@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { ArrowLeftRight, Sparkles, Tag, Layers, Search as SearchIcon } from 'lucide-react';
 
 import * as api from '@/lib/api-client';
+import { useActivePersona } from '@/lib/persona-context';
 
 const CytoscapeView = dynamic(
   () => import('@/components/graph/CytoscapeView').then((m) => m.CytoscapeView),
@@ -19,6 +20,7 @@ export default function SubstitutePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sameBrandOk, setSameBrandOk] = useState(false);
+  const { active } = useActivePersona();
 
   useEffect(() => {
     api.substituteSamples(15).then((r) => setSamples(r.items)).catch((e) => setError(String(e)));
@@ -28,12 +30,12 @@ export default function SubstitutePage() {
     if (!selected) return;
     let cancelled = false;
     setLoading(true); setError(null); setResult(null);
-    api.substitute(selected, sameBrandOk, 8)
+    api.substitute(selected, sameBrandOk, 8, active?.id)
       .then((r) => { if (!cancelled) setResult(r); })
       .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [selected, sameBrandOk]);
+  }, [selected, sameBrandOk, active?.id]);
 
   const filteredSamples = (samples ?? []).filter((p) => {
     if (!filter.trim()) return true;

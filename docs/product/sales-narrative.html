@@ -539,15 +539,15 @@
         <div class="col stack" style="margin-bottom:2rem">
           <p class="lede" lang="ko">
             시나리오는 기능 목록이 아니라 <strong>누가 무엇을 결정하는가</strong>로 정리되어 있습니다.
-            상단의 페르소나를 바꾸면, 페르소나에 따라 답이 달라지는 <strong>9개 화면</strong>
-            (A·D·E·G·I·J·K·L·M)이 한 번에 다시 잘립니다. 나머지 4개(B 대화·C 인사이트·F 대체재·H 물류)는
-            현재 페르소나 파라미터를 받지 않습니다 — B는 대신 대화 메모리로 맥락을 이어갑니다.
+            상단의 페르소나를 바꾸면, 페르소나에 따라 답이 달라지는 <strong>11개 화면</strong>
+            (A·D·E·F·G·H·I·J·K·L·M)이 한 번에 다시 잘립니다. 나머지 2개는 의도적입니다 —
+            B(대화)는 대화 메모리로 맥락을 잇고, C(인사이트)는 카테고리 단위 집계라 페르소나에 종속되지 않습니다.
           </p>
           <p class="lede" lang="en">
             These are organised by <strong>who decides what</strong>, not by feature. One persona switch at the
-            top re-slices the <strong>nine scenarios</strong> whose answer depends on it
-            (A·D·E·G·I·J·K·L·M). The other four — B chat, C insights, F substitute, H logistics — take no
-            persona parameter today; B carries context through conversational memory instead.
+            top re-slices the <strong>eleven scenarios</strong> whose answer depends on it
+            (A·D·E·F·G·H·I·J·K·L·M). The other two are deliberate: B chat carries its context through
+            conversational memory, and C insights is a category-level rollup by design.
           </p>
         </div>
 
@@ -578,8 +578,8 @@
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">규제 사인오프 · 상세페이지 배지</span><span lang="en">Compliance sign-off · PDP safety badges</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">F</span><h3 class="scen-name" lang="ko">대체재 추천</h3><h3 class="scen-name" lang="en">Substitute Finder</h3></div>
-            <p class="scen-what" lang="ko">같은 카테고리 · 다른 브랜드를 성분/관심사 겹침과 가격 차이로 5–8개 제시.</p>
-            <p class="scen-what" lang="en">Same category, different brand, ranked by ingredient and concern overlap with the price delta shown.</p>
+            <p class="scen-what" lang="ko">같은 카테고리 · 다른 브랜드를 성분/관심사 겹침과 가격 차이로 제시. 활성 페르소나가 회피해야 할 성분이 든 대안은 애초에 후보에서 빠집니다 — 검색에서 걸러진 상품이 “대체재”로 되살아나지 않습니다.</p>
+            <p class="scen-what" lang="en">Same category, different brand, ranked by ingredient and concern overlap with the price delta shown. Alternatives the active persona must avoid are dropped — a product rejected in search cannot reappear here as a “substitute”.</p>
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">품절 대응 · PB 전환 · 마진</span><span lang="en">Out-of-stock swaps · private label · margin</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">G</span><h3 class="scen-name" lang="ko">가격·가용성 비교</h3><h3 class="scen-name" lang="en">Price &amp; Availability</h3></div>
@@ -588,8 +588,8 @@
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">경쟁 가격 · 채널 전략</span><span lang="en">Competitive pricing · channel strategy</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">H</span><h3 class="scen-name" lang="ko">물류 네트워크</h3><h3 class="scen-name" lang="en">Logistics Network</h3></div>
-            <p class="scen-what" lang="ko">거점 30 · 레인 76 · 재고 940행을 한국 지도 위에. 지도 안에서 “이 SKU 재고가 가장 많은 센터는?”을 그대로 물어봅니다.</p>
-            <p class="scen-what" lang="en">30 warehouses, 76 lanes and 940 inventory rows on a Korean map — with an inline panel that answers network questions in place.</p>
+            <p class="scen-what" lang="ko">거점 30 · 레인 76 · 재고 940행을 한국 지도 위에. 페르소나를 걸면 시도·거점마다 그 페르소나의 회원 수가 얹혀, <strong>수요가 있는 곳과 거점이 있는 곳</strong>이 한 화면에서 갈립니다. 지도 안에서 자연어 질문도 그대로 됩니다.</p>
+            <p class="scen-what" lang="en">30 warehouses, 76 lanes and 940 inventory rows on a Korean map. With a persona active, every region and node carries that persona's member count — so <strong>where demand is</strong> and <strong>where our nodes are</strong> separate on one screen. Natural-language questions work in place.</p>
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">네트워크 설계 · 장애 대응</span><span lang="en">Network design · disruption response</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">I</span><h3 class="scen-name" lang="ko">이탈 위험 진단</h3><h3 class="scen-name" lang="en">Churn Risk</h3></div>

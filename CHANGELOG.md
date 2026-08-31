@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — persona reaches Scenario F (substitute) and H (logistics)
+- **F `/api/substitute`** accepts `persona` + `drop_persona_conflicts` (default true). Alternatives containing an ingredient the persona avoids are removed, preferred-ingredient matches earn `PERSONA_PREFERRED_BONUS = 4` (between a shared ingredient at 3 and a shared concern at 5), and `persona_preferred` / `persona_conflict` are returned per candidate. The persona pass runs across the whole 50-row candidate set **before** the `top_k` cut, so dropping a conflict promotes a real alternative instead of leaving a hole. `drop_persona_conflicts=false` flags conflicts instead of hiding them.
+- Shared `services/search.py:persona_context()` extracted from `apply_persona_lens()` so A and F read the *same* avoid/prefer/favourite-brick facts — a product rejected as unsafe in search cannot reappear as a "substitute".
+- **H `GET /api/logistics/network?persona=`** attaches `persona_member_count` to every `RegionOut` and `WarehouseOut` via the standard `MATCHES_PERSONA` OR `DERIVED_FROM` bridge pattern. `None` when no persona was supplied, `0` when asked and none live there — the map needs to tell "not asked" from "asked, nobody here". Overlay-query failure degrades to no overlay; the network always renders.
+- Frontend: `substitute()` and `logisticsNetwork()` take an optional persona; `/substitute` and `/logistics` pages read `useActivePersona()` and re-fetch on change. Persona now re-slices **11 of 13** scenarios (A D E F G H I J K L M); B derives context from conversational memory and C is a deliberately persona-independent category rollup.
+- 7 new tests in `tests/api/test_persona_substitute_logistics.py` (85 total).
+
 ### Fixed — persona lens on Scenario A + insights output guardrail
 - **`SearchRequest.persona` was declared and never read.** The web client sent it (`api-client.ts`) and `PersonaSwitch` is mounted globally in `layout.tsx`, so the persona was transmitted and silently discarded — Scenario A results were identical for every persona. New `services/search.py:apply_persona_lens()` re-slices retrieved hits through the persona's ontology context: products carrying an avoided ingredient are dropped, products matching a preferred ingredient (`+0.15`) or favourite GS1 brick (`+0.08`) are boosted, and the reason is written into hit metadata (`persona_preferred` / `persona_favorite_category` / `persona_conflict`) so the UI can explain the re-ordering. Applied after retrieval, not as an OpenSearch filter — the prefer/avoid facts live in Neptune, and keeping retrieval persona-blind preserves the RAG-retrieves / ontology-explains split.
 - Router over-fetches (`top_k * 2`, capped at 50) when a persona is active so the lens can drop hits and still return `top_k`. `/api/search/stream` emits an extra `persona` phase event after `rerank`.
@@ -270,6 +277,13 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### Added — 페르소나가 시나리오 F(대체재)와 H(물류)까지 확장
+- **F `/api/substitute`**가 `persona` + `drop_persona_conflicts`(기본 true)를 받습니다. 페르소나가 회피하는 성분이 든 대안은 제거되고, 선호 성분 일치는 `PERSONA_PREFERRED_BONUS = 4`(공유 성분 3과 공유 관심사 5 사이) 가점을 받으며, 후보마다 `persona_preferred` / `persona_conflict`가 반환됩니다. 페르소나 패스는 `top_k` 컷 **이전**에 50행 후보 전체에 적용되므로, 충돌 후보를 빼면 빈자리가 남는 대신 실제 대안이 올라옵니다. `drop_persona_conflicts=false`면 숨기지 않고 플래그만 답니다.
+- `apply_persona_lens()`에서 공용 `services/search.py:persona_context()`를 추출 — A와 F가 **동일한** 회피/선호/선호브릭 사실을 읽으므로, 검색에서 위험으로 걸러진 상품이 "대체재"로 되살아날 수 없습니다.
+- **H `GET /api/logistics/network?persona=`**가 표준 `MATCHES_PERSONA` OR `DERIVED_FROM` 브리지 패턴으로 모든 `RegionOut` · `WarehouseOut`에 `persona_member_count`를 붙입니다. 페르소나 미지정 시 `None`, 지정했으나 해당 지역에 회원이 없으면 `0` — 지도는 "묻지 않음"과 "물었는데 없음"을 구분해야 합니다. 오버레이 쿼리 실패 시 오버레이 없이 degrade 하며, 네트워크는 항상 렌더링됩니다.
+- 프론트엔드: `substitute()` · `logisticsNetwork()`가 선택적 페르소나를 받고, `/substitute` · `/logistics` 페이지가 `useActivePersona()`를 읽어 변경 시 재조회합니다. 이제 페르소나가 **13개 중 11개** 시나리오(A D E F G H I J K L M)를 다시 자릅니다. B는 대화 메모리로 맥락을 잇고, C는 의도적으로 페르소나에 종속되지 않는 카테고리 집계입니다.
+- `tests/api/test_persona_substitute_logistics.py`에 7개 테스트 추가 (총 85개).
 
 ### Fixed — 시나리오 A 페르소나 렌즈 + 인사이트 출력 가드레일
 - **`SearchRequest.persona`가 선언만 되고 읽히지 않았습니다.** 웹 클라이언트는 값을 보내고(`api-client.ts`) `PersonaSwitch`는 `layout.tsx`에 전역 마운트되어 있었으므로, 페르소나는 전달된 뒤 조용히 버려졌습니다 — 시나리오 A 결과가 모든 페르소나에서 동일했습니다. 새 `services/search.py:apply_persona_lens()`가 검색 결과를 페르소나의 온톨로지 컨텍스트로 다시 자릅니다: 회피 성분을 가진 상품은 제외, 선호 성분(`+0.15`) 또는 선호 GS1 브릭(`+0.08`) 일치 상품은 가점, 그리고 그 이유를 메타데이터(`persona_preferred` / `persona_favorite_category` / `persona_conflict`)에 기록해 UI가 재정렬을 설명할 수 있게 했습니다. OpenSearch 필터가 아니라 검색 **이후**에 적용 — 선호/회피 사실은 Neptune에 있고, 검색 단계를 페르소나-블라인드로 두어야 "RAG가 찾고 온톨로지가 설명한다"는 분업이 유지됩니다.
