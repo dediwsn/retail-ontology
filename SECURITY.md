@@ -4,6 +4,10 @@ This document records security decisions that an automated reviewer (Kiro)
 correctly flagged as gaps, with the rationale for the demo posture and the
 exact migration path for production cutover.
 
+Items that have since been closed are marked **Resolved** rather than deleted,
+so the decision log stays readable as a history. Last verified against the
+codebase on **2026-08-31**.
+
 ## 1. CloudFront ↔ ALB unencrypted (HTTP:80)
 
 **Current**: ALB listener is HTTP on port 80. CloudFront origin protocol
@@ -21,9 +25,15 @@ ALB 구간은 AWS 백본 + Origin Shield(선택)로 보호. 운영 단계는 ACM
 - Org compliance (`Epoxy`) auto-deletes ALB listeners that have any
   `0.0.0.0/0` ingress, enforcing this prefix-list-only posture
   (commit `560844b`: addListener `open: false`).
-- API middleware supports `REQUIRE_ORIGIN_AUTH=true` + `ORIGIN_AUTH_SECRET`
-  for an additional shared-secret check on every CF→ALB request
-  (defense-in-depth even over HTTP).
+- **Origin token enforced today.** `ComputeStack` sets
+  `REQUIRE_ORIGIN_AUTH: 'true'` on the API task definition
+  (`infra-cdk/lib/compute-stack.ts`), so `AuthMiddleware` rejects any request
+  arriving without a matching `X-Origin-Auth-Token`. CloudFront injects it as
+  a custom origin header resolved at deploy time from Secrets Manager
+  (`{{resolve:secretsmanager:...}}` — the CFN template carries the directive,
+  never the plaintext). Comparison is `hmac.compare_digest`, so it is
+  constant-time. This is defense-in-depth over the plaintext CF→ALB hop, not
+  the only line.
 
 **Why HTTPS isn't enabled in the demo**:
 - ALB HTTPS requires an ACM certificate.
@@ -45,39 +55,108 @@ ALB 구간은 AWS 백본 + Origin Shield(선택)로 보호. 운영 단계는 ACM
    - `ComputeStack`: add 443 listener with the seoul ACM cert; redirect 80→443.
 5. Set `REQUIRE_ORIGIN_AUTH=true` permanently to keep the layered defense.
 
-## 2. Lambda@Edge auth is no-op + API auth opt-out by default
+## 2. Edge auth enforced; API JWT check opt-out by default
 
-**Current**: `experimental.EdgeFunction` returns the request unchanged.
-API `AuthMiddleware` runs but defaults to `DEMO_PUBLIC_MODE=true`, which
-bypasses the JWT check.
+> **Updated 2026-08-31.** This section previously described the Lambda@Edge
+> function as an inline pass-through and the API-side JWT check as structural
+> only. Both statements are obsolete — see ADR-0012 and
+> `api/middleware_auth.py:_verify_jwt`. What remains open is narrower than
+> what this document used to claim.
 
-**Spec reference**: § 6.1 — *"admin-managed users (`lotte@demo`,
-`shinsegae@demo` 등), self-signup off, 그룹: `shopper`/`md`/`admin`"*
+**Current**: authentication is enforced **at the CloudFront edge**, before any
+request reaches the origin. The API-side JWT check is fully implemented but
+still defaults to bypass via `DEMO_PUBLIC_MODE`.
 
-**Why it's bypassed in the demo**:
-- The demo is invitation-only with a known URL — public access is
-  acceptable for the 30–60 minute live demo session.
-- Cognito Hosted UI is deployed and ready (`UserPoolId`,
-  `UserPoolClientId`, `UserPoolDomain` outputs from EdgeStack).
-- The app does not store user-identifying data — synthetic personas only.
-- Wiring full auth before basic data flow is verified inverts the
-  ROI: auth without working scenarios is no demo.
+### 2.1 Lambda@Edge — implemented (not a pass-through)
 
-**Migration to enforced auth (1–2 hour follow-up)**:
-1. **Lambda@Edge JWT validation**: replace the inline pass-through in
-   `lib/edge-stack.ts` with the `cognito-at-edge` npm package implementation
-   (~50 lines). Bake the User Pool ID + Client ID at synth time via
-   string replacement in the inline code (Lambda@Edge has no env vars).
-2. **API enforced auth**: set ECS task env `DEMO_PUBLIC_MODE=false`.
-   Force-new-deployment picks it up. `AuthMiddleware._verify_jwt` then
-   rejects all unauthenticated requests except `/healthz`.
-3. **Strengthen JWT verification**: current code does structural checks +
-   kid match (sufficient with edge JWT validation in front). Production
-   should use `python-jose` for full RS256 signature verification using
-   the JWKS public key. ~10 LOC change in `_verify_jwt`.
-4. **Cognito user provisioning script**: `scripts/provision_cognito_users.sh`
-   creates `lotte@demo`, `shinsegae@demo`, etc. with temporary passwords,
-   adding to `shopper` / `md` groups for scenario routing.
+`AuthEdgeFn` (`infra-cdk/lib/edge-stack.ts`, `us-east-1` via
+`cfExperimental.EdgeFunction`) runs on **viewer-request** for every request to
+the distribution and does the following:
+
+1. Returns the request unchanged if the URI matches `PUBLIC_PATHS`. That list
+   is deliberately narrow:
+   `[/api/auth/callback, /api/auth/logout, /_next/, /favicon, /api/health]`.
+   **The root path `/` is gated** — an anonymous browser's first network
+   response is a 302, not a half-rendered SPA shell. See
+   [ADR-0012](docs/decisions/0012-lambda-edge-root-gate-and-logout.md).
+2. Reads the `id_token` and `access_token` cookies from the request headers.
+3. Accepts the request if either token is structurally well-formed (three
+   segments) and carries a numeric `exp` claim in the future.
+4. Otherwise returns a `302` to the Cognito Hosted UI `/oauth2/authorize`
+   endpoint with `response_type=code`, `scope=openid+email+profile`, and a
+   `redirect_uri` **derived from the request `Host` header** — so the function
+   adapts to any alias without a redeploy.
+
+The Cognito domain and app-client ID are baked into the function source at
+synth time by string substitution, because Lambda@Edge supports neither
+environment variables nor CDK tokens here (a forward reference to the user-pool
+client would create a synth cycle through the distribution). See
+[ADR-0003](docs/decisions/0003-lambda-edge-stable-id-hardcode-strategy.md).
+
+**Deliberate scope**: the edge check validates *presence and expiry*, not the
+RS256 signature. This is the user-flow gate. Cryptographic verification is the
+API's job, and the API does it — see 2.2. Splitting it this way keeps the edge
+function small and its cold-start negligible; a forged-but-well-formed cookie
+gets past the edge and is then rejected at the API whenever
+`DEMO_PUBLIC_MODE=false`.
+
+**Session teardown**: `/api/auth/logout` clears all three token cookies *and*
+redirects to the Cognito Hosted UI logout URL, so logout ends the IdP session
+rather than only the local one. The Cognito app client must list
+`https://<PUBLIC_DOMAIN>/` (with the trailing slash) as a LogoutURL.
+
+### 2.2 API-side JWT verification — implemented, bypassed by default
+
+`api/middleware_auth.py:_verify_jwt` performs **full RS256 verification** via
+PyJWT + `cryptography`:
+
+- signature verified against the JWK matched by `kid` from Cognito's JWKS
+  endpoint (`RSAAlgorithm.from_jwk`),
+- `iss` checked against the expected
+  `https://cognito-idp.<region>.amazonaws.com/<user-pool-id>`,
+- `exp` / `nbf` validated by PyJWT,
+- audience checked manually as `client_id` (access tokens) or `aud`
+  (id tokens), because Cognito access tokens carry no `aud` claim,
+- JWKS cached in a `TTLCache(maxsize=4, ttl=3600)` — a 1-hour TTL rather than
+  `lru_cache`, so key rotation cannot permanently reject freshly-signed tokens.
+
+**The remaining gap** is the switch, not the implementation:
+`AuthMiddleware.dispatch` reads `os.environ.get("DEMO_PUBLIC_MODE", "true")`
+and skips the JWT branch when it is `true`. `ComputeStack` does not set the
+variable, so the deployed API defaults to **public mode**. Origin-token
+enforcement (§1) still applies in that state, so the API is reachable only
+through CloudFront — but any CloudFront visitor reaches it without a valid
+token.
+
+Note also that `_is_public` exempts every path under `/api/auth/` in addition
+to `/healthz` and `/api/health-web`. That is required for the OAuth round trip
+and is intentional, but it means those routes are unauthenticated by design in
+both modes.
+
+**Why the bypass is still in place**:
+- The demo is invitation-only behind a known URL, and the edge gate already
+  keeps anonymous browsers out of the UI.
+- The application stores no user-identifying data — synthetic personas only.
+- `scripts/eval_wow_queries.py` and the offline pytest suite both rely on the
+  public mode to run without a session cookie (`tests/conftest.py` sets
+  `DEMO_PUBLIC_MODE=true` at collection time).
+
+**Migration to fully enforced auth**:
+1. Provision real users: `scripts/provision_cognito_users.sh` creates the demo
+   accounts with temporary passwords and group membership
+   (`shopper` / `md` / `admin`).
+2. Set `DEMO_PUBLIC_MODE: 'false'` in the API task-definition environment block
+   in `infra-cdk/lib/compute-stack.ts`, then `cdk deploy compute` and force a
+   new deployment. No application code changes.
+3. Give the evaluation harness a session cookie (`--cookie`) instead of relying
+   on public mode — see `.claude/skills/wow-query-eval.md`.
+4. *Optional hardening*: promote the edge check from structural to full
+   signature verification with the `cognito-at-edge` package. Only worth doing
+   if the edge must reject forged tokens on its own; with 2 in place, the API
+   already rejects them.
+5. Consume Cognito group claims for route-level authorisation. Groups are
+   provisioned but not yet enforced anywhere — this is the real remaining work,
+   not the JWT plumbing.
 
 ## 3. Other accepted demo trade-offs (P1 backlog)
 
@@ -92,20 +171,22 @@ bypasses the JWT check.
 - **ALB access logs to S3 with 30-day retention**: not enabled. Production
   fix: `accessLogs.bucket` on ALB construction in ComputeStack pointing
   to a new dedicated S3 bucket in DataStack.
-- **AWS Cost Anomaly Detection**: not enabled. Production fix: add
-  `CfnCostCategory` + `CfnAnomalyMonitor` in ObservabilityStack.
+- ~~**AWS Cost Anomaly Detection**: not enabled.~~ **Implemented** —
+  `ObservabilityStack` attaches a `ce.CfnAnomalySubscription` to the account's
+  `Default-Services-Monitor` with email notification.
 
-All four items are tracked in spec § 10/§ 11.2 and are blocked on
-nothing technical — they're ~1 hour of CDK work and were deprioritized
+The remaining items are tracked in spec § 10/§ 11.2 and are blocked on
+nothing technical — they're ~1 hour of CDK work each and were deprioritized
 behind getting the wow scenarios working end-to-end.
 
 ## Decision log
 
 | # | Issue | Severity (Kiro) | Demo posture | Migration trigger |
 |---|---|---|---|---|
-| 1 | CF↔ALB plaintext | HIGH | Accepted, prefix-list-only SG + optional X-Origin-Auth | Custom domain assigned |
-| 2 | Edge auth no-op | HIGH | Accepted, demo is private URL | Real users / public exposure |
-| 3 | API auth bypass | HIGH | Opt-in via `DEMO_PUBLIC_MODE=false` | Cognito users provisioned |
+| 1 | CF↔ALB plaintext | HIGH | Accepted, prefix-list-only SG + `X-Origin-Auth-Token` enforced | Custom domain assigned |
+| 2 | Edge auth no-op | HIGH | **Resolved** — Lambda@Edge gates every path incl. `/`, 302s to Cognito (ADR-0012) | n/a |
+| 3 | API auth bypass | HIGH | Open — full RS256 verification implemented, gated behind `DEMO_PUBLIC_MODE` (default `true`) | Cognito users provisioned |
+| 3b | JWT verified structurally only | HIGH | **Resolved** — full RS256 + JWKS + iss/exp/aud in `_verify_jwt` | n/a |
 | 4 | Logs AWS-managed key | MED | Accepted, encryption still active | Production deployment |
 | 5 | No CT data events | MED | Accepted, deferred | Compliance audit requirement |
 | 6 | No ALB access logs | MED | Accepted, deferred | Forensics need |
