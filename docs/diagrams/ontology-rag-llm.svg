@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2174" height="3635" viewBox="0 0 2174 3635" font-family="DejaVu Sans, Noto Sans CJK KR, Malgun Gothic, Apple SD Gothic Neo, sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2C4A42"/></marker><marker id="ao" viewBox="0 0 10 10" refX="9.5" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10" fill="none" stroke="#2C4A42" stroke-width="1.4"/></marker></defs>
+<rect width="2174" height="3635" fill="#FFFFFF"/>
+<text x="34" y="34" font-size="19" font-weight="700" fill="#16211F">Ontology · RAG · LLM — how the three layers actually interlock</text>
+<rect x="22.0" y="46.0" width="374.4" height="131.0" rx="4" fill="#F1F4F1" stroke="#9FB3AC" stroke-width="1"/>
+<text x="31.0" y="59.0" font-size="10.5" font-weight="600" letter-spacing="0.8" fill="#5D6B66">CLIENT</text>
+<rect x="480.4" y="46.0" width="680.5" height="131.0" rx="4" fill="#E4EDE8" stroke="#9FB3AC" stroke-width="1"/>
+<text x="489.4" y="59.0" font-size="10.5" font-weight="600" letter-spacing="0.8" fill="#5D6B66">API — FASTAPI ON FARGATE ARM64</text>
+<rect x="1244.9" y="46.0" width="384.1" height="131.0" rx="4" fill="#F5EDDC" stroke="#9FB3AC" stroke-width="1"/>
+<text x="1253.9" y="59.0" font-size="10.5" font-weight="600" letter-spacing="0.8" fill="#5D6B66">LLM — AMAZON BEDROCK</text>
+<rect x="1635.0" y="46.0" width="516.7" height="131.0" rx="4" fill="#E7EBF2" stroke="#9FB3AC" stroke-width="1"/>
+<text x="1644.0" y="59.0" font-size="10.5" font-weight="600" letter-spacing="0.8" fill="#5D6B66">RETRIEVAL · ONTOLOGY · MEMORY</text>
+<line x1="95.0" y1="173.0" x2="95.0" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="34.0" y="66.0" width="122.1" height="33.0" rx="16.5" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="95.0" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">MD / Shopper</text>
+<line x1="324.2" y1="173.0" x2="324.2" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="264.1" y="66.0" width="120.3" height="50.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="324.2" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">Next.js 14</text>
+<text x="324.2" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">streamSSE&lt;T&gt;</text>
+<line x1="560.4" y1="173.0" x2="560.4" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="492.4" y="66.0" width="136.0" height="67.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="560.4" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">routers/</text>
+<text x="560.4" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">search · chat ·</text>
+<text x="560.4" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">insights</text>
+<line x1="813.5" y1="173.0" x2="813.5" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="736.4" y="66.0" width="154.2" height="50.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="813.5" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">services/search.py</text>
+<text x="813.5" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">hybrid_search()</text>
+<line x1="1073.7" y1="173.0" x2="1073.7" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="998.6" y="66.0" width="150.3" height="50.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="1073.7" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">services/agent.py</text>
+<text x="1073.7" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">converse_stream()</text>
+<line x1="1336.3" y1="173.0" x2="1336.3" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="1256.9" y="66.0" width="158.9" height="101.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="1336.3" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">Bedrock Runtime</text>
+<text x="1336.3" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">Guardrails ·</text>
+<text x="1336.3" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">embed-v4</text>
+<text x="1336.3" y="133.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">rerank-v3 · Sonnet</text>
+<text x="1336.3" y="150.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">4.6</text>
+<line x1="1531.4" y1="173.0" x2="1531.4" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="1445.7" y="66.0" width="171.2" height="67.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="1531.4" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">Bedrock Knowledge</text>
+<text x="1531.4" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">Base</text>
+<text x="1531.4" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">agent-runtime:Retrieve</text>
+<line x1="1719.3" y1="173.0" x2="1719.3" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="1647.0" y="66.0" width="144.6" height="67.0" rx="12" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="1719.3" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">OpenSearch</text>
+<text x="1719.3" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">Serverless</text>
+<text x="1719.3" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">Nori BM25 + KNN</text>
+<line x1="1891.9" y1="173.0" x2="1891.9" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="1821.6" y="66.0" width="140.7" height="67.0" rx="12" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="1891.9" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">Amazon Neptune</text>
+<text x="1891.9" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">openCypher over</text>
+<text x="1891.9" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">SigV4</text>
+<line x1="2066.0" y1="173.0" x2="2066.0" y2="3619.0" stroke="#B7C5BF" stroke-width="1.2" stroke-dasharray="4 4"/>
+<rect x="1992.2" y="66.0" width="147.4" height="67.0" rx="3" fill="#FFFFFF" stroke="#426057" stroke-width="1.4"/>
+<text x="2066.0" y="82.0" text-anchor="middle" font-size="13" font-weight="700" fill="#16211F">AgentCore Memory</text>
+<text x="2066.0" y="99.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">session + user</text>
+<text x="2066.0" y="116.0" text-anchor="middle" font-size="13" font-weight="400" fill="#5D6B66">namespace</text>
+<rect x="22.0" y="612.0" width="2129.7" height="303.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M22.0 612.0 h47.6 l8 14 v0 h-55.6 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="30.0" y="623.0" font-size="11.5" font-weight="700" fill="#2F5348">group</text>
+<text x="83.6" y="623.0" font-size="11.5" fill="#5D6B66">RAG retrieval — two searches, because AOSS rejects the hybrid plugin</text>
+<rect x="22.0" y="925.0" width="2129.7" height="210.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M22.0 925.0 h29.2 l8 14 v0 h-37.2 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="30.0" y="936.0" font-size="11.5" font-weight="700" fill="#2F5348">alt</text>
+<text x="65.2" y="936.0" font-size="11.5" fill="#5D6B66">reranker inference profile configured</text>
+<rect x="22.0" y="1795.0" width="2129.7" height="825.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M22.0 1795.0 h38.4 l8 14 v0 h-46.4 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="30.0" y="1806.0" font-size="11.5" font-weight="700" fill="#2F5348">loop</text>
+<text x="74.4" y="1806.0" font-size="11.5" fill="#5D6B66">up to 8 tool-use rounds</text>
+<rect x="22.0" y="3205.0" width="2129.7" height="112.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M22.0 3205.0 h38.4 l8 14 v0 h-46.4 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="30.0" y="3216.0" font-size="11.5" font-weight="700" fill="#2F5348">loop</text>
+<text x="74.4" y="3216.0" font-size="11.5" fill="#5D6B66">contentBlockDelta events</text>
+<rect x="22.0" y="3327.0" width="2129.7" height="110.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M22.0 3327.0 h29.2 l8 14 v0 h-37.2 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="30.0" y="3338.0" font-size="11.5" font-weight="700" fill="#2F5348">alt</text>
+<text x="65.2" y="3338.0" font-size="11.5" fill="#5D6B66">Bedrock unavailable</text>
+<rect x="31.0" y="1966.0" width="2111.7" height="636.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M31.0 1966.0 h29.2 l8 14 v0 h-37.2 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="39.0" y="1977.0" font-size="11.5" font-weight="700" fill="#2F5348">alt</text>
+<text x="74.2" y="1977.0" font-size="11.5" fill="#5D6B66">message carries no toolUse</text>
+<rect x="40.0" y="2188.0" width="2093.7" height="309.0" rx="3" fill="none" stroke="#79A296" stroke-width="1.1" stroke-dasharray="3 3"/>
+<path d="M40.0 2188.0 h29.2 l8 14 v0 h-37.2 z" fill="#DCE8E3" stroke="#79A296" stroke-width="1.1"/>
+<text x="48.0" y="2199.0" font-size="11.5" font-weight="700" fill="#2F5348">alt</text>
+<text x="83.2" y="2199.0" font-size="11.5" fill="#5D6B66">semantic_search</text>
+<line x1="22" y1="205.0" x2="2152" y2="205.0" stroke="#9BB0A8" stroke-width="1"/>
+<rect x="903.4" y="192.0" width="366.9" height="26" rx="13" fill="#DCE8E3" stroke="#9BB0A8" stroke-width="1"/>
+<text x="1086.8" y="210.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#2F5348">Scenario A — RAG retrieves, the ontology explains</text>
+<line x1="97.0" y1="264.0" x2="318.2" y2="264.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="249.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">1. </tspan>"임산부가 써도 되는 저자극 선크림"</text>
+<line x1="326.2" y1="301.0" x2="554.4" y2="301.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="286.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">2. </tspan>POST /api/search/stream</text>
+<line x1="558.4" y1="338.0" x2="330.2" y2="338.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="323.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">3. </tspan>SSE phase(bm25) · phase(knn)</text>
+<path d="M514.1 352.0 h335.6 l10 10 v36.0 h-345.6 z" fill="#FDF6E3" stroke="#D6C088" stroke-width="1"/>
+<path d="M849.7 352.0 v10 h10 z" fill="#D6C088" opacity="0.5"/>
+<text x="526.1" y="370.0" font-size="12" fill="#4A4028">phases are progress markers emitted around a single</text>
+<text x="526.1" y="385.0" font-size="12" fill="#4A4028">hybrid_search() call — not per-stage instrumentation</text>
+<line x1="562.4" y1="435.0" x2="807.5" y2="435.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="686.9" y="420.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">4. </tspan>hybrid_search(q, top_k)</text>
+<line x1="815.5" y1="472.0" x2="1330.3" y2="472.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1074.9" y="457.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">5. </tspan>ApplyGuardrail(source=INPUT)</text>
+<line x1="1334.3" y1="509.0" x2="819.5" y2="509.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1074.9" y="494.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">6. </tspan>scrubbed query</text>
+<line x1="815.5" y1="561.0" x2="1330.3" y2="561.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1074.9" y="531.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">7. </tspan>InvokeModel cohere.embed-v4</text>
+<text x="1074.9" y="546.0" text-anchor="middle" font-size="12.5" fill="#16211F">input_type=search_query</text>
+<line x1="1334.3" y1="598.0" x2="819.5" y2="598.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1074.9" y="583.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">8. </tspan>1024-dim vector</text>
+<line x1="815.5" y1="695.0" x2="1713.3" y2="695.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1266.4" y="650.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">9. </tspan>knn {</text>
+<text x="1266.4" y="665.0" text-anchor="middle" font-size="12.5" fill="#16211F">bedrock-knowledge-base-default-vector,</text>
+<text x="1266.4" y="680.0" text-anchor="middle" font-size="12.5" fill="#16211F">k=100 }</text>
+<line x1="1717.3" y1="732.0" x2="819.5" y2="732.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1266.4" y="717.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">10. </tspan>candidate pool</text>
+<line x1="815.5" y1="799.0" x2="1713.3" y2="799.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1266.4" y="754.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">11. </tspan>match {</text>
+<text x="1266.4" y="769.0" text-anchor="middle" font-size="12.5" fill="#16211F">AMAZON_BEDROCK_TEXT_CHUNK,</text>
+<text x="1266.4" y="784.0" text-anchor="middle" font-size="12.5" fill="#16211F">analyzer=korean_nori }</text>
+<line x1="1717.3" y1="836.0" x2="819.5" y2="836.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1266.4" y="821.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">12. </tspan>candidate pool</text>
+<path d="M813.5 869.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="869.5" y="860.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">13. </tspan>_rrf_merge(knn, bm25, k=60)</text>
+<line x1="815.5" y1="993.0" x2="1330.3" y2="993.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1074.9" y="963.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">14. </tspan>InvokeModel cohere.rerank-v3</text>
+<text x="1074.9" y="978.0" text-anchor="middle" font-size="12.5" fill="#16211F">(cross-region profile)</text>
+<line x1="1334.3" y1="1030.0" x2="819.5" y2="1030.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1074.9" y="1015.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">15. </tspan>top_k reordered by relevance_score</text>
+<line x1="30" y1="1052.0" x2="2144" y2="1052.0" stroke="#79A296" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="38" y="1047.0" font-size="11.5" font-style="italic" fill="#5D6B66">[any exception]</text>
+<path d="M813.5 1089.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="869.5" y="1080.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">16. </tspan>silently fall back to RRF order</text>
+<line x1="811.5" y1="1183.0" x2="566.4" y2="1183.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="686.9" y="1153.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">17. </tspan>List[SearchHit] — sku_id read from</text>
+<text x="686.9" y="1168.0" text-anchor="middle" font-size="12.5" fill="#16211F">AOSS metadata</text>
+<line x1="562.4" y1="1250.0" x2="1885.9" y2="1250.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1226.1" y="1205.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">18. </tspan>subgraph_for_skus(top 5, hops=2)</text>
+<text x="1226.1" y="1220.0" text-anchor="middle" font-size="12.5" fill="#16211F">$sku_ids bound · path clause</text>
+<text x="1226.1" y="1235.0" text-anchor="middle" font-size="12.5" fill="#16211F">whitelisted</text>
+<line x1="1889.9" y1="1287.0" x2="566.4" y2="1287.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1226.1" y="1272.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">19. </tspan>nodes + edges in Cytoscape shape</text>
+<line x1="558.4" y1="1324.0" x2="330.2" y2="1324.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="1309.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">20. </tspan>SSE result { hits, subgraph }</text>
+<line x1="322.2" y1="1376.0" x2="101.0" y2="1376.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="1346.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">21. </tspan>ranked SKUs beside the 1-hop</text>
+<text x="209.6" y="1361.0" text-anchor="middle" font-size="12.5" fill="#16211F">ontology subgraph</text>
+<path d="M1769.5 1390.0 h234.8 l10 10 v36.0 h-244.8 z" fill="#FDF6E3" stroke="#D6C088" stroke-width="1"/>
+<path d="M2004.3 1390.0 v10 h10 z" fill="#D6C088" opacity="0.5"/>
+<text x="1781.5" y="1408.0" font-size="12" fill="#4A4028">the ontology is the explanation layer:</text>
+<text x="1781.5" y="1423.0" font-size="12" fill="#4A4028">it justifies what RAG retrieved</text>
+<line x1="22" y1="1462.0" x2="2152" y2="1462.0" stroke="#9BB0A8" stroke-width="1"/>
+<rect x="837.7" y="1449.0" width="498.2" height="26" rx="13" fill="#DCE8E3" stroke="#9BB0A8" stroke-width="1"/>
+<text x="1086.8" y="1467.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#2F5348">Scenario B — the LLM drives; ontology, RAG and memory are its tools</text>
+<line x1="97.0" y1="1521.0" x2="318.2" y2="1521.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="1506.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">22. </tspan>follow-up question</text>
+<line x1="326.2" y1="1558.0" x2="554.4" y2="1558.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="1543.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">23. </tspan>POST /api/chat (SSE)</text>
+<line x1="562.4" y1="1610.0" x2="1067.7" y2="1610.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="817.0" y="1580.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">24. </tspan>converse_stream(session_id, message,</text>
+<text x="817.0" y="1595.0" text-anchor="middle" font-size="12.5" fill="#16211F">actor_id)</text>
+<line x1="1075.7" y1="1647.0" x2="1330.3" y2="1647.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1205.0" y="1632.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">25. </tspan>ApplyGuardrail(source=INPUT)</text>
+<line x1="1334.3" y1="1684.0" x2="1079.7" y2="1684.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1205.0" y="1669.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">26. </tspan>safe_msg + intervened flag</text>
+<line x1="1075.7" y1="1721.0" x2="2060.0" y2="1721.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1569.8" y="1706.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">27. </tspan>create_event(USER turn)</text>
+<path d="M1892.1 1735.0 h263.6 l10 10 v36.0 h-273.6 z" fill="#FDF6E3" stroke="#D6C088" stroke-width="1"/>
+<path d="M2155.7 1735.0 v10 h10 z" fill="#D6C088" opacity="0.5"/>
+<text x="1904.1" y="1753.0" font-size="12" fill="#4A4028">write failures are logged and swallowed —</text>
+<text x="1904.1" y="1768.0" font-size="12" fill="#4A4028">the conversation continues without memory</text>
+<line x1="1075.7" y1="1863.0" x2="1330.3" y2="1863.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1205.0" y="1833.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">28. </tspan>Converse(Sonnet 4.6, history,</text>
+<text x="1205.0" y="1848.0" text-anchor="middle" font-size="12.5" fill="#16211F">toolConfig = 7 TOOL_SPECS)</text>
+<line x1="1334.3" y1="1915.0" x2="1079.7" y2="1915.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1205.0" y="1885.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">29. </tspan>assistant message — text blocks +</text>
+<text x="1205.0" y="1900.0" text-anchor="middle" font-size="12.5" fill="#16211F">toolUse blocks</text>
+<line x1="1071.7" y1="1952.0" x2="330.2" y2="1952.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="699.0" y="1937.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">30. </tspan>SSE delta(text)</text>
+<path d="M1073.7 2015.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1129.7" y="2006.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">31. </tspan>exit loop</text>
+<line x1="30" y1="2061.0" x2="2144" y2="2061.0" stroke="#79A296" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="38" y="2056.0" font-size="11.5" font-style="italic" fill="#5D6B66">[toolUse present — _dispatch_tool() fans out]</text>
+<path d="M1073.7 2113.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1129.7" y="2089.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">32. </tspan>_push_trace() into _TRACE_BUF</text>
+<text x="1129.7" y="2104.0" font-size="12.5" fill="#16211F">(deque, maxlen 200)</text>
+<line x1="1071.7" y1="2174.0" x2="330.2" y2="2174.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="699.0" y="2159.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">33. </tspan>SSE log { tool, input }</text>
+<line x1="1071.7" y1="2256.0" x2="819.5" y2="2256.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="943.6" y="2226.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">34. </tspan>hybrid_search() — re-enters the whole</text>
+<text x="943.6" y="2241.0" text-anchor="middle" font-size="12.5" fill="#16211F">RAG path above</text>
+<line x1="30" y1="2278.0" x2="2144" y2="2278.0" stroke="#79A296" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="38" y="2273.0" font-size="11.5" font-style="italic" fill="#5D6B66">[kb_lookup]</text>
+<line x1="1075.7" y1="2319.0" x2="1525.4" y2="2319.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1302.5" y="2304.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">35. </tspan>Retrieve(overrideSearchType=HYBRID)</text>
+<line x1="30" y1="2341.0" x2="2144" y2="2341.0" stroke="#79A296" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="38" y="2336.0" font-size="11.5" font-style="italic" fill="#5D6B66">[neptune_subgraph · nearest_warehouses\nshortest_path · inventory_lookup]</text>
+<line x1="1075.7" y1="2382.0" x2="1885.9" y2="2382.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1482.8" y="2367.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">36. </tspan>open_cypher(parameters={...})</text>
+<line x1="30" y1="2404.0" x2="2144" y2="2404.0" stroke="#79A296" stroke-width="1" stroke-dasharray="3 3"/>
+<text x="38" y="2399.0" font-size="11.5" font-style="italic" fill="#5D6B66">[memory_recall]</text>
+<line x1="1075.7" y1="2475.0" x2="2060.0" y2="2475.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1569.8" y="2430.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">37. </tspan>retrieve_memory_records</text>
+<text x="1569.8" y="2445.0" text-anchor="middle" font-size="12.5" fill="#16211F">namespace =</text>
+<text x="1569.8" y="2460.0" text-anchor="middle" font-size="12.5" fill="#16211F">user/{actor_id}/preferences</text>
+<path d="M1073.7 2556.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1129.7" y="2517.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">38. </tspan>wrap list results as { items, count }</text>
+<text x="1129.7" y="2532.0" font-size="12.5" fill="#16211F">Converse toolResult.json must be an</text>
+<text x="1129.7" y="2547.0" font-size="12.5" fill="#16211F">object</text>
+<line x1="1075.7" y1="2653.0" x2="1330.3" y2="2653.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1205.0" y="2638.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">39. </tspan>ApplyGuardrail(source=OUTPUT)</text>
+<line x1="1334.3" y1="2690.0" x2="1079.7" y2="2690.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1205.0" y="2675.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">40. </tspan>safe_out</text>
+<line x1="1075.7" y1="2727.0" x2="2060.0" y2="2727.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1569.8" y="2712.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">41. </tspan>create_event(ASSISTANT turn)</text>
+<line x1="1071.7" y1="2764.0" x2="330.2" y2="2764.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="699.0" y="2749.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">42. </tspan>SSE stop { final }</text>
+<line x1="322.2" y1="2801.0" x2="101.0" y2="2801.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="2786.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">43. </tspan>answer beside the live tool-call panel</text>
+<line x1="22" y1="2827.0" x2="2152" y2="2827.0" stroke="#9BB0A8" stroke-width="1"/>
+<rect x="847.4" y="2814.0" width="478.9" height="26" rx="13" fill="#DCE8E3" stroke="#9BB0A8" stroke-width="1"/>
+<text x="1086.8" y="2832.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#2F5348">Scenario C — the ontology aggregates first; the LLM only narrates</text>
+<line x1="97.0" y1="2886.0" x2="318.2" y2="2886.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="2871.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">44. </tspan>"이번 분기 뜨는 성분 트렌드는?"</text>
+<line x1="326.2" y1="2923.0" x2="554.4" y2="2923.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="2908.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">45. </tspan>POST /api/insights/stream</text>
+<line x1="558.4" y1="2960.0" x2="330.2" y2="2960.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="2945.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">46. </tspan>SSE phase(neptune)</text>
+<line x1="562.4" y1="3027.0" x2="1885.9" y2="3027.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="1226.1" y="2982.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">47. </tspan>MATCH</text>
+<text x="1226.1" y="2997.0" text-anchor="middle" font-size="12.5" fill="#16211F">(t:Trend)-[:INVOLVES]-&gt;(i:Ingredient)</text>
+<text x="1226.1" y="3012.0" text-anchor="middle" font-size="12.5" fill="#16211F">ORDER BY fanout DESC LIMIT 10</text>
+<line x1="1889.9" y1="3064.0" x2="566.4" y2="3064.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="1226.1" y="3049.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">48. </tspan>up to 10 aggregated rows</text>
+<path d="M1061.4 3078.0 h319.4 l10 10 v36.0 h-329.4 z" fill="#FDF6E3" stroke="#D6C088" stroke-width="1"/>
+<path d="M1380.8 3078.0 v10 h10 z" fill="#D6C088" opacity="0.5"/>
+<text x="1073.4" y="3096.0" font-size="12" fill="#4A4028">aggregation runs before the model, so the numbers</text>
+<text x="1073.4" y="3111.0" font-size="12" fill="#4A4028">are computed — the prompt forbids inventing any</text>
+<line x1="562.4" y1="3191.0" x2="1330.3" y2="3191.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="948.3" y="3146.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">49. </tspan>ConverseStream(system = MD analyst</text>
+<text x="948.3" y="3161.0" text-anchor="middle" font-size="12.5" fill="#16211F">prompt,</text>
+<text x="948.3" y="3176.0" text-anchor="middle" font-size="12.5" fill="#16211F">user = serialized aggregation rows)</text>
+<line x1="1334.3" y1="3258.0" x2="566.4" y2="3258.0" stroke="#2C4A42" stroke-width="1.3" stroke-dasharray="6 4" marker-end="url(#ah)"/>
+<text x="948.3" y="3243.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">50. </tspan>text delta</text>
+<line x1="558.4" y1="3295.0" x2="330.2" y2="3295.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="3280.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">51. </tspan>SSE delta(text)</text>
+<path d="M560.4 3391.0 h46 v20 h-46" fill="none" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="616.4" y="3367.0" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">52. </tspan>deterministic recap built from the same</text>
+<text x="616.4" y="3382.0" font-size="12.5" fill="#16211F">rows</text>
+<line x1="558.4" y1="3485.0" x2="330.2" y2="3485.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="442.3" y="3455.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">53. </tspan>SSE result { answer_ko, chart_spec,</text>
+<text x="442.3" y="3470.0" text-anchor="middle" font-size="12.5" fill="#16211F">drill_down_subgraph }</text>
+<line x1="322.2" y1="3522.0" x2="101.0" y2="3522.0" stroke="#2C4A42" stroke-width="1.3" marker-end="url(#ah)"/>
+<text x="209.6" y="3507.0" text-anchor="middle" font-size="12.5" fill="#16211F"><tspan font-weight="700" fill="#79A296">54. </tspan>streamed Korean summary + bar chart</text>
+<path d="M131.9 3536.0 h374.6 l10 10 v51.0 h-384.6 z" fill="#FDF6E3" stroke="#D6C088" stroke-width="1"/>
+<path d="M506.5 3536.0 v10 h10 z" fill="#D6C088" opacity="0.5"/>
+<text x="143.9" y="3554.0" font-size="12" fill="#4A4028">chart_spec = { type, title, data[] } drawn by the client.</text>
+<text x="143.9" y="3569.0" font-size="12" fill="#4A4028">services/code_interpreter.py exists but no router imports it,</text>
+<text x="143.9" y="3584.0" font-size="12" fill="#4A4028">so no matplotlib PNG is produced on this path.</text>
+</svg>

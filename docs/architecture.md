@@ -72,7 +72,7 @@ Thirteen wow scenarios (A–M) span semantic search, conversational agent with m
 - **Bedrock Knowledge Base** (`<knowledge-base-id>`) — managed RAG retrieval over `raw-docs`.
 - **Bedrock Guardrails** (`<guardrail-id>`) — input/output PII scrub for chat and insights.
 - **AgentCore Memory** (`ontology_retail_dev_memory-<suffix>`) — short-term session events + long-term user-namespaced facts, 7-day TTL.
-- **AgentCore Code Interpreter** — Firecracker microVM for matplotlib chart rendering with bundled NanumGothic font.
+- **AgentCore Code Interpreter** — Firecracker microVM wrapper for matplotlib chart rendering with a bundled NanumGothic font, at `api/services/code_interpreter.py`. **Not currently wired into any route** — no router imports it (`grep -rn code_interpreter api/routers/`). Scenario C instead returns a `chart_spec` derived from the Neptune aggregation and renders it client-side. Wiring this in is tracked as a roadmap item.
 
 ### Observability & Safety
 
@@ -227,7 +227,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 - **Bedrock Knowledge Base** (`<knowledge-base-id>`) — `raw-docs` 위 매니지드 RAG 검색.
 - **Bedrock Guardrails** (`<guardrail-id>`) — 채팅·인사이트 입출력 PII 스크럽.
 - **AgentCore Memory** (`ontology_retail_dev_memory-<suffix>`) — short-term 세션 이벤트 + long-term 사용자별 사실, 7일 TTL.
-- **AgentCore Code Interpreter** — matplotlib 차트 렌더링용 Firecracker microVM, 번들된 NanumGothic 폰트.
+- **AgentCore Code Interpreter** — matplotlib 차트 렌더링용 Firecracker microVM 래퍼(`api/services/code_interpreter.py`), 번들된 NanumGothic 폰트. **현재 어떤 라우터에도 연결되어 있지 않습니다** (`grep -rn code_interpreter api/routers/` 결과 없음). 시나리오 C는 대신 Neptune 집계에서 파생한 `chart_spec`을 반환하고 클라이언트에서 렌더링합니다. 연결 작업은 로드맵 항목으로 관리합니다.
 
 ### Observability & Safety
 

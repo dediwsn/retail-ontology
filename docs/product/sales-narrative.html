@@ -559,8 +559,8 @@
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">대화형 커머스 · 사내 코파일럿</span><span lang="en">Conversational commerce · internal copilot</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">C</span><h3 class="scen-name" lang="ko">MD 인사이트</h3><h3 class="scen-name" lang="en">MD Insights</h3></div>
-            <p class="scen-what" lang="ko">Neptune 집계 → 한국어 요약 토큰 스트리밍 → 샌드박스에서 matplotlib이 실제로 실행되어 나온 PNG 차트. 차트를 “설명”하지 않고 “계산”합니다.</p>
-            <p class="scen-what" lang="en">Neptune aggregation → streamed Korean summary → a real PNG from matplotlib executing in a sandbox. The chart is computed, not described.</p>
+            <p class="scen-what" lang="ko">Neptune 집계가 <strong>먼저</strong> 돌고, 그 숫자 위에서 한국어 요약이 토큰 단위로 흐릅니다. 차트 값도 같은 집계에서 나옵니다 — 모델이 만들어낸 숫자가 아닙니다.</p>
+            <p class="scen-what" lang="en">Neptune aggregation runs <strong>first</strong>; the Korean summary streams over those rows. The chart values come from the same aggregation — not from the model.</p>
             <p class="scen-dec"><b lang="ko">결정</b><b lang="en">Decides</b><span lang="ko">주간 카테고리 리뷰</span><span lang="en">Weekly category reviews</span></p></article>
 
           <article class="scen"><div class="scen-head"><span class="scen-tag">D</span><h3 class="scen-name" lang="ko">페르소나 매칭</h3><h3 class="scen-name" lang="en">Persona Match</h3></div>
@@ -944,8 +944,8 @@
           </div>
           <div class="beat">
             <span class="t">8–13</span><span class="s" lang="ko">C · MD 인사이트</span><span class="s" lang="en">C · MD Insights</span>
-            <span class="line" lang="ko">요약이 토큰 단위로 흐르는 동안 기다렸다가 차트가 뜨면 <q>이건 샌드박스에서 실제로 실행된 matplotlib입니다</q>.</span>
-            <span class="line" lang="en">Let the summary stream, then when the chart lands: <q>that is matplotlib actually executing in a sandbox</q>.</span>
+            <span class="line" lang="ko">요약이 토큰 단위로 흐르는 동안 기다렸다가 차트가 뜨면 <q>집계가 먼저 돌고 모델은 그 숫자를 설명만 합니다 — 숫자를 지어내지 않습니다</q>.</span>
+            <span class="line" lang="en">Let the summary stream, then when the chart lands: <q>the aggregation ran first — the model narrates those numbers, it doesn't invent them</q>.</span>
           </div>
           <div class="beat">
             <span class="t">13–17</span><span class="s" lang="ko">L · 커버리지</span><span class="s" lang="en">L · Coverage</span>

@@ -134,19 +134,23 @@ plus the **capability** that satisfies it.
 - **Given** a streaming response, **when** it renders, **then** every event conforms to the shared
   `{type: phase|delta|log|final|result, data: {…}}` vocabulary.
 
-### US-3.3 — Self-serve trend analysis with real charts ✅ `C`
+### US-3.3 — Self-serve trend analysis with charts from the graph ✅ `C`
 > **As an** MD preparing a weekly category review,
-> **I want** a Korean summary plus an actual chart, generated on demand
+> **I want** a Korean summary plus a chart, generated on demand
 > **so that** I stop filing BI tickets a week ahead of every meeting.
 
 **Acceptance criteria**
-- **Given** a trend question, **when** I submit it, **then** Neptune aggregation runs first and the
+- **Given** a trend question, **when** I submit it, **then** Neptune aggregation runs **first** and the
   Sonnet 4.6 summary streams token-by-token over the aggregated result.
-- **Given** the summary completes, **when** the chart renders, **then** it is a PNG produced by
-  matplotlib executing inside the AgentCore Code Interpreter microVM, with Korean glyphs rendered via
-  the bundled NanumGothic font.
-- **Given** any figure in the summary, **when** I drill down, **then** a 1-hop subgraph shows the
-  underlying entities.
+- **Given** the summary, **when** it cites a figure, **then** that figure came from the aggregation —
+  the system prompt forbids inventing numbers absent from the data.
+- **Given** the response, **when** the chart renders, **then** its values come from the same
+  aggregation via `chart_spec = {type, title, data[]}`, drawn by the client.
+- **Given** Bedrock is unavailable, **when** I submit a question, **then** a deterministic recap is
+  built from the same rows so the page still has narrative.
+- 🗓 **Given** server-rendered charts are wanted, **then** `api/services/code_interpreter.py`
+  (AgentCore Code Interpreter + matplotlib + NanumGothic) is wired into the route — implemented today
+  but not imported by any router.
 
 ### US-3.4 — Ask logistics questions in the map itself ✅ `H` `B`
 > **As a** supply-chain planner looking at the network map,
@@ -488,14 +492,14 @@ plus the **capability** that satisfies it.
 |---|---|---|---|---|
 | 1 — Find the right product | 4 | 4 | — | — |
 | 2 — Trust what I'm buying | 3 | 2 | 1 | — |
-| 3 — Ask the data anything | 4 | 4 | — | — |
+| 3 — Ask the data anything | 4 | 3 | — | 1 |
 | 4 — Know my members | 4 | 4 | — | — |
 | 5 — Grow share of wallet | 3 | 2 | — | 1 |
 | 6 — Serve every member | 3 | 3 | — | — |
 | 7 — Understand the ontology | 3 | 3 | — | — |
 | 8 — Operate the platform | 6 | 5 | 1 | — |
 | 9 — Sell, demo and extend | 4 | 4 | — | — |
-| **Total** | **34** | **31** | **2** | **1** |
+| **Total** | **34** | **30** | **2** | **2** |
 
 ---
 

@@ -1,0 +1,130 @@
+@startuml ontology-rag-llm
+' ---------------------------------------------------------------------------
+' Ontology · RAG · LLM — runtime interplay in retail-ontology
+' Traced from source at commit db75eec. Every message below corresponds to a
+' real call site; see docs/diagrams/README.md for the file:function index.
+' Render:  plantuml -tsvg docs/diagrams/ontology-rag-llm.puml
+' ---------------------------------------------------------------------------
+title Ontology · RAG · LLM — how the three layers actually interlock
+
+autonumber
+hide footbox
+
+box "Client" #F1F4F1
+actor "MD / Shopper" as U
+participant "Next.js 14\nstreamSSE<T>" as W
+end box
+
+box "API — FastAPI on Fargate ARM64" #E4EDE8
+participant "routers/\nsearch · chat · insights" as R
+participant "services/search.py\nhybrid_search()" as S
+participant "services/agent.py\nconverse_stream()" as AG
+end box
+
+box "LLM — Amazon Bedrock" #F5EDDC
+participant "Bedrock Runtime\nGuardrails · embed-v4\nrerank-v3 · Sonnet 4.6" as BR
+participant "Bedrock Knowledge Base\nagent-runtime:Retrieve" as KB
+end box
+
+box "Retrieval · Ontology · Memory" #E7EBF2
+database "OpenSearch Serverless\nNori BM25 + KNN" as OS
+database "Amazon Neptune\nopenCypher over SigV4" as NEP
+participant "AgentCore Memory\nsession + user namespace" as MEM
+end box
+
+== Scenario A — RAG retrieves, the ontology explains ==
+
+U -> W : "임산부가 써도 되는 저자극 선크림"
+W -> R : POST /api/search/stream
+R -> W : SSE phase(bm25) · phase(knn)
+note over R, S : phases are progress markers emitted around a single\nhybrid_search() call — not per-stage instrumentation
+R -> S : hybrid_search(q, top_k)
+S -> BR : ApplyGuardrail(source=INPUT)
+BR --> S : scrubbed query
+S -> BR : InvokeModel cohere.embed-v4\ninput_type=search_query
+BR --> S : 1024-dim vector
+
+group RAG retrieval — two searches, because AOSS rejects the hybrid plugin
+S -> OS : knn { bedrock-knowledge-base-default-vector, k=100 }
+OS --> S : candidate pool
+S -> OS : match { AMAZON_BEDROCK_TEXT_CHUNK, analyzer=korean_nori }
+OS --> S : candidate pool
+S -> S : _rrf_merge(knn, bm25, k=60)
+end
+
+alt reranker inference profile configured
+S -> BR : InvokeModel cohere.rerank-v3 (cross-region profile)
+BR --> S : top_k reordered by relevance_score
+else any exception
+S -> S : silently fall back to RRF order
+end
+
+S --> R : List[SearchHit] — sku_id read from AOSS metadata
+R -> NEP : subgraph_for_skus(top 5, hops=2)\n$sku_ids bound · path clause whitelisted
+NEP --> R : nodes + edges in Cytoscape shape
+R -> W : SSE result { hits, subgraph }
+W -> U : ranked SKUs beside the 1-hop ontology subgraph
+note over NEP : the ontology is the explanation layer:\nit justifies what RAG retrieved
+
+== Scenario B — the LLM drives; ontology, RAG and memory are its tools ==
+
+U -> W : follow-up question
+W -> R : POST /api/chat (SSE)
+R -> AG : converse_stream(session_id, message, actor_id)
+AG -> BR : ApplyGuardrail(source=INPUT)
+BR --> AG : safe_msg + intervened flag
+AG -> MEM : create_event(USER turn)
+note right of MEM : write failures are logged and swallowed —\nthe conversation continues without memory
+
+loop up to 8 tool-use rounds
+AG -> BR : Converse(Sonnet 4.6, history,\ntoolConfig = 7 TOOL_SPECS)
+BR --> AG : assistant message — text blocks + toolUse blocks
+AG -> W : SSE delta(text)
+alt message carries no toolUse
+AG -> AG : exit loop
+else toolUse present — _dispatch_tool() fans out
+AG -> AG : _push_trace() into _TRACE_BUF (deque, maxlen 200)
+AG -> W : SSE log { tool, input }
+alt semantic_search
+AG -> S : hybrid_search() — re-enters the whole RAG path above
+else kb_lookup
+AG -> KB : Retrieve(overrideSearchType=HYBRID)
+else neptune_subgraph · nearest_warehouses\nshortest_path · inventory_lookup
+AG -> NEP : open_cypher(parameters={...})
+else memory_recall
+AG -> MEM : retrieve_memory_records\nnamespace = user/{actor_id}/preferences
+end
+AG -> AG : wrap list results as { items, count }\nConverse toolResult.json must be an object
+end
+end
+
+AG -> BR : ApplyGuardrail(source=OUTPUT)
+BR --> AG : safe_out
+AG -> MEM : create_event(ASSISTANT turn)
+AG -> W : SSE stop { final }
+W -> U : answer beside the live tool-call panel
+
+== Scenario C — the ontology aggregates first; the LLM only narrates ==
+
+U -> W : "이번 분기 뜨는 성분 트렌드는?"
+W -> R : POST /api/insights/stream
+R -> W : SSE phase(neptune)
+R -> NEP : MATCH (t:Trend)-[:INVOLVES]->(i:Ingredient)\nORDER BY fanout DESC LIMIT 10
+NEP --> R : up to 10 aggregated rows
+note over R, NEP : aggregation runs before the model, so the numbers\nare computed — the prompt forbids inventing any
+R -> BR : ConverseStream(system = MD analyst prompt,\nuser = serialized aggregation rows)
+
+loop contentBlockDelta events
+BR --> R : text delta
+R -> W : SSE delta(text)
+end
+
+alt Bedrock unavailable
+R -> R : deterministic recap built from the same rows
+end
+
+R -> W : SSE result { answer_ko, chart_spec, drill_down_subgraph }
+W -> U : streamed Korean summary + bar chart
+note over W : chart_spec = { type, title, data[] } drawn by the client.\nservices/code_interpreter.py exists but no router imports it,\nso no matplotlib PNG is produced on this path.
+
+@enduml
