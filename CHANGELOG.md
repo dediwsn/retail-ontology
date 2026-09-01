@@ -13,6 +13,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — local mock mode (walk the whole UI with no AWS)
+- New `mocks/` package + `scripts/devserver.py` run the **real** FastAPI app and the **real** Next.js pages with every AWS boundary faked. Nothing under `api/` or `web/app/` changes: routers, Pydantic models, the SSE event vocabulary, error handling and the auth middleware all execute for real, and only calls that would leave the process are replaced.
+- Faked: Neptune (`open_cypher`, `subgraph_for_skus`), OpenSearch (`hybrid_search` + the inline client `/ops/ingest` builds), Bedrock (Converse, ConverseStream, InvokeModel for embed + rerank, ApplyGuardrail), Knowledge Base, AgentCore Memory, CloudWatch Logs and Cost Explorer. Cognito is bypassed via `DEMO_PUBLIC_MODE=true`.
+- The chat agent still performs a real tool-use round trip — the fake Converse returns a `toolUse` block on the first turn, so `_dispatch_tool` runs, `_TRACE_BUF` fills, and the tool-call panel shows genuine activity.
+- The `open_cypher` fake has two layers: hand-written handlers where semantics matter (regions, warehouses, routes, members, trends, substitute candidates, persona preferences — route endpoints reference real warehouse ids so the maps stay coherent), and a generic responder that parses the query's `RETURN` projection and synthesises a matching row, typing values from the *expression* (`count(` → int, `avg(` → float, `collect(` → list) before falling back to alias heuristics. Unmatched queries log `MOCK-CYPHER-MISS` and collect in `mocks.aws.MISSES` so gaps stay visible.
+- Region codes come from `web/public/korea-provinces.json` (`feature.properties.code`), **not** the KOSTAT scheme — that file is what the choropleth joins on, and KOSTAT codes render a uniformly grey map.
+- Deterministic world from a SHA-1-seeded PRNG against `ANCHOR = 2026-04-01`, matching `data/synthetic/`: 17 regions · 30 warehouses · 76 routes · 12 events · 250 products · 15 personas · 1,000 members · 20 campaigns · 400 transactions · 400 touchpoints · 10 industry categories.
+- Verified: **41/41 API endpoints** return 200 and **27/27 page routes** render (`/`, A–M, `/objects/{type}`, `/schema`, `/standards`, `/validation`, `/ops/{ingest,guardrail,memory,eval,trace}`, `/codegraph`). `/ops` itself 404s by design — the route is `/ops/[area]`.
+- New runbook: [docs/runbooks/local-mock-mode.md](docs/runbooks/local-mock-mode.md), including an explicit list of what this mode does *not* prove (data realism, query correctness, latency, auth).
+
+### Fixed — web dependencies were imported but never declared
+- `lucide-react` and `react-simple-maps` (plus `d3-geo` and the two `@types`) are imported across `web/app` and `web/components` but were absent from `web/package.json`. On a clean checkout `npm ci && npx tsc --noEmit` reported **107 errors, 24 of them `TS2307` module-not-found**, so the CI `tsc-check (web)` job — which runs exactly that with no `continue-on-error` — could not have been passing, and `next build` would fail the same way.
+- Declaring them drops the count to **83**. The remaining 83 are pre-existing implicit-`any` and type-mismatch errors in application code, untouched here.
+
 ### Added — persona reaches Scenario F (substitute) and H (logistics)
 - **F `/api/substitute`** accepts `persona` + `drop_persona_conflicts` (default true). Alternatives containing an ingredient the persona avoids are removed, preferred-ingredient matches earn `PERSONA_PREFERRED_BONUS = 4` (between a shared ingredient at 3 and a shared concern at 5), and `persona_preferred` / `persona_conflict` are returned per candidate. The persona pass runs across the whole 50-row candidate set **before** the `top_k` cut, so dropping a conflict promotes a real alternative instead of leaving a hole. `drop_persona_conflicts=false` flags conflicts instead of hiding them.
 - Shared `services/search.py:persona_context()` extracted from `apply_persona_lens()` so A and F read the *same* avoid/prefer/favourite-brick facts — a product rejected as unsafe in search cannot reappear as a "substitute".
@@ -277,6 +291,20 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 따릅니다.
 
 ## [Unreleased]
+
+### Added — 로컬 목(mock) 모드 — AWS 없이 전체 UI 페이지 순회
+- 신규 `mocks/` 패키지 + `scripts/devserver.py`로 **실제** FastAPI 앱과 **실제** Next.js 페이지를 모든 AWS 경계만 가짜로 바꿔 실행합니다. `api/` · `web/app/` 아래는 전혀 수정하지 않습니다 — 라우터, Pydantic 모델, SSE 이벤트 어휘, 예외 처리, 인증 미들웨어가 모두 실제로 동작하고, 프로세스를 벗어나는 호출만 대체됩니다.
+- 대체 대상: Neptune(`open_cypher`, `subgraph_for_skus`), OpenSearch(`hybrid_search` 및 `/ops/ingest`가 인라인으로 만드는 클라이언트), Bedrock(Converse, ConverseStream, 임베딩·리랭크용 InvokeModel, ApplyGuardrail), Knowledge Base, AgentCore Memory, CloudWatch Logs, Cost Explorer. Cognito는 `DEMO_PUBLIC_MODE=true`로 우회합니다.
+- 챗 에이전트는 여전히 **실제 도구 호출 왕복**을 수행합니다 — 가짜 Converse가 첫 턴에 `toolUse` 블록을 반환하므로 `_dispatch_tool`이 실행되고 `_TRACE_BUF`가 채워져 도구 호출 패널에 실제 활동이 보입니다.
+- `open_cypher` 페이크는 2계층입니다: 의미가 중요한 쿼리는 수기 핸들러(지역·거점·경로·회원·트렌드·대체재 후보·페르소나 선호 — 경로 양 끝이 실제 거점 id를 참조하므로 지도가 깨지지 않습니다), 나머지는 쿼리의 `RETURN` 프로젝션을 파싱해 형태를 맞춘 행을 생성하는 범용 응답기입니다. 값 타입은 별칭 이름보다 **표현식**을 먼저 봅니다(`count(` → int, `avg(` → float, `collect(` → list). 매칭되지 않은 쿼리는 `MOCK-CYPHER-MISS`로 로깅되고 `mocks.aws.MISSES`에 모여, 빈틈이 조용히 묻히지 않습니다.
+- 지역 코드는 KOSTAT 체계가 **아니라** `web/public/korea-provinces.json`의 `feature.properties.code`를 사용합니다 — 코로플레스가 조인하는 대상이 이 파일이며, KOSTAT 코드를 쓰면 지도가 전부 회색으로 렌더링됩니다.
+- `ANCHOR = 2026-04-01` 기준 SHA-1 시드 PRNG로 생성한 결정론적 데이터(`data/synthetic/` 규약과 동일): 지역 17 · 거점 30 · 경로 76 · 이벤트 12 · 상품 250 · 페르소나 15 · 회원 1,000 · 캠페인 20 · 거래 400 · 접점 400 · 산업 카테고리 10.
+- 검증 완료: **API 엔드포인트 41/41** 200 응답, **페이지 라우트 27/27** 렌더링(`/`, A–M, `/objects/{type}`, `/schema`, `/standards`, `/validation`, `/ops/{ingest,guardrail,memory,eval,trace}`, `/codegraph`). `/ops` 단독은 설계상 404입니다 — 실제 라우트는 `/ops/[area]`.
+- 신규 런북: [docs/runbooks/local-mock-mode.md](docs/runbooks/local-mock-mode.md). 이 모드가 **증명하지 못하는 것**(데이터 정확성, 쿼리 정합성, 지연시간, 인증)도 명시했습니다.
+
+### Fixed — 웹 의존성이 import만 되고 선언되지 않았던 문제
+- `lucide-react`와 `react-simple-maps`(및 `d3-geo`, 두 개의 `@types`)가 `web/app` · `web/components` 전반에서 import 되지만 `web/package.json`에 없었습니다. 클린 체크아웃에서 `npm ci && npx tsc --noEmit`는 **107개 오류, 그중 24개가 `TS2307` 모듈 없음**을 보고합니다. CI의 `tsc-check (web)` 잡이 `continue-on-error` 없이 정확히 이 명령을 실행하므로 통과했을 수 없으며, `next build`도 같은 이유로 실패합니다.
+- 의존성을 선언하면 오류가 **83개**로 줄어듭니다. 남은 83개는 애플리케이션 코드의 기존 implicit-`any` · 타입 불일치 오류이며 이번 변경에서 손대지 않았습니다.
 
 ### Added — 페르소나가 시나리오 F(대체재)와 H(물류)까지 확장
 - **F `/api/substitute`**가 `persona` + `drop_persona_conflicts`(기본 true)를 받습니다. 페르소나가 회피하는 성분이 든 대안은 제거되고, 선호 성분 일치는 `PERSONA_PREFERRED_BONUS = 4`(공유 성분 3과 공유 관심사 5 사이) 가점을 받으며, 후보마다 `persona_preferred` / `persona_conflict`가 반환됩니다. 페르소나 패스는 `top_k` 컷 **이전**에 50행 후보 전체에 적용되므로, 충돌 후보를 빼면 빈자리가 남는 대신 실제 대안이 올라옵니다. `drop_persona_conflicts=false`면 숨기지 않고 플래그만 답니다.
