@@ -22,8 +22,9 @@ Execute the project's test surface in this order, stopping at first failure:
 
 4. **Smoke test** the critical paths via CloudFront:
    ```bash
-   curl -fsS https://retail-ontology.whchoi.net/healthz
-   curl -fsS -X POST https://retail-ontology.whchoi.net/api/search -H 'content-type: application/json' \
+   # export PUBLIC_DOMAIN=retail-ontology.example.com  (your CloudFront alias)
+   curl -fsS "https://$PUBLIC_DOMAIN/healthz"
+   curl -fsS -X POST "https://$PUBLIC_DOMAIN/api/search" -H 'content-type: application/json' \
      -d '{"q":"시카 진정 크림","top_k":5}' | jq '.hits | length'
    ```
 

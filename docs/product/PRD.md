@@ -2,7 +2,9 @@
 
 **Product name (working):** Ontology Retail — Korean Retail/CPG Knowledge Graph Intelligence Platform
 **Codebase:** `ontology-retail` · **Version at time of writing:** v0.7.0 (+ Unreleased codegraph)
-**Live demo:** https://retail-ontology.whchoi.net
+**Live demo:** per deployment — set `PUBLIC_DOMAIN` and the CloudFront alias, then record the URL
+here. Reproduce the whole environment with `cdk deploy --all`; for a no-AWS walkthrough see
+[docs/runbooks/local-mock-mode.md](../runbooks/local-mock-mode.md).
 **Document owner:** Product / Solutions
 **Last updated:** 2026-08-31
 **Status:** Deployed reference implementation — production-hardening checklist in §12
@@ -324,7 +326,7 @@ with per-standard coverage shown at `/validation`.
 ### 7.1 Request path
 
 ```
-Browser (retail-ontology.whchoi.net)
+Browser (retail-ontology.<your-domain>)
   → CloudFront  [ACM TLS · Lambda@Edge cookie auth · X-Origin-Auth-Token injection]
   → ALB         [SG restricted to the CloudFront origin-facing prefix list]
   → ECS Fargate ARM64

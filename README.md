@@ -58,8 +58,8 @@ Walkthrough of all 13 wow scenarios (A–M) and the `/codegraph` meta page. Clic
 
 ```bash
 # Clone the repository
-git clone https://github.com/whchoi98/ontology-retail.git
-cd ontology-retail
+git clone https://github.com/dediwsn/retail-ontology.git
+cd retail-ontology
 
 # Install backend dependencies
 python3 -m venv .venv
@@ -208,9 +208,9 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ## Contact
 
-- Maintainer: [whchoi98](https://github.com/whchoi98)
-- Issues: <https://github.com/whchoi98/ontology-retail/issues>
-- Email: whchoi98@gmail.com
+- Maintainer: [dediwsn](https://github.com/dediwsn)
+- Issues: <https://github.com/dediwsn/retail-ontology/issues>
+- Upstream: [whchoi98/ontology-retail](https://github.com/whchoi98/ontology-retail) — this repository began as a fork
 
 ---
 
@@ -262,8 +262,8 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 
 ```bash
 # 저장소 클론
-git clone https://github.com/whchoi98/ontology-retail.git
-cd ontology-retail
+git clone https://github.com/dediwsn/retail-ontology.git
+cd retail-ontology
 
 # 백엔드 의존성 설치
 python3 -m venv .venv
@@ -407,9 +407,9 @@ python3 scripts/eval_wow_queries.py
 
 ## 연락처
 
-- 메인테이너: [whchoi98](https://github.com/whchoi98)
-- 이슈: <https://github.com/whchoi98/ontology-retail/issues>
-- 이메일: whchoi98@gmail.com
+- 메인테이너: [dediwsn](https://github.com/dediwsn)
+- 이슈: <https://github.com/dediwsn/retail-ontology/issues>
+- 업스트림: [whchoi98/ontology-retail](https://github.com/whchoi98/ontology-retail) — 이 저장소는 해당 프로젝트의 fork에서 출발했습니다
 
 <!-- harness-eval-badge:start -->
 ![Harness Score](https://img.shields.io/badge/harness-8.8%2F10-green)

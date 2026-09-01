@@ -106,7 +106,7 @@ Expected: `running == desired`, `deps == 1` (single deployment, prior ACTIVE dra
 
 ## 8. Smoke verify
 
-Direct ALB access is blocked by the SG (CloudFront prefix list only); verification goes via CloudFront with auth. Easiest path is opening `https://retail-ontology.whchoi.net` in a browser logged in as `demo / demo@whchoi.net`.
+Direct ALB access is blocked by the SG (CloudFront prefix list only); verification goes via CloudFront with auth. Easiest path is opening `https://$PUBLIC_DOMAIN` (your CloudFront alias) in a browser, logged in as the demo user provisioned by `scripts/provision_cognito_users.sh`.
 
 For headless verification of graph state (e.g. after a loader run), see [`reload-synthetic-data.md`](reload-synthetic-data.md) §5 "Verification".
 

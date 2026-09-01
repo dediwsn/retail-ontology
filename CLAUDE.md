@@ -6,7 +6,7 @@ Project memory for Claude Code. This file is auto-loaded into every session and 
 
 `ontology-retail` is a 30–60 minute proof-of-concept demo for a Korean Retail/CPG knowledge graph that powers thirteen wow scenarios (A–M) on AWS Bedrock + AgentCore + Neptune. It is a multi-runtime monorepo: Python FastAPI backend, Next.js 14 frontend, AWS CDK infrastructure, and a synthetic-data loader that doubles as a one-shot ECS task. A separate `/codegraph` meta page embeds a graphify-generated AST graph (LLM-zero build, communities labelled offline via Bedrock Sonnet — see [scripts/refresh_codegraph.sh](scripts/refresh_codegraph.sh)).
 
-Custom domain: `https://retail-ontology.whchoi.net` (CloudFront + Lambda@Edge cookie auth → Cognito). Demo user: `demo / demo@whchoi.net`.
+Custom domain: set per deployment — `PUBLIC_DOMAIN` env var on the API task definition, CloudFront alias, ACM cert (us-east-1) and Cognito callback URLs must all agree (CloudFront + Lambda@Edge cookie auth → Cognito). Docs use `retail-ontology.<your-domain>` as the placeholder. The original reference deployment ran at `retail-ontology.whchoi.net`.
 
 The five-persona spine (임산부, 4세 아이, 캠퍼, 민감성 피부, 글루텐 알레르기) drives every demo path. Spine personas are stored as `Persona` nodes with `is_spine=true`; the 40 narrative personas (`psn_*`, descriptive Bedrock-narrated profiles) are bridged to spine via `(narrative)-[:DERIVED_FROM]->(spine)` so any persona selection in the UI resolves to spine-linked Members. Scenarios A–L plus the knowledge-graph object explorer must remain coherent for the same persona context.
 
@@ -26,7 +26,7 @@ A search · B chat · C insights · D persona-match · E safety · F substitute 
 | Search | OpenSearch Serverless (Nori BM25 + Cohere KNN, RRF fusion) |
 | Foundation models | Bedrock Sonnet 4.6 for chat/insights, Cohere embed-v4 for vectors, Cohere rerank-v3 |
 | Memory | AgentCore Memory (short-term session + long-term user namespaces) |
-| Sandbox | AgentCore Code Interpreter Firecracker microVM (matplotlib + NanumGothic) |
+| Sandbox | AgentCore Code Interpreter Firecracker microVM (matplotlib + NanumGothic) — **built, not wired**: `api/services/code_interpreter.py` exists but no router imports it. `/api/insights` returns a client-rendered `chart_spec` derived from the Neptune aggregation. Verify with `grep -rn code_interpreter api/routers/` |
 | Maps | react-simple-maps + d3-geo + Korean sido GeoJSON (KOSTAT 행정구역코드) |
 | Auth | Cognito user pool + Lambda@Edge cookie auth at CloudFront |
 | Edge | CloudFront distribution → ALB (HTTP origin, SG-locked to CF prefix list) |

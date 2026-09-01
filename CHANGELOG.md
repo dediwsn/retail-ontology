@@ -279,8 +279,8 @@ Sidebar version bumped from `v0.1` → `v0.2.0`.
 - Scope AgentCore Memory IAM to least privilege and relax Cognito password to eight characters for demo accounts
 - Remove account-root policy from OpenSearch and use portable cost monitor lookup
 
-[Unreleased]: https://github.com/whchoi98/ontology-retail/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/whchoi98/ontology-retail/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dediwsn/retail-ontology/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dediwsn/retail-ontology/releases/tag/v0.1.0
 
 ---
 
@@ -554,5 +554,5 @@ Cognito redirect_uri, ECR push 파이프라인). Sidebar 버전 `v0.1` → `v0.2
 - AgentCore Memory IAM을 최소 권한으로 좁히고 데모 계정 Cognito 비밀번호를 8자로 완화
 - OpenSearch에서 계정 root 정책 제거 및 portable cost monitor 조회로 변경
 
-[Unreleased]: https://github.com/whchoi98/ontology-retail/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/whchoi98/ontology-retail/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dediwsn/retail-ontology/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dediwsn/retail-ontology/releases/tag/v0.1.0

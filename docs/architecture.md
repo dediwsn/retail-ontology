@@ -18,7 +18,7 @@ Thirteen wow scenarios (A–M) span semantic search, conversational agent with m
 
 ### Edge & Auth
 
-- **CloudFront distribution** (`<distribution-id>`) — TLS termination, viewer/origin caching, custom domain `retail-ontology.whchoi.net` with ACM `*.whchoi.net` cert.
+- **CloudFront distribution** (`<distribution-id>`) — TLS termination, viewer/origin caching, custom domain `retail-ontology.<your-domain>` with an ACM `*.<your-domain>` cert (set via `PUBLIC_DOMAIN` + the CloudFront alias; the original reference deployment used `whchoi.net`).
 - **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — cookie-based auth check on every request. `PUBLIC_PATHS` whitelist (`callback`, `logout`, `_next`, `favicon`, `api/health`) is intentionally narrow — the root path `/` is gated, so anonymous viewers see a 302 to Cognito Hosted UI immediately, not a half-loaded SPA shell. See [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md).
 - **Cognito User Pool** (`<user-pool-id>`) — RS256 JWTs, OAuth code grant, email-as-username, demo password policy (8 chars). Hosted UI logout URL must include `https://<PUBLIC_DOMAIN>/` (with trailing slash) for `/api/auth/logout` to land cleanly.
 - **Auth router** (`api/routers/auth.py`) — `/api/auth/login` (sidebar re-auth), `/api/auth/callback` (OAuth code → token exchange + cookie set), `/api/auth/logout` (cookie clear + Cognito Hosted UI logout 302), `/api/auth/whoami` (always JSON 200, `{authenticated: bool, ...}`).
@@ -88,9 +88,9 @@ Thirteen wow scenarios (A–M) span semantic search, conversational agent with m
                    ┌──────────────────────────┐
                    │  Browser                 │
                    │  retail-ontology.        │
-                   │  whchoi.net              │
+                   │  <your-domain>           │
                    └────────────┬─────────────┘
-                                │ HTTPS (ACM *.whchoi.net)
+                                │ HTTPS (ACM *.<your-domain>)
                                 ▼
                    ┌──────────────────────────┐
                    │  CloudFront              │
@@ -173,7 +173,7 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
 
 ### Edge & Auth
 
-- **CloudFront 배포** (`<distribution-id>`) — TLS 종단, viewer/origin 캐싱, 커스텀 도메인 `retail-ontology.whchoi.net` + ACM `*.whchoi.net` 인증서.
+- **CloudFront 배포** (`<distribution-id>`) — TLS 종단, viewer/origin 캐싱, 커스텀 도메인 `retail-ontology.<your-domain>` + ACM `*.<your-domain>` 인증서 (`PUBLIC_DOMAIN`과 CloudFront alias로 지정. 최초 레퍼런스 배포는 `whchoi.net`을 사용했습니다).
 - **Lambda@Edge** (`AuthEdgeFn`, us-east-1 `experimental.EdgeFunction`) — 모든 요청에 대해 쿠키 기반 인증 검사. `PUBLIC_PATHS` 화이트리스트(`callback`, `logout`, `_next`, `favicon`, `api/health`)는 의도적으로 좁게 — 루트 경로 `/`도 게이트되므로 미인증 viewer는 즉시 Cognito Hosted UI 302를 받고, half-loaded SPA 셸이 노출되지 않습니다. [ADR-0012](decisions/0012-lambda-edge-root-gate-and-logout.md) 참조.
 - **Cognito User Pool** (`<user-pool-id>`) — RS256 JWT, OAuth code grant, 이메일=사용자명, 데모용 8자 비밀번호 정책. Hosted UI logout URL은 `https://<PUBLIC_DOMAIN>/`(슬래시 포함)을 등록해야 `/api/auth/logout`이 깨끗하게 착륙합니다.
 - **Auth 라우터** (`api/routers/auth.py`) — `/api/auth/login`(사이드바 재인증), `/api/auth/callback`(OAuth code → 토큰 교환 + 쿠키 설정), `/api/auth/logout`(쿠키 삭제 + Cognito Hosted UI logout 302), `/api/auth/whoami`(항상 JSON 200, `{authenticated: bool, ...}`).
@@ -243,9 +243,9 @@ User → CloudFront (auth) → ALB → API → (Neptune + OpenSearch + Bedrock +
                    ┌──────────────────────────┐
                    │  브라우저                │
                    │  retail-ontology.        │
-                   │  whchoi.net              │
+                   │  <your-domain>           │
                    └────────────┬─────────────┘
-                                │ HTTPS (ACM *.whchoi.net)
+                                │ HTTPS (ACM *.<your-domain>)
                                 ▼
                    ┌──────────────────────────┐
                    │  CloudFront              │

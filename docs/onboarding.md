@@ -16,7 +16,7 @@ This guide brings a new contributor from "I have a laptop and AWS access" to "I 
 
 ```bash
 # Clone
-git clone https://github.com/whchoi98/ontology-retail.git
+git clone https://github.com/dediwsn/retail-ontology.git
 cd ontology-retail
 
 # Backend (runtime + dev deps for offline tests)

@@ -335,6 +335,10 @@
   }
   .close-box h3 { font-size: clamp(1.3rem, 2.4vw, 1.75rem); margin-bottom: .8rem; }
   .cta-row { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: .7rem; }
+  .demo-note {
+    margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--rule-soft);
+    font-size: .95rem; color: var(--ink-2); line-height: 1.65;
+  }
   .cta {
     display: inline-flex; align-items: center; gap: .5rem; text-decoration: none;
     font-family: var(--f-mono); font-size: .78rem; letter-spacing: .06em;
@@ -1002,14 +1006,28 @@
           One ontology, thirteen revenue-relevant decisions, zero data-team tickets — and every answer arrives
           with the graph path that produced it.
         </p>
-        <div class="cta-row">
-          <a class="cta" href="https://retail-ontology.whchoi.net">
-            <span lang="ko">라이브 데모 열기</span><span lang="en">Open the live demo</span>
-          </a>
-          <a class="cta ghost" href="https://youtu.be/irGMb3x6Iys">
-            <span lang="ko">시연 영상 (13개 시나리오)</span><span lang="en">Watch the walkthrough</span>
-          </a>
-        </div>
+        <!-- Demo links are intentionally not hard-coded: this page must never send a
+             customer to an environment the presenter does not control. To add them,
+             replace this block with:
+
+               <div class="cta-row">
+                 <a class="cta" href="https://YOUR-DOMAIN">
+                   <span lang="ko">라이브 데모 열기</span><span lang="en">Open the live demo</span>
+                 </a>
+                 <a class="cta ghost" href="https://YOUR-VIDEO-URL">
+                   <span lang="ko">시연 영상 (13개 시나리오)</span><span lang="en">Watch the walkthrough</span>
+                 </a>
+               </div>
+        -->
+        <p class="demo-note" lang="ko">
+          <strong>라이브 데모</strong>는 요청 시 안내드립니다 — 13개 시나리오 전체를 30–60분 안에 보여드립니다.
+          전체 환경은 <span class="mono">cdk deploy --all</span> 한 번으로 고객사 AWS 계정에 그대로 재현됩니다.
+        </p>
+        <p class="demo-note" lang="en">
+          <strong>A live walkthrough</strong> is available on request — all thirteen scenarios in 30–60 minutes.
+          The whole environment reproduces in your own AWS account with a single
+          <span class="mono">cdk deploy --all</span>.
+        </p>
       </div>
     </div>
   </section>

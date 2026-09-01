@@ -20,10 +20,10 @@
 
 브라우저가 가장 먼저 만나는 layer. 기능:
 
-- **TLS 종단** — `*.whchoi.net` ACM 인증서로 HTTPS 처리, ALB로는 HTTP-80 forward (데모 트레이드오프, [SECURITY.md](../SECURITY.md)에 production 마이그레이션 계획)
+- **TLS 종단** — `*.<your-domain>` ACM 인증서로 HTTPS 처리, ALB로는 HTTP-80 forward (데모 트레이드오프, [SECURITY.md](../SECURITY.md)에 production 마이그레이션 계획)
 - **Viewer + Origin caching** — 정적 자산은 edge에서, 동적 API는 pass-through
 - **Origin lock-down** — `X-Origin-Auth-Token` (Secrets Manager 백킹) 커스텀 헤더를 ALB로 주입 → ALB는 이 헤더 + CF 관리 prefix list만 통과시킴 → ALB DNS를 직접 알아내도 우회 불가
-- **커스텀 도메인**: `retail-ontology.whchoi.net`
+- **커스텀 도메인**: `retail-ontology.<your-domain>` (`PUBLIC_DOMAIN` 환경변수 · CloudFront alias · ACM 인증서 · Cognito 콜백 URL이 모두 일치해야 합니다)
 
 ### Lambda@Edge (`AuthEdgeFn`, us-east-1)
 
@@ -40,7 +40,7 @@ CloudFront viewer-request 트리거:
 
 - **OAuth 2.0 Authorization Code grant + Hosted UI**
 - **RS256 JWT** — JWKS는 1시간 TTL 캐시 (키 회전 대응)
-- **데모 사용자**: `demo / demo@whchoi.net`, 비밀번호 정책 8자 (production은 더 강하게)
+- **데모 사용자**: `scripts/provision_cognito_users.sh`로 생성, 비밀번호 정책 8자 (production은 더 강하게)
 - **App Client ID는 Lambda@Edge inline + API env 양쪽에서 사용** — ADR-0003이 Lambda@Edge 측 hardcode trade-off 명시 (API 측은 required env로 강제)
 - **Cognito는 PUT semantics** — `update-user-pool-client`가 미지정 필드를 null로 clobber. 그래서 ALL Cognito 변경은 CDK only ([ADR-0004](decisions/0004-cognito-user-pool-client-cdk-driven.md))
 - **Hosted UI Logout URL** — `https://<PUBLIC_DOMAIN>/`(슬래시 포함) 등록 필수. `/api/auth/logout`이 이 URL로 바운스하므로 누락 시 로그아웃 후 빈 화면
@@ -56,12 +56,12 @@ Cognito Hosted UI 보완용 ApplicationAPI 4개 엔드포인트. 모두 [ADR-001
 
 ### ACM Certificate
 
-- **us-east-1 발급** (CloudFront 요건). Wildcard `*.whchoi.net`
+- **us-east-1 발급** (CloudFront 요건). Wildcard `*.<your-domain>`
 - DNS 검증, 자동 갱신
 
 ### Route 53
 
-- **Hosted Zone**: `whchoi.net` 위에 ALIAS 레코드로 `retail-ontology.whchoi.net` → CloudFront distribution
+- **Hosted Zone**: `<your-domain>` 위에 ALIAS 레코드로 `retail-ontology.<your-domain>` → CloudFront distribution
 - 도메인 변경 시 4개 surface 정합성: DNS, CF alias, Cognito callback, API `PUBLIC_DOMAIN` env (auto-sync rule in [CLAUDE.md](../CLAUDE.md))
 
 ---
